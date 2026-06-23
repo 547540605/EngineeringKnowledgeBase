@@ -1,0 +1,510 @@
+# EngineeringKnowledgeBase
+
+## Overview
+
+EngineeringKnowledgeBase is a long-term personal engineering knowledge system.
+
+本仓库用于沉淀软件开发、工程实践以及计算机科学相关知识。
+
+它不仅是一个笔记仓库（Notes Repository），更是一个持续演化的知识体系（Knowledge System）。
+
+本仓库同时服务于：
+
+* Human Readers（开发人员）
+* AI Assistants（AI助手）
+* RAG Systems（知识库检索系统）
+* Agent Memory（Agent长期记忆）
+* Future Projects（未来项目）
+
+目标是让知识能够被持续积累、组织、检索、复用和演化。
+
+---
+
+# Core Philosophy
+
+## Knowledge > Notes
+
+本仓库的目标不是记录笔记。
+
+而是构建知识体系。
+
+普通笔记：
+
+```text
+JIT是什么
+AOT是什么
+CLR是什么
+```
+
+知识体系：
+
+```text
+Programming Languages
+└── Runtime
+    ├── CLR
+    ├── JVM
+    ├── GC
+    ├── JIT
+    └── AOT
+```
+
+本仓库更关注：
+
+```text
+知识属于哪里
+知识之间如何关联
+知识在整个计算机科学体系中的位置
+```
+
+而不仅仅是：
+
+```text
+知识本身是什么
+```
+
+---
+
+## Record First
+
+先记录，再整理。
+
+知识的保存优先于知识的组织。
+
+不要因为结构不完美而放弃记录。
+
+---
+
+## Reusable Knowledge
+
+优先记录未来可能再次使用的知识。
+
+例如：
+
+* 问题排查
+* 调试经验
+* 开发技巧
+* 架构理解
+* 环境配置
+* 最佳实践
+* 工具使用经验
+
+而不是项目中的一次性信息。
+
+---
+
+## Continuous Evolution
+
+允许仓库结构持续演化。
+
+初期可能只有：
+
+```text
+README.md
+```
+
+未来可能发展为：
+
+```text
+ComputerScience/
+Engineering/
+Projects/
+Tools/
+AI/
+```
+
+结构可以变化。
+
+知识应当长期保留。
+
+---
+
+# Knowledge System
+
+## Knowledge Hierarchy First
+
+知识体系优先于知识碎片。
+
+记录知识时，尽量回答以下问题：
+
+### What is it?
+
+它是什么？
+
+---
+
+### Why does it exist?
+
+它为什么存在？
+
+---
+
+### Where does it belong?
+
+它属于哪个领域？
+
+---
+
+### What does it depend on?
+
+它依赖什么知识？
+
+---
+
+### What concepts are related?
+
+它与哪些知识相关？
+
+---
+
+例如：
+
+```text
+JIT
+```
+
+不仅记录：
+
+```text
+JIT是什么
+```
+
+还应记录：
+
+```text
+Programming Languages
+└── Runtime
+    └── JIT
+```
+
+---
+
+例如：
+
+```text
+Virtual Memory
+```
+
+应记录：
+
+```text
+Operating Systems
+└── Memory Management
+    └── Virtual Memory
+```
+
+---
+
+例如：
+
+```text
+Cache
+```
+
+应记录：
+
+```text
+Computer Architecture
+└── Memory Hierarchy
+    └── Cache
+```
+
+---
+
+目标是逐步建立完整的知识地图（Knowledge Map）。
+
+---
+
+# Knowledge Domains
+
+当前关注的主要领域包括：
+
+```text
+Computer Science
+├── Programming Languages
+├── Operating Systems
+├── Computer Architecture
+├── Networking
+├── Database
+├── Algorithms
+├── Software Engineering
+└── AI
+```
+
+以及：
+
+```text
+Engineering Practice
+├── C#
+├── Python
+├── Android
+├── Linux
+├── Git
+├── Docker
+├── Cloud
+├── DevOps
+├── Testing
+└── Tools
+```
+
+未来可持续扩展。
+
+---
+
+# Knowledge Recording Rules
+
+## One Topic One Subject
+
+一个主题对应一个知识点。
+
+避免多个无关内容混杂。
+
+---
+
+## Use Searchable Titles
+
+标题必须包含关键词。
+
+不推荐：
+
+```markdown
+# 一个奇怪的问题
+```
+
+推荐：
+
+```markdown
+# Python.Runtime cannot import tornado.gen
+```
+
+或者：
+
+```markdown
+# ASP.NET Core Windows Service Deployment
+```
+
+---
+
+## Record Facts
+
+优先记录：
+
+* 现象
+* 原因
+* 解决方案
+* 结论
+
+尽量避免：
+
+```text
+感觉
+猜测
+大概
+可能
+```
+
+除非明确标注。
+
+---
+
+## Preserve Examples
+
+代码、日志、报错信息尽量保留原文。
+
+方便未来：
+
+* 搜索
+* 向量检索
+* RAG
+* Agent引用
+
+---
+
+## Recommended Structure
+
+推荐使用：
+
+```markdown
+# Title
+
+## Problem
+
+## Root Cause
+
+## Solution
+
+## Example
+
+## Related Knowledge
+
+## Notes
+```
+
+但不是强制要求。
+
+---
+
+# AI Maintenance Rules
+
+本章节用于指导 AI 如何维护本仓库。
+
+---
+
+## Rule 1
+
+当用户提出问题时：
+
+如果答案具有长期复用价值，应考虑加入知识库。
+
+---
+
+## Rule 2
+
+新增知识前：
+
+优先检查是否已经存在相关主题。
+
+如果存在：
+
+更新已有内容。
+
+如果不存在：
+
+创建新主题。
+
+---
+
+## Rule 3
+
+避免重复知识。
+
+优先扩展已有知识。
+
+---
+
+## Rule 4
+
+如果用户出现以下表达：
+
+```text
+记录下来
+加入知识库
+写到仓库
+后面可能会用
+记住这个
+整理一下
+形成文档
+```
+
+则认为该内容具有长期价值。
+
+---
+
+## Rule 5
+
+新增知识时：
+
+除了记录知识本身，
+
+还应记录：
+
+```text
+所属领域
+相关知识
+上下游知识
+```
+
+帮助构建知识体系。
+
+---
+
+例如：
+
+```text
+Delegate
+```
+
+应关联：
+
+```text
+C#
+Runtime
+Event
+Callback
+Reflection
+```
+
+---
+
+## Rule 6
+
+AI应优先维护知识结构。
+
+不要仅记录答案。
+
+应尽量建立知识关联。
+
+---
+
+# Future RAG Compatibility
+
+本仓库未来可能作为：
+
+* RAG Knowledge Base
+* Vector Database Source
+* Agent Memory
+* AI Search Index
+* Coding Agent Context
+
+的数据来源。
+
+因此所有知识应尽量满足：
+
+```text
+Human Readable
+AI Readable
+Search Friendly
+Embedding Friendly
+Reusable
+Linked
+```
+
+---
+
+# Current Structure
+
+当前阶段保持极简：
+
+```text
+EngineeringKnowledgeBase
+└── README.md
+```
+
+所有知识均可先记录在 README 中。
+
+未来由 AI 协助进行拆分与重构。
+
+---
+
+# Long-Term Vision
+
+Build a continuously evolving Engineering Knowledge System.
+
+目标不是积累笔记。
+
+目标不是收集技巧。
+
+目标是建立属于自己的：
+
+```text
+Engineering Knowledge System
++
+Computer Science Knowledge Map
++
+AI Maintainable Memory
+```
+
+让过去解决的问题持续产生价值。
+
+让未来项目能够复用过去的经验。
+
+让知识随着开发工作不断增长和演化。
