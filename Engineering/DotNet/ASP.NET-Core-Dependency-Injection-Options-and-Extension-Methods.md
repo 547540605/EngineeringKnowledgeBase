@@ -162,6 +162,110 @@ services.AddSingleton<IPhoneOperationOptionService, MockPhoneOperationOptionServ
 
 ---
 
+## 注入接口后，为什么看不到实现类新增的成员
+
+假设路径服务的注册是：
+
+```csharp
+services.AddSingleton<IDataPathService, DataPathService>();
+```
+
+业务服务使用构造函数接收接口：
+
+```csharp
+private readonly IDataPathService _dataPathService;
+
+public PhoneHardwarePreparationService(IDataPathService dataPathService)
+{
+    _dataPathService = dataPathService;
+}
+```
+
+运行时，DI 容器实际提供的对象确实是 `DataPathService`。但 `_dataPathService` 变量的**编译期类型**是 `IDataPathService`，因此 C# 编译器只允许代码访问接口已经声明的成员。
+
+```text
+实际对象类型：DataPathService
+变量声明类型：IDataPathService
+当前代码可访问：IDataPathService 中声明的成员
+```
+
+接口规定的是“实现类至少必须提供哪些能力”，不是“实现类只能拥有这些能力”。因此，下面的实现完全合法：
+
+```csharp
+public interface IDataPathService
+{
+    string DataDirectory { get; }
+}
+
+public class DataPathService : IDataPathService
+{
+    public string DataDirectory { get; } = "";
+
+    // 实现类可以有接口之外的额外公开成员。
+    public string ConfigDirectory { get; } = "";
+}
+```
+
+它不会报错，因为 `DataPathService` 已经满足了接口要求。只有当调用方把变量声明为接口类型时，额外成员才不可见：
+
+```csharp
+IDataPathService pathService = new DataPathService();
+
+// 可以：DataDirectory 在接口契约中。
+var dataDirectory = pathService.DataDirectory;
+
+// 不可以：ConfigDirectory 只属于实现类，接口没有承诺这项能力。
+// var configDirectory = pathService.ConfigDirectory;
+```
+
+`public` 表示“在访问权限允许时，外部代码可以访问该成员”；它不意味着每一种变量声明类型都会自动暴露此成员。若变量改为具体类型，则可以调用额外成员：
+
+```csharp
+DataPathService pathService = new DataPathService();
+var configDirectory = pathService.ConfigDirectory;
+```
+
+所以，即使在 `DataPathService` 中新增了：
+
+```csharp
+public string ConfigDirectory { get; }
+```
+
+下面这句仍然不能编译，除非接口也声明该属性：
+
+```csharp
+_dataPathService.ConfigDirectory
+```
+
+正确做法是把这项能力写进接口契约：
+
+```csharp
+public interface IDataPathService
+{
+    string DataDirectory { get; }
+    string ConfigDirectory { get; }
+}
+```
+
+然后所有 `IDataPathService` 的实现类都必须提供 `ConfigDirectory`。这是接口的价值：调用方只依赖明确公开的能力；替换成 Mock、测试实现或另一种路径实现时，编译器会保证这些实现仍具备同样的能力。
+
+不推荐这样绕过接口：
+
+```csharp
+((DataPathService)_dataPathService).ConfigDirectory
+```
+
+它会让调用方重新依赖具体类，破坏原本的接口边界；未来替换实现或测试 Mock 时，转换可能失败。
+
+这体现了 C# 的两个相关概念：
+
+```text
+编译期类型：决定当前代码能调用哪些成员。
+运行时类型：决定实际执行哪个实现。
+```
+
+---
+
 ## AddSingleton with Factory Lambda
 
 除了这种“接口到实现类”的注册：
