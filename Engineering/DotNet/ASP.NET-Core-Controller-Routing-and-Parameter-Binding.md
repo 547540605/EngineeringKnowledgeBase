@@ -20,6 +20,7 @@ Engineering Practice
 - Reflection
 - [C# Attributes, Reflection, and Assemblies](../../ComputerScience/ProgrammingLanguages/CSharp/CSharp-Attributes-Reflection-and-Assemblies.md)
 - [HTTP/HTTPS 报文格式](../../ComputerScience/Networking/HTTP/HTTP-Message-Format.md)
+- [ASP.NET Core Action Results and File Responses](ASP.NET-Core-Action-Results-and-File-Responses.md)
 
 ---
 
@@ -261,3 +262,4 @@ ASP.NET Core 路由表匹配到 HealthController.Health
 - C#：class、泛型、Attribute、值类型/引用类型、nullable。
 - ASP.NET Core：Controller、路由、Swagger、依赖注入。
 - .NET 底层：程序集、元数据、反射。
+

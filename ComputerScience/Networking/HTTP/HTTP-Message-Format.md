@@ -1,4 +1,4 @@
-# HTTP/HTTPS 报文格式
+﻿# HTTP/HTTPS 报文格式
 
 ## 所属领域
 
@@ -15,6 +15,7 @@ Computer Science
 - [API Authentication Patterns](Authentication/API-Authentication-Patterns.md)
 - REST API
 - URL 编码
+- [HTTP Cache-Control](HTTP-Cache-Control.md)
 
 ---
 
@@ -268,3 +269,4 @@ string response = HttpRequestHelper.Get(url, GetM4Headers());
 - HTTP/2 和 HTTP/3 使用二进制帧，但逻辑结构相同
 - `Content-Type` 和 `Content-Length` 是最重要的两个 Header，搞错了对方就解析不了
 - 调试 API 时，推荐用 Postman、Fiddler 或浏览器 F12 的 Network 面板查看原始报文
+
