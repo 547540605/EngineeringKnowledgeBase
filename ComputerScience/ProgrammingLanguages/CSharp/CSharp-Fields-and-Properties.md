@@ -162,7 +162,8 @@ public class PhoneClickRequest
 
 ## 相关知识
 
-- [C# Type System, Generics, and Nullable](CSharp-Type-System-Generics-Nullable.md)
+- [C# Value, Reference, and Nullable Types](CSharp-Value-Reference-and-Nullable-Types.md)
+- [C# init Properties and Null-Forgiving Operator](CSharp-Init-Properties-and-Null-Forgiving-Operator.md)
 - [C# nameof Operator](CSharp-Nameof-Operator.md)
 - Encapsulation
 - DTO

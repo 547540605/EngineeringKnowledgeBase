@@ -1,4 +1,4 @@
-﻿# C# using：命名空间导入与资源自动释放
+# C# Resource Disposal and Ownership
 
 ## 所属领域
 
@@ -6,18 +6,26 @@
 Computer Science
 └── Programming Languages
     └── C#
-        ├── Namespace
-        ├── IDisposable
         └── Resource Management
+            ├── IDisposable
+            └── Object Ownership
 ```
 
-## 问题
+## 相关知识
 
-C# 中多种语法都使用 `using` 关键字，但作用并不相同：
+- `IDisposable` 与 `Dispose()`
+- `try` / `finally`
+- 托管内存与非托管资源
+- 垃圾回收 GC
+- `IAsyncDisposable` 与 `await using`
+- 依赖注入容器管理服务生命周期
+- [C# using Directive](CSharp-Using-Directive.md)
 
-```csharp
-using SkiaSharp;
-```
+---
+
+实现了 `IDisposable` 的对象通常占有需要及时归还的资源。C# 的 `using` 语句和 `using var` 声明用于限定这些对象的生命周期，并保证离开作用域时释放资源。
+
+## using 语句：限定资源生命周期
 
 ```csharp
 using (var bitmap = camera.GrabOne())
@@ -30,35 +38,7 @@ using (var bitmap = camera.GrabOne())
 using var bitmap = camera.GrabOne();
 ```
 
-第一种用于导入命名空间，后两种用于保证资源被释放。
-
-## using 指令：导入命名空间
-
-文件顶部的写法：
-
-```csharp
-using SkiaSharp;
-```
-
-称为 `using` 指令。它让当前文件可以直接使用该命名空间中的类型短名称。
-
-没有该指令时：
-
-```csharp
-SkiaSharp.SKEncodedImageFormat.Jpeg
-```
-
-加入该指令后：
-
-```csharp
-SKEncodedImageFormat.Jpeg
-```
-
-它只影响名称查找和代码书写，不会创建对象，也不会释放资源。
-
-## using 语句：限定资源生命周期
-
-实现了 `IDisposable` 的对象通常占有需要及时归还的资源，例如：
+此类对象通常占有：
 
 - 文件句柄
 - 网络连接
@@ -177,16 +157,6 @@ await using var resource = await CreateResourceAsync();
 ```
 
 它会在作用域结束时异步调用 `DisposeAsync()`，常见于异步流、网络和数据库资源。
-
-## 相关知识
-
-- C# 命名空间与类型名称解析
-- `IDisposable` 与 `Dispose()`
-- `try` / `finally`
-- 托管内存与非托管资源
-- 垃圾回收 GC
-- `IAsyncDisposable` 与 `await using`
-- 依赖注入容器管理服务生命周期
 
 ## 托管内存与非托管资源
 

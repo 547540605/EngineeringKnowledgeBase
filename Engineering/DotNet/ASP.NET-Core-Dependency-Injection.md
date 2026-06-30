@@ -1,4 +1,4 @@
-﻿# ASP.NET Core Dependency Injection, Options, and Extension Methods
+# ASP.NET Core Dependency Injection
 
 ## 所属领域
 
@@ -6,9 +6,7 @@
 Engineering Practice
 └── .NET
     └── ASP.NET Core
-        ├── Dependency Injection
-        ├── Options Pattern
-        └── Extension Methods
+        └── Dependency Injection
 ```
 
 ## 相关知识
@@ -17,8 +15,8 @@ Engineering Practice
 - Interface
 - Mock / Real Implementation
 - `IServiceCollection`
-- `IOptions<T>`
-- Configuration Binding
+- [ASP.NET Core Options Pattern](ASP.NET-Core-Options-Pattern.md)
+- [ASP.NET Core Service Registration Extension Methods](ASP.NET-Core-Service-Registration-Extension-Methods.md)
 
 ---
 
@@ -28,12 +26,10 @@ ASP.NET Core 项目中经常出现：
 
 ```csharp
 builder.Services.AddControllers();
-builder.Services.Configure<SimulationOptions>(builder.Configuration.GetSection("Simulation"));
 builder.Services.AddSingleton<IMaterialTableService, MaterialTableService>();
-builder.Services.AddHardwareServices(builder.Configuration);
 ```
 
-理解这些代码，需要理解依赖注入、Options 配置绑定和扩展方法。
+理解这些代码，需要理解依赖注入、服务注册和生命周期。
 
 ---
 
@@ -408,109 +404,6 @@ services.AddSingleton<MaterialTableCalibrationHelper>();
 ```
 
 对于纯工具类、配置辅助类、稳定且不会替换的服务，直接注入具体类是合理的。不需要为了接口而强行创建接口。
-
----
-
-## Options Pattern
-
-配置绑定常见写法：
-
-```csharp
-builder.Services.Configure<SimulationOptions>(
-    builder.Configuration.GetSection("Simulation"));
-```
-
-它会把 `appsettings.json` 中的配置段绑定到强类型类。
-
-```json
-{
-  "Simulation": {
-    "Enabled": true,
-    "DefaultTaskDurationMs": 3000
-  }
-}
-```
-
-对应：
-
-```csharp
-public class SimulationOptions
-{
-    public bool Enabled { get; set; }
-    public int DefaultTaskDurationMs { get; set; }
-}
-```
-
-使用时通过构造函数注入：
-
-```csharp
-public MyService(IOptions<SimulationOptions> options)
-{
-    var simulationOptions = options.Value;
-}
-```
-
----
-
-## Extension Methods
-
-ASP.NET Core 官方注册方式常见如下：
-
-```csharp
-builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
-```
-
-自己的代码也可以写成类似风格：
-
-```csharp
-builder.Services.AddHardwareServices(builder.Configuration);
-```
-
-这依赖 C# 扩展方法。
-
-扩展方法条件：
-
-1. 类必须是 `static class`。
-2. 方法必须是 `static method`。
-3. 第一个参数前加 `this`，指定扩展目标类型。
-
-示例：
-
-```csharp
-public static class HardwareServiceRegistration
-{
-    public static IServiceCollection AddHardwareServices(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        ...
-        return services;
-    }
-}
-```
-
----
-
-## Why Extension Methods for Service Registration?
-
-把一长串依赖注册代码封装为扩展方法，可以保持 `Program.cs` 清爽。
-
-```text
-Program.cs
-├── AddControllers
-├── Configure Options
-├── Add Repository
-├── Add Domain Services
-└── AddHardwareServices
-```
-
-优点：
-
-- 模块化。
-- 高内聚。
-- 与 ASP.NET Core 官方风格一致。
-- 真实硬件 / Mock 注册逻辑可以集中管理。
 
 ---
 

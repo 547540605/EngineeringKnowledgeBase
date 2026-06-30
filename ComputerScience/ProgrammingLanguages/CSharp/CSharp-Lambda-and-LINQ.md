@@ -1,4 +1,4 @@
-﻿# C# Lambda, LINQ, and Collection Expressions
+# C# Lambda Expressions with LINQ
 
 ## 所属领域
 
@@ -6,35 +6,30 @@
 Computer Science
 └── Programming Languages
     └── C#
-        ├── Lambda Expression
-        ├── LINQ
-        └── Collection Expression
+        └── LINQ
+            └── Lambda Expression
 ```
 
-本文记录 C# 中 `=>`、LINQ 查询方法，以及 C# 12 集合表达式 `[..]` 的常见用法。
+## 相关知识
 
-这些语法经常同时出现在业务代码中，例如：
+- C# Delegate
+- LINQ
+- Generic Collection
+- Nullable Reference Types
+- [C# HashSet and Membership Checks](CSharp-HashSet-and-Membership-Checks.md)
+- [C# Collection Expressions](CSharp-Collection-Expressions.md)
+
+---
+
+本文记录 C# Lambda 表达式与 LINQ 查询方法配合使用时的常见写法。
+
+例如：
 
 ```csharp
 var removedUsedMaterial = current.Materials.FirstOrDefault(m =>
     !string.IsNullOrWhiteSpace(m.SlotId) &&
     !slotIds.Contains(m.SlotId.Trim()));
 ```
-
-以及：
-
-```csharp
-return [.. slots.Select(slot => new MaterialSlotInfo
-{
-    SlotId = slot.SlotId.Trim(),
-    SlotNo = slot.SlotNo,
-    IoChannel = slot.IoChannel,
-    Enabled = slot.Enabled,
-    Remark = slot.Remark?.Trim()
-})];
-```
-
----
 
 ## Lambda Expression
 
@@ -278,117 +273,7 @@ MaterialSlotInfo -> MaterialSlotInfo
 
 ---
 
-## HashSet and Contains
-
-`HashSet<T>` 表示不重复集合。
-
-常见用途：
-
-```text
-快速判断某个值是否已经存在。
-```
-
-例如：
-
-```csharp
-var slotIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-if (!slotIds.Add(slotId))
-{
-    return Failed("槽位 ID 重复。");
-}
-```
-
-`Add` 的返回值有特殊含义：
-
-```text
-true  ：添加成功，说明之前不存在。
-false ：添加失败，说明之前已经存在。
-```
-
-`StringComparer.OrdinalIgnoreCase` 表示忽略大小写。
-
-所以：
-
-```text
-slot_1
-SLOT_1
-Slot_1
-```
-
-会被认为是同一个槽位 ID。
-
----
-
-## Collection Expression `[..]`
-
-C# 12 支持集合表达式。
-
-例如：
-
-```csharp
-return [.. slots.Select(slot => new MaterialSlotInfo
-{
-    SlotId = slot.SlotId.Trim(),
-    SlotNo = slot.SlotNo,
-    IoChannel = slot.IoChannel,
-    Enabled = slot.Enabled,
-    Remark = slot.Remark?.Trim()
-})];
-```
-
-这里的：
-
-```csharp
-[.. something]
-```
-
-表示：
-
-```text
-把 something 里的元素展开，生成一个新的集合。
-```
-
-如果方法返回类型是：
-
-```csharp
-List<MaterialSlotInfo>
-```
-
-编译器会根据返回类型推断这里要创建 `List<MaterialSlotInfo>`。
-
-等价的传统写法是：
-
-```csharp
-return slots
-    .Select(slot => new MaterialSlotInfo
-    {
-        SlotId = slot.SlotId.Trim(),
-        SlotNo = slot.SlotNo,
-        IoChannel = slot.IoChannel,
-        Enabled = slot.Enabled,
-        Remark = slot.Remark?.Trim()
-    })
-    .ToList();
-```
-
-学习阶段如果觉得 `[..]` 太跳，可以优先使用 `.ToList()`。它更常见，也更容易读。
-
----
-
-## Related Knowledge
-
-相关知识：
-
-```text
-C# Delegate
-C# Generic Collection
-LINQ
-Nullable Reference Types
-ASP.NET Core Service Layer
-```
-
-依赖知识：
+## 依赖知识
 
 ```text
 方法
