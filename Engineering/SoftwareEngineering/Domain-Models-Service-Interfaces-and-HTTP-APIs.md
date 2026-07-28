@@ -3,7 +3,7 @@
 ## 所属领域
 
 ```text
-Engineering Practice
+Engineering
 └── Software Engineering
     ├── Domain Modeling
     ├── Service Boundary
@@ -18,7 +18,7 @@ Engineering Practice
 - Controller
 - Clean Architecture
 - Dependency Injection
-- [ASP.NET Core Controller Routing and Parameter Binding](../DotNet/ASP.NET-Core-Controller-Routing-and-Parameter-Binding.md)
+- [ASP.NET Core Controller Routing and Parameter Binding](../DotNet/ASPNETCore/ASP.NET-Core-Controller-Routing-and-Parameter-Binding.md)
 
 ---
 

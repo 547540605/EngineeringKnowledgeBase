@@ -16,7 +16,7 @@ Computer Science
 - 浏览器缓存
 - Proxy Cache
 - CDN
-- [ASP.NET Core Action Results and File Responses](../../../Engineering/DotNet/ASP.NET-Core-Action-Results-and-File-Responses.md)
+- [ASP.NET Core Action Results and File Responses](../../../Engineering/DotNet/ASPNETCore/ASP.NET-Core-Action-Results-and-File-Responses.md)
 
 ## HTTP 缓存解决什么问题
 

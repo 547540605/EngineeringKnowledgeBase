@@ -20,7 +20,7 @@ Computer Science
 - ASP.NET Core Routing
 - OpenAPI / Swagger
 - Native AOT
-- [ASP.NET Core Controller Routing and Parameter Binding](../../../Engineering/DotNet/ASP.NET-Core-Controller-Routing-and-Parameter-Binding.md)
+- [ASP.NET Core Controller Routing and Parameter Binding](../../../Engineering/DotNet/ASPNETCore/ASP.NET-Core-Controller-Routing-and-Parameter-Binding.md)
 
 ---
 

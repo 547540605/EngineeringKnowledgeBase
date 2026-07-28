@@ -3,7 +3,7 @@
 ## 所属领域
 
 ```text
-Engineering Practice
+Engineering
 └── API Integration
     └── Third-Party System Integration
         └── 仙工（SEER）AGV 调度系统
@@ -12,7 +12,7 @@ Engineering Practice
 
 ## 相关知识
 
-- [API Authentication Patterns](../../ComputerScience/Networking/HTTP/Authentication/API-Authentication-Patterns.md)
+- [API Authentication Patterns](../../../../../ComputerScience/Networking/HTTP/Authentication/API-Authentication-Patterns.md)
 - 策略模式（Strategy Pattern）
 - HTTP REST API 集成
 - AGV（自动导引运输车）调度

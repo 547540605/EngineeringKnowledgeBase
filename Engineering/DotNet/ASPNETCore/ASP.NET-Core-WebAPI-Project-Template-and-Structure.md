@@ -3,7 +3,7 @@
 ## 所属领域
 
 ```text
-Engineering Practice
+Engineering
 └── .NET
     └── ASP.NET Core
         └── WebAPI Project Structure
@@ -53,7 +53,7 @@ ASP.NET Core Web API
 
 HTTP 和 HTTPS 的报文结构见：
 
-- [HTTP/HTTPS 报文格式](../../ComputerScience/Networking/HTTP/HTTP-Message-Format.md)
+- [HTTP/HTTPS 报文格式](../../../ComputerScience/Networking/HTTP/HTTP-Message-Format.md)
 
 工程实践上：
 

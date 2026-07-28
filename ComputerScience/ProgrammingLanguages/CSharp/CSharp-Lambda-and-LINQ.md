@@ -18,6 +18,7 @@ Computer Science
 - Nullable Reference Types
 - [C# HashSet and Membership Checks](CSharp-HashSet-and-Membership-Checks.md)
 - [C# Collection Expressions](CSharp-Collection-Expressions.md)
+- [C# Expression-Bodied Members](CSharp-Expression-Bodied-Members.md)
 
 ---
 
@@ -33,7 +34,9 @@ var removedUsedMaterial = current.Materials.FirstOrDefault(m =>
 
 ## Lambda Expression
 
-`=>` 是 Lambda 表达式语法。
+在 Lambda 表达式中，`=>` 用于分隔参数和函数体。
+
+`=>` 也可以用于表达式体成员，例如只读属性或单表达式方法；此时它不是 Lambda 表达式。参见 [C# Expression-Bodied Members](CSharp-Expression-Bodied-Members.md)。
 
 可以先理解成：
 
