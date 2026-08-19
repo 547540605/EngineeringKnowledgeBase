@@ -10,6 +10,13 @@ Computer Science
             └── Enum Underlying Types
 ```
 
+## 相关知识
+
+- [位运算与位掩码](../../DataRepresentation/Bitwise-Operations-and-Bit-Masks.md)
+- [C# 字符串拆分与 Flags 位标志选项](CSharp-String-Split-and-Flags-Enum-Options.md)
+
+---
+
 ## enum : byte 不是继承
 
 ```csharp

@@ -15,6 +15,7 @@ Engineering
 - Interface
 - Mock / Real Implementation
 - `IServiceCollection`
+- [C# 单例模式](../../../ComputerScience/ProgrammingLanguages/CSharp/CSharp-Singleton-Pattern.md)
 - [ASP.NET Core Options Pattern](ASP.NET-Core-Options-Pattern.md)
 - [ASP.NET Core Service Registration Extension Methods](ASP.NET-Core-Service-Registration-Extension-Methods.md)
 

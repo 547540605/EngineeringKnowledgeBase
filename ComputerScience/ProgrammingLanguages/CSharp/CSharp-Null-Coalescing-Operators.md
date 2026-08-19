@@ -89,6 +89,43 @@ if (result == null)
 
 因此 `result ?? string.Empty` 是一种防御式处理。不过它不应代替明确的业务约束：如果 `result` 为 `null` 代表调用错误，应该优先校验参数并抛出适当异常，而不是悄悄替换成默认值。
 
+## `?? throw` Throw Expressions（空值校验与快速抛错）
+
+从 C# 7.0 开始，`throw` 可以作为表达式（Throw Expression）使用。将 `??` 与 `throw` 结合，可以在单行中实现“获取数据，如果为 null 则立即抛出异常中断”：
+
+```csharp
+var template = ActionUtil.ReadTemplateImage(imageName) 
+    ?? throw new FailException("读取投屏断连检测模板图失败");
+```
+
+等价于传统的条件语句：
+
+```csharp
+var template = ActionUtil.ReadTemplateImage(imageName);
+if (template == null)
+{
+    throw new FailException("读取投屏断连检测模板图失败");
+}
+```
+
+### 核心优势
+
+1. **类型自动收窄（Type Narrowing）**：
+   如果方法返回的是可空类型（如 `Image?`），经过 `?? throw` 后，编译器能断定下一行代码中的 `template` 变量**绝不可能为 null**，因此类型自动收窄为不可空类型（`Image`），后续调用无需再做非空检查。
+2. **适用于表达式上下文（构造函数防御性校验）**：
+   非常适合在类构造函数或属性中做入参非空防御：
+   ```csharp
+   public class ScreenDetector
+   {
+       private readonly ILogger _logger;
+
+       public ScreenDetector(ILogger logger)
+       {
+           _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+       }
+   }
+   ```
+
 ## Applicable Types
 
 `??` 可用于可能为 `null` 的引用类型和可空值类型：
@@ -108,5 +145,6 @@ var retries = retryCount ?? 3;
 - [C# Value, Reference, and Nullable Types](CSharp-Value-Reference-and-Nullable-Types.md)
 - [C# Default Values](CSharp-Default-Values.md)
 - [C# init Properties and Null-Forgiving Operator](CSharp-Init-Properties-and-Null-Forgiving-Operator.md)
+- [C# 字符串拆分与 Flags 位标志选项](CSharp-String-Split-and-Flags-Enum-Options.md)
 - C# Conditional Operator
 - Parameter Validation
