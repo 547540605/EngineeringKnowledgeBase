@@ -16,6 +16,7 @@ Computer Science
 - [C# sealed 类与继承边界](CSharp-Sealed-Classes-and-Inheritance-Boundaries.md)
 - [C# 访问修饰符与作用域](CSharp-Access-Modifiers-and-Scope.md)
 - [C# 字段与属性](CSharp-Fields-and-Properties.md)
+- [C# lock 互斥锁与线程同步](CSharp-Lock-and-Thread-Synchronization.md)
 - [C# 资源释放与对象所有权](CSharp-Resource-Disposal-and-Ownership.md)
 - [ASP.NET Core 依赖注入](../../../Engineering/DotNet/ASPNETCore/ASP.NET-Core-Dependency-Injection.md)
 - CLR 类型初始化器（`.cctor`）与静态构造函数

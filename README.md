@@ -234,7 +234,9 @@ Computer Science
 
 ```text
 Engineering
-├── C#
+├── DotNet
+│   ├── CSharp
+│   └── ASPNETCore
 ├── Python
 ├── Android
 ├── Linux
@@ -477,16 +479,19 @@ Linked
 
 # Current Structure
 
-当前阶段保持极简：
+当前知识按计算机科学基础与工程实践拆分，目录会随知识体系演化：
 
 ```text
 EngineeringKnowledgeBase
-└── README.md
+├── ComputerScience/
+│   └── 跨语言、跨技术栈的基础知识
+└── Engineering/
+    └── DotNet/
+        ├── CSharp/
+        └── ASPNETCore/
 ```
 
-所有知识均可先记录在 README 中。
-
-未来由 AI 协助进行拆分与重构。
+具体目录以仓库现状为准；新增知识优先归入已有领域，避免按项目或时间线堆放。
 
 ---
 

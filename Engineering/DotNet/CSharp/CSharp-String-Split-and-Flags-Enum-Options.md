@@ -14,7 +14,7 @@ Computer Science
 
 ## 相关知识
 
-- [位运算与位掩码](../../DataRepresentation/Bitwise-Operations-and-Bit-Masks.md)
+- [位运算与位掩码](../../../ComputerScience/DataRepresentation/Bitwise-Operations-and-Bit-Masks.md)
 - [C# 枚举底层类型与协议字段宽度](CSharp-Enum-Underlying-Types-and-Protocol-Fields.md)
 - [C# Null-Coalescing Operators](CSharp-Null-Coalescing-Operators.md)
 - [C# 值类型、引用类型与可空类型](CSharp-Value-Reference-and-Nullable-Types.md)

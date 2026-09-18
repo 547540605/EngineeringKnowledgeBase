@@ -98,5 +98,25 @@ return new MaterialTableHardwareDevices
 ```text
 Pattern matching
 Declaration pattern
+```
+
+## Property Pattern: 属性模式匹配
+
+从 C# 8.0 开始，模式匹配支持直接检查对象的属性值（Property Pattern）：
+
+```csharp
+if (detectionTask is { IsCompleted: false })
+{
+    throw new FailException("已有投屏断连检测正在执行");
+}
+```
+
+这句话在单行内完成了两层检查：
+1. **隐式非空检查**：`detectionTask != null`。
+2. **属性值比对**：`detectionTask.IsCompleted == false`。
+
+如果 `detectionTask` 是 `null`，整个表达式安全返回 `false`，不会抛出空引用异常。这比传统的 `if (detectionTask != null && !detectionTask.IsCompleted)` 更加简洁与声明式。
+
+```text
 is not pattern
 ```

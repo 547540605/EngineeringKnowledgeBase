@@ -12,7 +12,7 @@ Computer Science
 
 ## 相关知识
 
-- [位运算与位掩码](../../DataRepresentation/Bitwise-Operations-and-Bit-Masks.md)
+- [位运算与位掩码](../../../ComputerScience/DataRepresentation/Bitwise-Operations-and-Bit-Masks.md)
 - [C# 字符串拆分与 Flags 位标志选项](CSharp-String-Split-and-Flags-Enum-Options.md)
 
 ---
