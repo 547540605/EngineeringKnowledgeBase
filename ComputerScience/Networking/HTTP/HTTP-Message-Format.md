@@ -16,6 +16,7 @@ Computer Science
 - REST API
 - URL 编码
 - [HTTP Cache-Control](HTTP-Cache-Control.md)
+- [CORS、同源策略与 Preflight 预检请求](CORS-Same-Origin-Policy-and-Preflight.md)
 
 ---
 

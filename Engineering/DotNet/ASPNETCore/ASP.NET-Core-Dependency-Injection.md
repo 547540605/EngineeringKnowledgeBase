@@ -36,6 +36,66 @@ builder.Services.AddSingleton<IMaterialTableService, MaterialTableService>();
 
 ## Dependency Injection
 
+### 先理解这句官方描述
+
+> ASP.NET Core features built-in dependency injection (DI) that makes configured services available throughout an app for Inversion of Control (IoC).
+
+这句话不是三个互不相干的术语，而是一条完整的因果链：
+
+```text
+先把服务注册到 ASP.NET Core
+        ↓
+内置 DI 容器知道“需要某种能力时应提供什么对象”
+        ↓
+框架创建 Controller 或其他服务时，自动把所需对象传入
+        ↓
+业务类不再自行决定、创建和组装依赖
+        ↓
+实现 IoC（控制反转）
+```
+
+其中：
+
+- **configured services（已注册服务）**：在 `builder.Services` 中注册过的对象或映射，例如 `AddSingleton<IVibrationHardware, RealVibrationHardware>()`。虽然原文使用 *configured*，但在 .NET 日常术语中通常称为“服务注册”，避免与 `appsettings.json` 等应用配置混淆。
+- **available throughout an app（在应用中可用）**：不是变成任意位置都能随意访问的全局变量；而是框架创建对象时，可以根据构造函数参数从 DI 容器取得已注册服务。
+- **IoC（Inversion of Control，控制反转）**：在这里指业务类不再控制依赖的具体实现、创建时机和生命周期，改由应用启动处和框架统一控制。IoC 是更宽泛的设计原则；DI 只是其中一种实现方式。
+- **DI（Dependency Injection，依赖注入）**：实现 IoC 的常见方式；本项目使用构造函数注入。
+
+### 没有 IoC 时：业务类自己控制依赖
+
+```csharp
+public sealed class VibrationApplicationService
+{
+    private readonly IVibrationHardware _hardware;
+
+    public VibrationApplicationService()
+    {
+        _hardware = new RealVibrationHardware();
+    }
+}
+```
+
+这里 `VibrationApplicationService` 除了执行设备业务，还自行决定必须使用 `RealVibrationHardware` 并负责创建它。控制权在业务类本身；要切换模拟硬件、替换厂商驱动或编写测试，就必须修改这个类。
+
+### 通过 DI 实现 IoC：声明需求，由外部完成组装
+
+```csharp
+public sealed class VibrationApplicationService(
+    IVibrationHardware hardware)
+{
+    private readonly IVibrationHardware _hardware = hardware;
+}
+```
+
+业务类现在只声明“我需要一个能控制振动台的 `IVibrationHardware`”，并不决定它到底是模拟实现还是真实实现。应用启动时在 `Program.cs` 决定并注册实现：
+
+```csharp
+builder.Services.AddSingleton<IVibrationHardware, SimulatedVibrationHardware>();
+// 或：builder.Services.AddSingleton<IVibrationHardware, RealVibrationHardware>();
+```
+
+之后 ASP.NET Core 的 DI 容器创建 `VibrationApplicationService` 时，会查找构造函数所需的 `IVibrationHardware`，创建或取得已注册实现并传入。于是“依赖的选择与创建”从业务类移到了组合根 `Program.cs` 和 DI 容器，控制权完成反转。
+
 依赖注入（Dependency Injection, DI）的核心思想：
 
 ```text

@@ -17,6 +17,7 @@ Computer Science
 - Encapsulation
 - Assembly Boundary
 - [C# Class Inheritance and Interface Implementation](CSharp-Class-Inheritance-and-Interface-Implementation.md)
+- [C# Singleton Pattern](CSharp-Singleton-Pattern.md)
 
 ---
 
@@ -40,6 +41,32 @@ Computer Science
 
 严格控制 `public` API 的暴露范围，可以有效减少模块间的耦合度，这是评估代码质量架构成熟度的重要标准之一。
 
+### 构造函数的访问权限：谁可以创建对象
+
+构造函数同样是成员；其访问修饰符决定谁可以写 `new 类型(...)`。日常开发中优先掌握以下三种：
+
+| 修饰符 | 在类型本身可访问的前提下，谁可调用构造函数 | 常见用途 |
+|---|---|---|
+| `public` | 任何调用方 | 普通公开对象和服务 |
+| `internal` | 同一程序集内的代码 | 仅供项目内部创建的实现 |
+| `private` | 只有声明该构造函数的类型自身 | 静态工厂、限制创建方式、单例 |
+
+```csharp
+public sealed class Device
+{
+    public Device() { } // 外部可 new Device()
+}
+
+public sealed class DeviceFactory
+{
+    private DeviceFactory() { } // 只有 DeviceFactory 自己可 new
+
+    public static DeviceFactory Create() => new DeviceFactory();
+}
+```
+
+`private` 构造函数并不只服务于单例；它的通用含义是“外部不能直接创建对象”。单例模式正是利用它配合静态实例来保证创建入口唯一，具体实现见 [C# Singleton Pattern](CSharp-Singleton-Pattern.md)。
+
 ## 2. 顶层类型的可访问性规则 (Top-level Type Accessibility)
 
 在使用“最小权限原则”时，可能会遇到编译错误：`CS1527: 命名空间中定义的元素无法显式声明为 private...`。这涉及到 C# 中非常基础但容易被忽略的“声明空间”规则。
@@ -59,6 +86,7 @@ Computer Science
 ### 什么时候才能用 private？
 `private` 只能用于修饰**嵌套在其他类型内部的成员**：
 * 类的字段、属性、方法。
+* 类的构造函数。
 * **嵌套类 / 嵌套接口**（定义在另一个类的内部）。
 
 ```csharp
