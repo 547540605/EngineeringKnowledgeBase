@@ -1,0 +1,48 @@
+site_name: 工程知识库
+site_description: 面向人类、AI、RAG 和 Agent 的可检索工程知识体系
+site_url: https://547540605.github.io/EngineeringKnowledgeBase/
+repo_name: 547540605/EngineeringKnowledgeBase
+repo_url: https://github.com/547540605/EngineeringKnowledgeBase
+edit_uri: edit/main/
+
+# The repository root remains the source of truth. scripts/sync_docs.py creates this temporary
+# build directory so the existing ComputerScience/ and Engineering/ paths do not move.
+docs_dir: docs
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+  font: false
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  generator: false
