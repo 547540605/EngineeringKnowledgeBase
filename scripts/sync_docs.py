@@ -29,9 +29,10 @@ def main() -> None:
     readme = ROOT / "README.md"
     shutil.copy2(readme, DOCS / "index.md")
 
-    changelog = ROOT / "CHANGELOG.md"
-    if changelog.exists():
-        shutil.copy2(changelog, DOCS / changelog.name)
+    for root_doc_name in ("CHANGELOG.md", "PLUGIN-INSTALL.md"):
+        root_doc = ROOT / root_doc_name
+        if root_doc.exists():
+            shutil.copy2(root_doc, DOCS / root_doc.name)
 
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
         target_dir = DOCS / source_dir.name

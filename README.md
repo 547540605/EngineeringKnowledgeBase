@@ -20,6 +20,8 @@ EngineeringKnowledgeBase is a long-term personal engineering knowledge system.
 
 近期变化请参阅 [更新说明](CHANGELOG.md)。
 
+跨电脑使用 Codex 插件请参阅 [插件安装指南](PLUGIN-INSTALL.md)。
+
 ---
 
 # Core Philosophy

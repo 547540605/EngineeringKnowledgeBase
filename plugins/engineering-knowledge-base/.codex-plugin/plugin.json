@@ -1,0 +1,25 @@
+{
+  "name": "engineering-knowledge-base",
+  "version": "0.1.0+codex.20260921031316",
+  "description": "Use the shared EngineeringKnowledgeBase and its searchable web documentation to check for existing knowledge and record only genuinely new topics.",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "工程知识库",
+    "shortDescription": "共享工程知识。",
+    "longDescription": "Connects any Codex project to the shared EngineeringKnowledgeBase and its browser-based documentation site. It reads the knowledge base rules, searches for an existing topic before writing, and records only new reusable knowledge without changing the rules from other projects.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Add this to the shared engineering knowledge base.",
+      "Check whether this topic already exists in the knowledge base.",
+      "Find related knowledge before recording this topic."
+    ]
+  }
+}
