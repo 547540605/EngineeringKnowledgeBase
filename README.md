@@ -18,6 +18,8 @@ EngineeringKnowledgeBase is a long-term personal engineering knowledge system.
 
 目标是让知识能够被持续积累、组织、检索、复用和演化。
 
+近期变化请参阅 [更新说明](CHANGELOG.md)。
+
 ---
 
 # Core Philosophy
@@ -449,6 +451,17 @@ AI应优先维护知识结构。
 不要仅记录答案。
 
 应尽量建立知识关联。
+
+---
+
+## Change Tracking
+
+根目录的 [CHANGELOG.md](CHANGELOG.md) 用于记录读者关心的知识新增、明确更新和结构调整。
+
+* 新增知识或用户明确要求更新现有知识时，应在同一次提交中补充简短更新说明。
+* 更新说明按 `YYYY-MM-DD` 分组，区分“新增”“更新”“维护”，并链接到对应知识条目。
+* 仅发现重复内容、未修改知识时，不新增更新说明。
+* CHANGELOG 不是完整 Git 日志；条目应说明变化内容和价值，保持简洁。
 
 ---
 

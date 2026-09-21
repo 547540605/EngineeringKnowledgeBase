@@ -29,6 +29,10 @@ def main() -> None:
     readme = ROOT / "README.md"
     shutil.copy2(readme, DOCS / "index.md")
 
+    changelog = ROOT / "CHANGELOG.md"
+    if changelog.exists():
+        shutil.copy2(changelog, DOCS / changelog.name)
+
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
         target_dir = DOCS / source_dir.name
         for source_file in source_dir.rglob("*.md"):
