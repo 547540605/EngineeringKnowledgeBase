@@ -17,19 +17,19 @@
 
 这种图通常叫**控制系统框图**（control-system block diagram），若强调测量量返回并与目标比较，也叫**闭环反馈控制框图**（closed-loop feedback control block diagram）。显式力控制可以抽象成：
 
-[![显式力控制的闭环反馈控制系统框图（点击打开原图）](Explicit-Force-Control-Block-Diagram.svg)](Explicit-Force-Control-Block-Diagram.svg)
+[![Generalized explicit force control（点击打开原尺寸图）](Explicit-Force-Control-Block-Diagram.svg)](Explicit-Force-Control-Block-Diagram.svg)
 
 [点击打开原尺寸 SVG 矢量图，在浏览器中缩放查看](Explicit-Force-Control-Block-Diagram.svg)
 
 比较点计算：
 
 ```text
-e(t) = Fd(t) - Fm(t)
+e = F_S - F_C
 ```
 
-圆形节点是求和点（比较点）：目标力输入端标 `+`，测量力反馈端标 `−`，所以输出误差 `e(t) = Fd(t) - Fm(t)`。端口符号分别贴近对应支路，说明它们参与代数求和时的符号。`C_F` 是力控制器，`Hs` 表示传感器链路，可能包括比例换算、坐标变换、去偏置和滤波。机器人、执行器和接触环境共同构成被控对象：控制输入作用于机器人，机器人接触环境后产生实际力，传感器再测量该力并反馈。
+圆形节点是求和点：测量力 `F_S` 进入正端，命令力 `F_C` 返回负端，形成误差 `e`；误差进入 `Control Law`，输出命令力。图只保留 NIST Figure 1 所表达的这几个信号和控制元素，没有展开传感器处理、机器人模型或具体 PI/PID 结构。
 
-图为适配本文概念的矢量重绘，使用标准方框、求和点和带方向的信号线表达闭环关系；它是原理示意，不是 NIST Figure 1 的逐像素复制。
+这是按 NIST Figure 1 的元素和信号关系重新绘制的简图，不是对原图的逐像素复制。原文说明，测量力与命令力之间的差值驱动机器人运动；控制律的具体形式在后文另行讨论。
 
 ### 控制输入不一定是同一种物理量
 

@@ -6,7 +6,7 @@
 
 ### 更新
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：重排求和点的正负输入端标记，并提供点击打开原尺寸 SVG 的矢量图，避免符号和支路对应不清。
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将自绘图收敛为 NIST Figure 1 的核心结构与信号，移除额外系统方块和扩展说明。
 
 ### 维护
 

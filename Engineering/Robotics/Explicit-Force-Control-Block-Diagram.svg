@@ -1,70 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 540" role="img" aria-labelledby="title desc">
-  <title id="title">显式力控制闭环反馈控制系统框图</title>
-  <desc id="desc">期望力与传感器测得的力在求和点比较，控制器驱动机器人和接触环境，实际接触力经传感器标定滤波后负反馈。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 360" role="img" aria-labelledby="title desc">
+  <title id="title">Generalized explicit force control</title>
+  <desc id="desc">Measured force F S enters the summing junction and its error enters the Control Law. The Control Law outputs commanded force F C, which is fed back to the negative input.</desc>
   <defs>
-    <marker id="arrow-dark" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
-    </marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#087f8c"/>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#263746"/>
     </marker>
     <style>
-      text { font-family: "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif; fill: #172b4d; }
-      .title { font-size: 25px; font-weight: 700; }
-      .subtitle { font-size: 15px; fill: #52657a; }
-      .signal { font-size: 17px; font-weight: 650; }
-      .block-title { font-size: 18px; font-weight: 700; }
-      .block-sub { font-size: 14px; fill: #496078; }
-      .minor { font-size: 14px; fill: #52657a; }
-      .line { fill: none; stroke: #334155; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-      .feedback { fill: none; stroke: #087f8c; stroke-width: 2.7; stroke-linecap: round; stroke-linejoin: round; }
+      text { font-family: Arial, "Segoe UI", sans-serif; fill: #172b3a; }
+      .heading { font-size: 24px; font-weight: 600; }
+      .label { font-size: 21px; }
+      .signal { fill: none; stroke: #263746; stroke-width: 2.5; stroke-linecap: square; stroke-linejoin: round; }
     </style>
   </defs>
 
-  <rect x="1" y="1" width="1278" height="538" rx="18" fill="#ffffff" stroke="#d8e1eb" stroke-width="2"/>
-  <text x="44" y="52" class="title">显式力控制 · 闭环反馈控制系统框图</text>
-  <text x="44" y="80" class="subtitle">力误差驱动控制输入；测量力返回比较点形成负反馈</text>
+  <text x="540" y="48" text-anchor="middle" class="heading">Generalized explicit force control</text>
 
-  <!-- reference input and summing junction -->
-  <text x="42" y="222" class="signal">期望力</text>
-  <text x="42" y="247" class="minor">F<tspan baseline-shift="sub" font-size="11">d</tspan>(t)</text>
-  <path class="line" d="M 112 230 H 179" marker-end="url(#arrow-dark)"/>
-  <circle cx="214" cy="230" r="35" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
-  <text x="188" y="236" font-size="16" font-weight="700">+</text>
-  <text x="222" y="258" font-size="16" font-weight="700" fill="#087f8c">−</text>
+  <text x="56" y="174" class="label">F<tspan baseline-shift="sub" font-size="14">S</tspan></text>
+  <path class="signal" d="M 92 167 H 235" marker-end="url(#arrow)"/>
 
-  <!-- error signal and controller -->
-  <path class="line" d="M 249 230 H 322" marker-end="url(#arrow-dark)"/>
-  <text x="271" y="205" class="signal">e(t)</text>
-  <rect x="326" y="179" width="190" height="102" rx="12" fill="#edf4ff" stroke="#5277b8" stroke-width="2.2"/>
-  <text x="421" y="218" text-anchor="middle" class="block-title">力控制器</text>
-  <text x="421" y="246" text-anchor="middle" class="block-sub">C<tspan baseline-shift="sub" font-size="11">F</tspan>(s) · PI / PID</text>
+  <circle cx="270" cy="167" r="34" fill="#fff" stroke="#263746" stroke-width="2.5"/>
+  <text x="248" y="158" font-size="18">+</text>
+  <text x="264" y="190" font-size="18">−</text>
 
-  <!-- controller output and plant -->
-  <path class="line" d="M 516 230 H 608" marker-end="url(#arrow-dark)"/>
-  <text x="540" y="205" class="signal">u(t)</text>
-  <text x="535" y="263" class="minor">控制命令</text>
-  <rect x="608" y="166" width="310" height="128" rx="12" fill="#eef8f7" stroke="#328b83" stroke-width="2.2"/>
-  <text x="763" y="207" text-anchor="middle" class="block-title">机器人、执行器与接触环境</text>
-  <text x="763" y="237" text-anchor="middle" class="block-sub">被控对象 P(s)</text>
-  <text x="763" y="262" text-anchor="middle" class="minor">控制输入产生接触力</text>
+  <path class="signal" d="M 304 167 H 418" marker-end="url(#arrow)"/>
+  <text x="354" y="145" text-anchor="middle" class="label">e</text>
 
-  <!-- force output and feedback branch -->
-  <path class="line" d="M 918 230 H 1114" marker-end="url(#arrow-dark)"/>
-  <text x="955" y="204" class="signal">F(t)</text>
-  <text x="955" y="258" class="minor">实际接触力</text>
-  <circle cx="1033" cy="230" r="5" fill="#334155"/>
-  <text x="1084" y="204" class="minor">作用于工件</text>
+  <rect x="422" y="119" width="220" height="96" fill="#fff" stroke="#263746" stroke-width="2.5"/>
+  <text x="532" y="176" text-anchor="middle" class="label">Control Law</text>
 
-  <!-- sensor path, routed orthogonally to avoid crossings -->
-  <path class="feedback" d="M 1033 230 V 404 H 908" marker-end="url(#arrow-teal)"/>
-  <text x="1047" y="331" class="minor" fill="#087f8c">测量路径</text>
-  <rect x="630" y="365" width="278" height="82" rx="12" fill="#e8f7f8" stroke="#168b96" stroke-width="2.2"/>
-  <text x="769" y="397" text-anchor="middle" class="block-title">力传感器与信号处理</text>
-  <text x="769" y="425" text-anchor="middle" class="block-sub">H<tspan baseline-shift="sub" font-size="11">s</tspan>(s) · 标定 / 滤波</text>
-  <path class="feedback" d="M 630 404 H 214 V 265" marker-end="url(#arrow-teal)"/>
-  <text x="420" y="386" text-anchor="middle" class="signal" fill="#087f8c">测量力 F<tspan baseline-shift="sub" font-size="12">m</tspan>(t)</text>
+  <path class="signal" d="M 642 167 H 946" marker-end="url(#arrow)"/>
+  <text x="800" y="145" text-anchor="middle" class="label">F<tspan baseline-shift="sub" font-size="14">C</tspan></text>
+  <circle cx="833" cy="167" r="4.5" fill="#263746"/>
 
-  <rect x="42" y="482" width="1196" height="34" rx="8" fill="#f4f7fb"/>
-  <text x="60" y="505" class="minor">求和点按端口符号计算 e(t) = F<tspan baseline-shift="sub" font-size="10">d</tspan>(t) − F<tspan baseline-shift="sub" font-size="10">m</tspan>(t)；u(t) 的物理含义由具体机器人接口决定。</text>
+  <path class="signal" d="M 833 171 V 286 H 270 V 202" marker-end="url(#arrow)"/>
+  <text x="550" y="275" text-anchor="middle" class="label">feedback</text>
 </svg>
