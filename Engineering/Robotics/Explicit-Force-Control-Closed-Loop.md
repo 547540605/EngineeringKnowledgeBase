@@ -17,7 +17,9 @@
 
 这种图通常叫**控制系统框图**（control-system block diagram），若强调测量量返回并与目标比较，也叫**闭环反馈控制框图**（closed-loop feedback control block diagram）。显式力控制可以抽象成：
 
-![显式力控制的闭环反馈控制系统框图](Explicit-Force-Control-Block-Diagram.svg)
+[![显式力控制的闭环反馈控制系统框图（点击打开原图）](Explicit-Force-Control-Block-Diagram.svg)](Explicit-Force-Control-Block-Diagram.svg)
+
+[点击打开原尺寸 SVG 矢量图，在浏览器中缩放查看](Explicit-Force-Control-Block-Diagram.svg)
 
 比较点计算：
 

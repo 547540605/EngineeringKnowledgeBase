@@ -6,7 +6,7 @@
 
 ### 更新
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将字符拼接示意替换为标准反馈结构的响应式矢量框图，解决错位、横向滚动和裁切问题。
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：用可点击打开原尺寸 SVG 的矢量框图替换字符拼接示意，避免错位、横向滚动和裁切。
 
 ### 维护
 
