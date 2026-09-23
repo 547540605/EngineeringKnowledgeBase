@@ -4,6 +4,14 @@
 
 ## 2026-09-23
 
+### 更新
+
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将字符拼接示意替换为标准反馈结构的响应式矢量框图，解决错位、横向滚动和裁切问题。
+
+### 维护
+
+- 知识库文档同步脚本现在会复制 Engineering 与 ComputerScience 目录下的 SVG 图表资源，保证 Markdown 中的本地矢量图在站点构建后仍可显示。
+
 ### 新增
 
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：展开说明期望力、测量力、控制误差与控制输入的反馈关系，并区分 Demo 的速度输出与直接力命令。

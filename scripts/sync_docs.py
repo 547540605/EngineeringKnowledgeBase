@@ -1,4 +1,4 @@
-"""Mirror the knowledge-base Markdown tree into the temporary MkDocs source directory."""
+"""Mirror knowledge-base Markdown and SVG diagrams into the temporary MkDocs source directory."""
 
 from __future__ import annotations
 
@@ -37,6 +37,11 @@ def main() -> None:
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
         target_dir = DOCS / source_dir.name
         for source_file in source_dir.rglob("*.md"):
+            target_file = target_dir / source_file.relative_to(source_dir)
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_file, target_file)
+
+        for source_file in source_dir.rglob("*.svg"):
             target_file = target_dir / source_file.relative_to(source_dir)
             target_file.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_file, target_file)
