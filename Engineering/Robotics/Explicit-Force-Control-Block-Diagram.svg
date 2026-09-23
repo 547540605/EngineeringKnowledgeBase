@@ -30,9 +30,8 @@
   <text x="42" y="247" class="minor">F<tspan baseline-shift="sub" font-size="11">d</tspan>(t)</text>
   <path class="line" d="M 112 230 H 179" marker-end="url(#arrow-dark)"/>
   <circle cx="214" cy="230" r="35" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
-  <text x="214" y="238" text-anchor="middle" font-size="24" font-weight="650">Σ</text>
-  <text x="186" y="211" font-size="15" font-weight="700">+</text>
-  <text x="202" y="259" font-size="15" font-weight="700" fill="#087f8c">−</text>
+  <text x="188" y="236" font-size="16" font-weight="700">+</text>
+  <text x="222" y="258" font-size="16" font-weight="700" fill="#087f8c">−</text>
 
   <!-- error signal and controller -->
   <path class="line" d="M 249 230 H 322" marker-end="url(#arrow-dark)"/>
@@ -67,5 +66,5 @@
   <text x="420" y="386" text-anchor="middle" class="signal" fill="#087f8c">测量力 F<tspan baseline-shift="sub" font-size="12">m</tspan>(t)</text>
 
   <rect x="42" y="482" width="1196" height="34" rx="8" fill="#f4f7fb"/>
-  <text x="60" y="505" class="minor">Σ 计算 e(t) = F<tspan baseline-shift="sub" font-size="10">d</tspan>(t) − F<tspan baseline-shift="sub" font-size="10">m</tspan>(t)。u(t) 的物理含义由具体机器人接口决定。</text>
+  <text x="60" y="505" class="minor">求和点按端口符号计算 e(t) = F<tspan baseline-shift="sub" font-size="10">d</tspan>(t) − F<tspan baseline-shift="sub" font-size="10">m</tspan>(t)；u(t) 的物理含义由具体机器人接口决定。</text>
 </svg>

@@ -6,7 +6,7 @@
 
 ### 更新
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：用可点击打开原尺寸 SVG 的矢量框图替换字符拼接示意，避免错位、横向滚动和裁切。
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：重排求和点的正负输入端标记，并提供点击打开原尺寸 SVG 的矢量图，避免符号和支路对应不清。
 
 ### 维护
 
