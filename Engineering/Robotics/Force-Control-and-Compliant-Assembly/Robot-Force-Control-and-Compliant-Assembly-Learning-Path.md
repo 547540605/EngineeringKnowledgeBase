@@ -35,6 +35,8 @@
 
 先读 NIST 的 [Best Practices and Performance Metrics Using Force Control for Robotic Assembly](https://www.govinfo.gov/content/pkg/GOVPUB-C13-d554356d2e6e8bcd33d4ebb8b45e370e/pdf/GOVPUB-C13-d554356d2e6e8bcd33d4ebb8b45e370e.pdf)。重点认识显式力控、刚度、阻抗和导纳等方法，以及稳定时间、超调、稳态误差、障碍响应等评价维度。
 
+配合阅读本知识库的 [NISTIR 7901：机器人力控制算法与闭环控制](NISTIR-7901-Force-Control-Algorithms.md)，其中将报告 Section V 的 A–F 算法、PI 框图和控制概念对应关系合并说明。
+
 再读 Schumacher 等人的 [An Introductory Review of Active Compliant Control](https://www.sim.informatik.tu-darmstadt.de/publ/download/2019_An_Introductory_Review_of_Active_Compliant_Control_Preprint.pdf)，建立混合力/位置、并行力/位置、阻抗和导纳控制之间的分类与选型框架。
 
 ### 2. 恒力调节与力控理论

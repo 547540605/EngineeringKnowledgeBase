@@ -6,19 +6,12 @@
 
 ### 更新
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将 PI 公式改为 LaTeX，并启用 MathJax 以正确显示上下标和积分表达式。
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：补齐 NIST A 节的 Figure 2 PI 框图，与 Figure 1 的通用闭环结构配套说明。
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：移除误写为 Figure 1 信号的 $u(t)$，统一用原文命令力符号 $F_C$。
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将静态 2 N 算例替换为可启动、停止和继续的 PI 仿真，展示目标力、实际力与 P/I 项变化。
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：移出 B–F 详细综述，保留 A 专题并链接到独立算法分类页。
-
-### 新增
-
-- [机器人力控制算法分类：NISTIR 7901 的 A–F 方法](Engineering/Robotics/Robot-Force-Control-Algorithm-Categories.md)：独立整理 NIST 的 A–F 分类和恒力/USB 应用关系，避免把 B–F 综述混入显式力控制 A 专题。
+- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将报告相关的 A–F 算法、显式力控框图、PI 仿真和 Demo/USB 联系合并到同一专题，并统一公式与符号。
 
 ### 维护
 
-- 修正显式力控制文章中 PI 仿真的站点相对路径，避免目录式页面 URL 下 iframe 和直达链接落到错误路径。
+- 在 Robotics 下增加“机器人力控制与柔顺装配”分类目录，将 NIST 专题、学习路线和图/仿真资源集中归档。
+- 修正 NIST 专题中的 PI 仿真站点相对路径，避免目录式页面 URL 下 iframe 和直达链接落到错误路径。
 - 文档同步脚本现在会复制 Engineering 与 ComputerScience 目录下的独立 HTML 仿真页面，使其能在知识库站点内嵌加载。
 - 文档站点现已全局支持 MathJax；知识库插件同步加入公式书写规范，其他项目添加的数学内容发布后也能正确呈现。
 
@@ -26,7 +19,7 @@
 
 ### 更新
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将自绘图收敛为 NIST Figure 1 的核心结构与信号，移除额外系统方块和扩展说明。
+- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将自绘图收敛为 NIST Figure 1 的核心结构与信号，移除额外系统方块和扩展说明。
 
 ### 维护
 
@@ -34,8 +27,8 @@
 
 ### 新增
 
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：展开说明期望力、测量力、控制误差与控制输入的反馈关系，并区分 Demo 的速度输出与直接力命令。
-- [机器人恒力控制与柔顺装配学习路线](Engineering/Robotics/Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md)：将恒力保持、柔顺控制与 USB/连接器插拔串成可复用的学习路径，并区分各任务的控制目标与传感需求。
+- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：展开说明期望力、测量力、控制误差与控制输入的反馈关系，并区分 Demo 的速度输出与直接力命令。
+- [机器人恒力控制与柔顺装配学习路线](Engineering/Robotics/Force-Control-and-Compliant-Assembly/Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md)：将恒力保持、柔顺控制与 USB/连接器插拔串成可复用的学习路径，并区分各任务的控制目标与传感需求。
 
 ## 2026-09-21
 
