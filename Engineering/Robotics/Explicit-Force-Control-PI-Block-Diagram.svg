@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 440" role="img" aria-labelledby="title desc">
+  <title id="title">Explicit force control with PI control</title>
+  <desc id="desc">The force error e of t splits into proportional and integral branches. Their contributions are summed to produce commanded force F C.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#263746"/></marker>
+    <style>
+      text { font-family: Arial, "Segoe UI", sans-serif; fill: #172b3a; }
+      .heading { font-size: 24px; font-weight: 600; }
+      .label { font-size: 21px; }
+      .branch { font-size: 17px; font-weight: 600; }
+      .signal { fill: none; stroke: #263746; stroke-width: 2.5; stroke-linecap: square; stroke-linejoin: round; }
+      .gain { fill: #fff; stroke: #263746; stroke-width: 2.5; }
+    </style>
+  </defs>
+  <text x="560" y="48" text-anchor="middle" class="heading">Explicit force control with PI control</text>
+  <text x="48" y="226" class="label">e(t)</text>
+  <path class="signal" d="M 102 218 H 190"/>
+  <circle cx="190" cy="218" r="4.5" fill="#263746"/>
+  <path class="signal" d="M 190 218 V 137 H 316" marker-end="url(#arrow)"/>
+  <text x="254" y="121" text-anchor="middle" class="branch">P</text>
+  <rect x="320" y="103" width="208" height="68" class="gain"/>
+  <text x="424" y="145" text-anchor="middle" class="label">K<tspan baseline-shift="sub" font-size="14">P</tspan> e(t)</text>
+  <path class="signal" d="M 528 137 H 792" marker-end="url(#arrow)"/>
+  <path class="signal" d="M 190 218 V 306 H 316" marker-end="url(#arrow)"/>
+  <text x="254" y="333" text-anchor="middle" class="branch">I</text>
+  <rect x="320" y="272" width="208" height="68" class="gain"/>
+  <text x="424" y="314" text-anchor="middle" class="label">K<tspan baseline-shift="sub" font-size="14">I</tspan> ∫ e(τ) dτ</text>
+  <path class="signal" d="M 528 306 H 792" marker-end="url(#arrow)"/>
+  <circle cx="828" cy="221" r="36" fill="#fff" stroke="#263746" stroke-width="2.5"/>
+  <text x="811" y="211" font-size="18">+</text>
+  <text x="811" y="239" font-size="18">+</text>
+  <path class="signal" d="M 792 137 H 828 V 185" marker-end="url(#arrow)"/>
+  <path class="signal" d="M 792 306 H 828 V 257" marker-end="url(#arrow)"/>
+  <path class="signal" d="M 864 221 H 1030" marker-end="url(#arrow)"/>
+  <text x="946" y="195" text-anchor="middle" class="label">F<tspan baseline-shift="sub" font-size="14">C</tspan></text>
+</svg>

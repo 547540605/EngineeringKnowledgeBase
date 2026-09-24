@@ -31,6 +31,16 @@ e = F_S - F_C
 
 这是按 NIST Figure 1 的元素和信号关系重新绘制的简图，不是对原图的逐像素复制。原文说明，测量力与命令力之间的差值驱动机器人运动；控制律的具体形式在后文另行讨论。
 
+### Figure 2：PI 力控制律
+
+NIST 的 A 节还给出第二张图：把 Figure 1 的 Control Law 展开为比例（P）和积分（I）两条并行支路，再将两支路的输出相加得到命令力 F_C。
+
+[![Explicit force control with PI control（点击打开原尺寸图）](Explicit-Force-Control-PI-Block-Diagram.svg)](Explicit-Force-Control-PI-Block-Diagram.svg)
+
+[点击打开 PI 框图原尺寸 SVG 矢量图](Explicit-Force-Control-PI-Block-Diagram.svg)
+
+其中 P 支路按当前误差 e(t) 产生 K_P e(t)；I 支路累积误差，产生 K_I ∫ e(τ)dτ。两项相加体现了 PI 控制器的组成。该图对应 NIST Figure 2，不是另一种独立的力控算法。
+
 ### 控制输入不一定是同一种物理量
 
 框图中的 `u(t)` 是抽象控制输入，具体可能是执行器力/关节力矩，也可能是机器人接口允许的运动命令。NIST 对显式力控的概念描述强调“由力误差调整命令施力”；实际系统中仍要结合控制器结构和机器人接口，查明控制器输出究竟是什么。
