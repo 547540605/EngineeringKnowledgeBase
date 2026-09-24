@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PI 力控制仿真</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: light-dark(#ffffff, #171a1f);
+      --text: light-dark(#20242a, #e7e9ec);
+      --muted: light-dark(#626c78, #a8b0ba);
+      --border: light-dark(#cbd2da, #48515d);
+      --grid: light-dark(#dfe4ea, #363d46);
+      --force: light-dark(#147f83, #55c4bd);
+      --target: light-dark(#747d88, #aeb6c0);
+      --primary: light-dark(#145bb8, #8ab8ff);
+      --primary-text: light-dark(#ffffff, #161a20);
+      --button: light-dark(#f1f4f7, #252b33);
+      --button-text: light-dark(#20242a, #e7e9ec);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px 18px 12px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    main { width: 100%; max-width: 960px; margin: 0 auto; }
+    .topline {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 4px 14px;
+      margin-bottom: 4px;
+    }
+    h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    .model, .status, .readout { color: var(--muted); font-size: 13px; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0 5px; }
+    button {
+      min-height: 34px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--button);
+      color: var(--button-text);
+      font: inherit;
+      font-size: 14px;
+    }
+    button.primary { border-color: var(--primary); background: var(--primary); color: var(--primary-text); }
+    button:disabled { opacity: .5; }
+    button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .readout { min-height: 20px; margin: 4px 0 5px; font-variant-numeric: tabular-nums; }
+    .chart-wrap { width: 100%; }
+    svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .frame, .axis, .grid { fill: none; stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .grid { stroke: var(--grid); }
+    .target-line { fill: none; stroke: var(--target); stroke-width: 1.5; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+    .force-line { fill: none; stroke: var(--force); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .axis-label, .axis-title, .curve-label { fill: var(--text); font-size: 12px; }
+    .curve-label { font-weight: 600; }
+    @media (max-width: 520px) {
+      body { padding: 12px 10px 8px; }
+      .model { font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      button { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="PI 力控制仿真">
+    <div class="topline">
+      <h1>PI 力控制仿真</h1>
+      <div class="model">理想一阶对象 · 目标 2 N · K<sub>p</sub> = 1.0 · K<sub>i</sub> = 2.2 · τ = 0.55 s</div>
+    </div>
+    <div class="controls" aria-label="仿真控制">
+      <button id="start" class="primary" type="button">开始</button>
+      <button id="stop" type="button" disabled>结束</button>
+      <span id="status" class="status" aria-live="polite">待开始</span>
+    </div>
+    <div id="readout" class="readout" aria-live="off">误差 2.00 N · P 项 2.00 · I 项 0.00 · PI 输出 2.00 N</div>
+    <div class="chart-wrap">
+      <svg id="chart" role="img" aria-labelledby="chart-title chart-desc">
+        <title id="chart-title">目标力和实际力的 PI 闭环响应</title>
+        <desc id="chart-desc">开始后，曲线实时显示 PI 控制下实际力向 2 牛顿目标收敛的过程。结束会冻结曲线。</desc>
+        <g id="grid"></g>
+        <path id="target-line" class="target-line"></path>
+        <path id="force-line" class="force-line"></path>
+        <circle id="current-point" r="4" fill="var(--force)"></circle>
+        <g id="curve-labels"></g>
+      </svg>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const chart = document.getElementById("chart");
+      const grid = document.getElementById("grid");
+      const targetLine = document.getElementById("target-line");
+      const forceLine = document.getElementById("force-line");
+      const point = document.getElementById("current-point");
+      const curveLabels = document.getElementById("curve-labels");
+      const startButton = document.getElementById("start");
+      const stopButton = document.getElementById("stop");
+      const status = document.getElementById("status");
+      const readout = document.getElementById("readout");
+      if (!chart || !grid || !targetLine || !forceLine || !point || !curveLabels || !startButton || !stopButton || !status || !readout) return;
+
+      const target = 2;
+      const kp = 1.0;
+      const ki = 2.2;
+      const tau = 0.55;
+      const stepSize = 0.01;
+      const duration = 8;
+      const outputMin = 0;
+      const outputMax = 6;
+      const forceMax = 3;
+      const plot = { left: 54, right: 14, top: 18, bottom: 42 };
+      const height = 300;
+      let width = 736;
+      let time = 0;
+      let force = 0;
+      let integral = 0;
+      let error = target;
+      let command = kp * target;
+      let samples = [{ time: 0, force: 0 }];
+      let running = false;
+      let animationId = 0;
+      let lastFrame = 0;
+      let accumulator = 0;
+
+      const x = (value) => plot.left + value / duration * (width - plot.left - plot.right);
+      const y = (value) => height - plot.bottom - value / forceMax * (height - plot.top - plot.bottom);
+      const fixed = (value) => Number(value).toFixed(2);
+
+      function draw() {
+        width = Math.max(320, Math.round(chart.parentElement.getBoundingClientRect().width));
+        chart.setAttribute("viewBox", "0 0 " + width + " " + height);
+        const right = width - plot.right;
+        const bottom = height - plot.bottom;
+        const xTicks = [0, 2, 4, 6, 8];
+        const yTicks = [0, 1, 2, 3];
+        const pieces = [
+          '<rect class="frame" x="' + plot.left + '" y="' + plot.top + '" width="' + (right - plot.left) + '" height="' + (bottom - plot.top) + '"></rect>'
+        ];
+        yTicks.forEach((value) => {
+          pieces.push('<line class="grid" x1="' + plot.left + '" y1="' + y(value) + '" x2="' + right + '" y2="' + y(value) + '"></line>');
+          pieces.push('<text class="axis-label" x="' + (plot.left - 9) + '" y="' + (y(value) + 4) + '" text-anchor="end">' + value + '</text>');
+        });
+        xTicks.forEach((value) => {
+          pieces.push('<line class="axis" x1="' + x(value) + '" y1="' + bottom + '" x2="' + x(value) + '" y2="' + (bottom + 5) + '"></line>');
+          pieces.push('<text class="axis-label" x="' + x(value) + '" y="' + (bottom + 21) + '" text-anchor="middle">' + value + '</text>');
+        });
+        pieces.push('<text class="axis-title" data-axis="y" x="14" y="' + ((plot.top + bottom) / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + ((plot.top + bottom) / 2) + ')">力（N）</text>');
+        pieces.push('<text class="axis-title" data-axis="x" x="' + ((plot.left + right) / 2) + '" y="' + (height - 5) + '" text-anchor="middle">时间（s）</text>');
+        grid.innerHTML = pieces.join("");
+
+        targetLine.setAttribute("d", "M " + x(0) + " " + y(target) + " H " + x(duration));
+        let path = "";
+        for (let i = 0; i < samples.length; i += 1) {
+          path += (i === 0 ? "M " : " L ") + x(samples[i].time) + " " + y(samples[i].force);
+        }
+        forceLine.setAttribute("d", path);
+        const latest = samples[samples.length - 1];
+        point.setAttribute("cx", x(latest.time));
+        point.setAttribute("cy", y(latest.force));
+        const actualLabelX = Math.max(plot.left + 8, Math.min(right - 42, x(latest.time) + 8));
+        curveLabels.innerHTML =
+          '<text class="curve-label" x="' + (right - 4) + '" y="' + (y(target) - 7) + '" text-anchor="end">目标 2 N</text>' +
+          '<text class="curve-label" x="' + actualLabelX + '" y="' + Math.max(plot.top + 13, y(latest.force) - 8) + '" text-anchor="start">实际力</text>';
+        readout.textContent = "t " + fixed(time) + " s · e " + fixed(error) + " N · P " + fixed(kp * error) + " · I " + fixed(ki * integral) + " · PI 输出 " + fixed(command) + " N";
+      }
+
+      function step() {
+        error = target - force;
+        const candidateIntegral = integral + error * stepSize;
+        const candidate = kp * error + ki * candidateIntegral;
+        const saturatedHigh = candidate > outputMax && error > 0;
+        const saturatedLow = candidate < outputMin && error < 0;
+        if (!saturatedHigh && !saturatedLow) integral = candidateIntegral;
+        command = Math.min(outputMax, Math.max(outputMin, kp * error + ki * integral));
+        force += ((command - force) / tau) * stepSize;
+        time = Math.min(duration, time + stepSize);
+        samples.push({ time, force });
+      }
+
+      function frame(now) {
+        if (!running) return;
+        if (!lastFrame) lastFrame = now;
+        accumulator += Math.min(0.1, (now - lastFrame) / 1000);
+        lastFrame = now;
+        while (accumulator >= stepSize && time < duration) {
+          step();
+          accumulator -= stepSize;
+        }
+        draw();
+        if (time >= duration) {
+          running = false;
+          startButton.disabled = false;
+          stopButton.disabled = true;
+          status.textContent = "仿真结束 · 点击开始重播";
+          animationId = 0;
+          return;
+        }
+        animationId = requestAnimationFrame(frame);
+      }
+
+      function start() {
+        if (running) return;
+        if (time >= duration) {
+          time = 0;
+          force = 0;
+          integral = 0;
+          error = target;
+          command = kp * target;
+          samples = [{ time: 0, force: 0 }];
+          accumulator = 0;
+          draw();
+        }
+        running = true;
+        lastFrame = 0;
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        status.textContent = "仿真运行中";
+        animationId = requestAnimationFrame(frame);
+      }
+
+      function stop() {
+        if (!running) return;
+        running = false;
+        if (animationId) cancelAnimationFrame(animationId);
+        animationId = 0;
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        status.textContent = "已结束 · 点击开始继续";
+        draw();
+      }
+
+      startButton.addEventListener("click", start);
+      stopButton.addEventListener("click", stop);
+      if ("ResizeObserver" in window) new ResizeObserver(draw).observe(chart.parentElement);
+      draw();
+    })();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-"""Mirror knowledge-base Markdown and SVG diagrams into the temporary MkDocs source directory."""
+"""Mirror knowledge-base documents and interactive HTML assets into the temporary MkDocs source directory."""
 
 from __future__ import annotations
 
@@ -46,6 +46,11 @@ def main() -> None:
             shutil.copy2(source_file, target_file)
 
         for source_file in source_dir.rglob("*.svg"):
+            target_file = target_dir / source_file.relative_to(source_dir)
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_file, target_file)
+
+        for source_file in source_dir.rglob("*.html"):
             target_file = target_dir / source_file.relative_to(source_dir)
             target_file.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_file, target_file)
