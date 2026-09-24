@@ -8,6 +8,7 @@
 
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将 PI 公式改为 LaTeX，并启用 MathJax 以正确显示上下标和积分表达式。
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：补齐 NIST A 节的 Figure 2 PI 框图，与 Figure 1 的通用闭环结构配套说明。
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：移除误写为 Figure 1 信号的 $u(t)$，统一用原文命令力符号 $F_C$。
 
 ### 维护
 
