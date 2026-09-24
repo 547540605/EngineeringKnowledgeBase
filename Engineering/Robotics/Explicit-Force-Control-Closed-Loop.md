@@ -49,9 +49,9 @@ Figure 1 标出测量力 $F_S$、误差比较、Control Law 和命令力 $F_C$�
 
 下面的仿真可以开始、结束并继续运行；跑满 8 秒后自动结束，再次开始会从零状态重播。曲线显示目标力与实际力，实时读数显示误差、比例项、积分项和 PI 输出。
 
-<iframe src="PI-Force-Control-Simulation.html" title="目标力为 2 N 的 PI 力控制仿真" width="100%" height="460" loading="lazy"></iframe>
+<iframe src="../PI-Force-Control-Simulation.html" title="目标力为 2 N 的 PI 力控制仿真" width="100%" height="460" loading="lazy"></iframe>
 
-[单独打开 PI 力控制仿真](PI-Force-Control-Simulation.html)
+[单独打开 PI 力控制仿真](../PI-Force-Control-Simulation.html)
 
 该页面使用一个理想一阶受控对象来演示 PI 反馈过程，不是压力板、雷赛驱动或 Demo 的实测数据。仿真对象模型为：
 
