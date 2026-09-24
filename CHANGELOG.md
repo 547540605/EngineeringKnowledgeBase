@@ -6,6 +6,7 @@
 
 ### 更新
 
+- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：为 Section V 的 A–F 按原文段落补充中文译文，并补上 Figure 1、2 的图注译文，方便与概述及工程补充对照。
 - [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：逐节对照报告修正 A、D、E、F 的信号与定义，补全 Figure 2 反馈回路，并将独立仿真和 Demo 推断与原文分开；同步更正[学习路线](Engineering/Robotics/Force-Control-and-Compliant-Assembly/Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md)对原文评价指标的表述。
 - [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：删除 A–F 对照表中的“阅读要点”列，仅保留各方法的控制关系。
 - [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将 Section V 的 A–F 调整为并列章节，去除将 B–F 称作“其他方法”的误导性表述。
