@@ -10,7 +10,11 @@
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：补齐 NIST A 节的 Figure 2 PI 框图，与 Figure 1 的通用闭环结构配套说明。
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：移除误写为 Figure 1 信号的 $u(t)$，统一用原文命令力符号 $F_C$。
 - [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：将静态 2 N 算例替换为可启动、停止和继续的 PI 仿真，展示目标力、实际力与 P/I 项变化。
-- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：补充 NISTIR 7901 Section V-B–F 的刚度、阻抗、导纳、隐式力与自然导纳控制，并说明其与恒力 Demo、USB 插拔任务的区别和联系。
+- [显式力控制与闭环控制系统框图](Engineering/Robotics/Explicit-Force-Control-Closed-Loop.md)：移出 B–F 详细综述，保留 A 专题并链接到独立算法分类页。
+
+### 新增
+
+- [机器人力控制算法分类：NISTIR 7901 的 A–F 方法](Engineering/Robotics/Robot-Force-Control-Algorithm-Categories.md)：独立整理 NIST 的 A–F 分类和恒力/USB 应用关系，避免把 B–F 综述混入显式力控制 A 专题。
 
 ### 维护
 
