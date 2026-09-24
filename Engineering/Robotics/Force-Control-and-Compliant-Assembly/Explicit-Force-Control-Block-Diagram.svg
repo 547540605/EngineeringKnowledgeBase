@@ -1,37 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 360" role="img" aria-labelledby="title desc">
-  <title id="title">Generalized explicit force control</title>
-  <desc id="desc">Measured force F S enters the summing junction and its error enters the Control Law. The Control Law outputs commanded force F C, which is fed back to the negative input.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 250" role="img" aria-labelledby="title desc">
+  <title id="title">NISTIR 7901 Figure 1：显式力控制信号框图（重绘）</title>
+  <desc id="desc">测量力 F S 从左侧进入求和点正端，命令力 F C 从输出回到负端，误差经过 Control Law 产生 F C。</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#263746"/>
-    </marker>
-    <style>
-      text { font-family: Arial, "Segoe UI", sans-serif; fill: #172b3a; }
-      .heading { font-size: 24px; font-weight: 600; }
-      .label { font-size: 21px; }
-      .signal { fill: none; stroke: #263746; stroke-width: 2.5; stroke-linecap: square; stroke-linejoin: round; }
-    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#263746"/></marker>
+    <style>text{font-family:Georgia,"Times New Roman",serif;fill:#172b3a}.signal{fill:none;stroke:#263746;stroke-width:2.6;stroke-linejoin:round}.label{font-size:27px}.small{font-size:21px}</style>
   </defs>
-
-  <text x="540" y="48" text-anchor="middle" class="heading">Generalized explicit force control</text>
-
-  <text x="56" y="174" class="label">F<tspan baseline-shift="sub" font-size="14">S</tspan></text>
-  <path class="signal" d="M 92 167 H 235" marker-end="url(#arrow)"/>
-
-  <circle cx="270" cy="167" r="34" fill="#fff" stroke="#263746" stroke-width="2.5"/>
-  <text x="248" y="158" font-size="18">+</text>
-  <text x="264" y="190" font-size="18">−</text>
-
-  <path class="signal" d="M 304 167 H 418" marker-end="url(#arrow)"/>
-  <text x="354" y="145" text-anchor="middle" class="label">e</text>
-
-  <rect x="422" y="119" width="220" height="96" fill="#fff" stroke="#263746" stroke-width="2.5"/>
-  <text x="532" y="176" text-anchor="middle" class="label">Control Law</text>
-
-  <path class="signal" d="M 642 167 H 946" marker-end="url(#arrow)"/>
-  <text x="800" y="145" text-anchor="middle" class="label">F<tspan baseline-shift="sub" font-size="14">C</tspan></text>
-  <circle cx="833" cy="167" r="4.5" fill="#263746"/>
-
-  <path class="signal" d="M 833 171 V 286 H 270 V 202" marker-end="url(#arrow)"/>
-  <text x="550" y="275" text-anchor="middle" class="label">feedback</text>
+  <rect width="1000" height="250" fill="#fff"/>
+  <text x="55" y="101" class="label">F<tspan baseline-shift="sub" font-size="17">S</tspan></text>
+  <path class="signal" d="M105 90 H198" marker-end="url(#arrow)"/>
+  <circle cx="225" cy="90" r="26" fill="#fff" stroke="#263746" stroke-width="2.6"/>
+  <text x="202" y="80" class="small">+</text><text x="216" y="115" class="small">−</text>
+  <path class="signal" d="M251 90 H366" marker-end="url(#arrow)"/>
+  <text x="302" y="72" class="small">e</text>
+  <rect x="370" y="52" width="262" height="76" fill="#fff" stroke="#263746" stroke-width="2.6"/>
+  <text x="501" y="99" text-anchor="middle" class="label">Control Law</text>
+  <path class="signal" d="M632 90 H846" marker-end="url(#arrow)"/>
+  <circle cx="754" cy="90" r="4" fill="#263746"/>
+  <text x="860" y="101" class="label">F<tspan baseline-shift="sub" font-size="17">C</tspan></text>
+  <path class="signal" d="M754 94 V202 H225 V117" marker-end="url(#arrow)"/>
 </svg>
