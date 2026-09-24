@@ -4,7 +4,7 @@
 
 ## NISTIR 7901：力控算法与评价
 
-与 NISTIR 7901 相关的显式力控制 A、算法 B–F、两张控制框图、PI 仿真及其与恒力 Demo/USB 插拔的联系，合并在一篇专题中：
+NISTIR 7901 Section V 的 A–F 六类力控算法、其中 A 类的两张控制框图与 PI 仿真，以及它们与恒力 Demo/USB 插拔的联系，合并在一篇专题中：
 
 - [NISTIR 7901：机器人力控制算法与闭环控制](NISTIR-7901-Force-Control-Algorithms.md)
 
