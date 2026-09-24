@@ -42,6 +42,10 @@ repository. Use it when the user wants to browse or share a human-friendly page.
 - Never write through the website and never treat the website as the rules source.
 - After adding a topic, tell the user that the browser page will become available after the repository
   is pushed and the Pages deployment succeeds.
+- The browser site renders LaTeX equations with MathJax. When recording mathematical content, use
+  inline LaTeX such as `$K_p e(t)$` and display LaTeX on separate lines as `$$ ... $$`; do not rely
+  on Unicode approximations or plain-text underscores for subscripts and integrals. Keep formulas
+  inside fenced code blocks only when showing literal source text rather than a rendered equation.
 
 ## Scope boundary
 

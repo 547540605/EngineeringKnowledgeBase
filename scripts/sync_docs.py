@@ -29,6 +29,10 @@ def main() -> None:
     readme = ROOT / "README.md"
     shutil.copy2(readme, DOCS / "index.md")
 
+    javascript_dir = DOCS / "javascripts"
+    javascript_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "scripts" / "mathjax.js", javascript_dir / "mathjax.js")
+
     for root_doc_name in ("CHANGELOG.md", "PLUGIN-INSTALL.md"):
         root_doc = ROOT / root_doc_name
         if root_doc.exists():
