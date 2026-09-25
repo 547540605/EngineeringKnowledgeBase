@@ -144,13 +144,106 @@ def invert_transform(R: np.ndarray, t: np.ndarray) -> tuple[np.ndarray, np.ndarr
     return R_inv, t_inv
 
 
+def _skew(v: np.ndarray) -> np.ndarray:
+    return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+
+
+def _mat_to_quat(R: np.ndarray) -> np.ndarray:
+    tr = np.trace(R)
+    if tr > 0:
+        S = np.sqrt(tr + 1.0) * 2
+        w = 0.25 * S
+        x = (R[2, 1] - R[1, 2]) / S
+        y = (R[0, 2] - R[2, 0]) / S
+        z = (R[1, 0] - R[0, 1]) / S
+    elif (R[0, 0] > R[1, 1]) and (R[0, 0] > R[2, 2]):
+        S = np.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2]) * 2
+        w = (R[2, 1] - R[1, 2]) / S
+        x = 0.25 * S
+        y = (R[0, 1] + R[1, 0]) / S
+        z = (R[0, 2] + R[2, 0]) / S
+    elif R[1, 1] > R[2, 2]:
+        S = np.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2]) * 2
+        w = (R[0, 2] - R[2, 0]) / S
+        x = (R[0, 1] + R[1, 0]) / S
+        y = 0.25 * S
+        z = (R[1, 2] + R[2, 1]) / S
+    else:
+        S = np.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1]) * 2
+        w = (R[1, 0] - R[0, 1]) / S
+        x = (R[0, 2] + R[2, 0]) / S
+        y = (R[1, 2] + R[2, 1]) / S
+        z = 0.25 * S
+    q = np.array([w, x, y, z])
+    return q if q[0] >= 0 else -q
+
+
+def _quat_to_mat(q: np.ndarray) -> np.ndarray:
+    w, x, y, z = q
+    return np.array([
+        [1 - 2*y*y - 2*z*z, 2*x*y - 2*z*w, 2*x*z + 2*y*w],
+        [2*x*y + 2*z*w, 1 - 2*x*x - 2*z*z, 2*y*z - 2*x*w],
+        [2*x*z - 2*y*w, 2*y*z + 2*x*w, 1 - 2*x*x - 2*y*y]
+    ])
+
+
+def _solve_hand_eye_tsai(
+    R_g2b: list[np.ndarray],
+    t_g2b: list[np.ndarray],
+    R_t2c: list[np.ndarray],
+    t_t2c: list[np.ndarray]
+) -> tuple[np.ndarray, np.ndarray]:
+    """数值解析版 Tsai-Lenz 手眼标定求解器 (用于独立验证或在未编译 calibrateHandEye 的 Python 环境中回退)"""
+    N = len(R_g2b)
+    M_list, b_list, A_list, B_list = [], [], [], []
+    for i in range(N - 1):
+        j = i + 1
+        T_i = np.eye(4)
+        T_i[:3, :3] = R_g2b[i]
+        T_i[:3, 3] = t_g2b[i].flatten()
+        T_j = np.eye(4)
+        T_j[:3, :3] = R_g2b[j]
+        T_j[:3, 3] = t_g2b[j].flatten()
+        T_A = np.linalg.inv(T_j) @ T_i
+
+        C_i = np.eye(4)
+        C_i[:3, :3] = R_t2c[i]
+        C_i[:3, 3] = t_t2c[i].flatten()
+        C_j = np.eye(4)
+        C_j[:3, :3] = R_t2c[j]
+        C_j[:3, 3] = t_t2c[j].flatten()
+        T_B = C_j @ np.linalg.inv(C_i)
+
+        A_list.append(T_A)
+        B_list.append(T_B)
+
+        q_A = _mat_to_quat(T_A[:3, :3])
+        q_B = _mat_to_quat(T_B[:3, :3])
+        M_list.append(_skew(q_A[1:] + q_B[1:]))
+        b_list.append(q_B[1:] - q_A[1:])
+
+    M = np.vstack(M_list)
+    b = np.concatenate(b_list)
+    P_X, _, _, _ = np.linalg.lstsq(M, b, rcond=None)
+    w_X = 1.0 / np.sqrt(1.0 + np.sum(P_X**2))
+    v_X = P_X * w_X
+    R_X = _quat_to_mat(np.array([w_X, v_X[0], v_X[1], v_X[2]]))
+
+    C_rows, d_rows = [], []
+    for T_A, T_B in zip(A_list, B_list):
+        C_rows.append(T_A[:3, :3] - np.eye(3))
+        d_rows.append((R_X @ T_B[:3, 3] - T_A[:3, 3]).flatten())
+    t_X, _, _, _ = np.linalg.lstsq(np.vstack(C_rows), np.concatenate(d_rows), rcond=None)
+    return R_X, t_X.reshape(3, 1)
+
+
 def perform_hand_eye_calibration(
     R_gripper2base: list[np.ndarray], 
     t_gripper2base: list[np.ndarray],
     R_target2cam: list[np.ndarray], 
     t_target2cam: list[np.ndarray],
     eye_to_hand: bool = False,
-    method: int = cv2.CALIB_HAND_EYE_TSAI
+    method: int = getattr(cv2, "CALIB_HAND_EYE_TSAI", 0)
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     执行手眼标定求解 (支持 Eye-in-Hand 与 Eye-to-Hand 双构型严格坐标映射)
@@ -169,12 +262,13 @@ def perform_hand_eye_calibration(
     """
     if not eye_to_hand:
         # Eye-in-Hand: 标准 AX = XB 求解 ^F_C T
-        R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
-            R_gripper2base, t_gripper2base,
-            R_target2cam, t_target2cam,
-            method=method
-        )
-        return R_cam2gripper, t_cam2gripper
+        if hasattr(cv2, "calibrateHandEye"):
+            return cv2.calibrateHandEye(
+                R_gripper2base, t_gripper2base,
+                R_target2cam, t_target2cam,
+                method=method
+            )
+        return _solve_hand_eye_tsai(R_gripper2base, t_gripper2base, R_target2cam, t_target2cam)
     else:
         # Eye-to-Hand: 依据 OpenCV 规范，将 Gripper2Base 严格反转为 Base2Gripper (^F_B T)
         R_base2gripper = []
@@ -185,19 +279,20 @@ def perform_hand_eye_calibration(
             t_base2gripper.append(t_b2g)
 
         # 传入反转后的运动参数，解出的即为 Camera-to-Base 位姿 (^B_C T)
-        R_cam2base, t_cam2base = cv2.calibrateHandEye(
-            R_base2gripper, t_base2gripper,
-            R_target2cam, t_target2cam,
-            method=method
-        )
-        return R_cam2base, t_cam2base
+        if hasattr(cv2, "calibrateHandEye"):
+            return cv2.calibrateHandEye(
+                R_base2gripper, t_base2gripper,
+                R_target2cam, t_target2cam,
+                method=method
+            )
+        return _solve_hand_eye_tsai(R_base2gripper, t_base2gripper, R_target2cam, t_target2cam)
 ```
 
 ---
 
 ## 7. 已知真值合成数据自闭环回代验证 (Verification with Synthetic Ground Truth)
 
-为确保工程落地零歧义，以下给出完整的合成数据自闭环验证程序。设定已知装配真值，生成机械臂多姿态运动与对应的虚拟相机观测，回代标定算法并精确检验误差：
+为确保工程落地零歧义，以下给出完整的合成数据自闭环验证程序。设定已知装配真值，生成机械臂多姿态运动与对应的虚拟相机观测，**直接调用 `perform_hand_eye_calibration()` 函数求解**并精确断言解算结果与真值的旋转和平移误差：
 
 ```python
 import numpy as np
@@ -208,7 +303,7 @@ def rodrigues_to_mat(r: np.ndarray) -> np.ndarray:
     if theta < 1e-12:
         return np.eye(3)
     u = r / theta
-    K = np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]])
+    K = _skew(u)
     return np.eye(3) + np.sin(theta) * K + (1 - np.cos(theta)) * (K @ K)
 
 
@@ -264,22 +359,24 @@ def test_hand_eye_synthetic_verification():
         R_target2cam_list.append(T_cam_target[:3, :3])
         t_target2cam_list.append(T_cam_target[:3, 3].reshape(3, 1))
 
-    # 3. 回代校验 Eye-to-Hand 回路方程残差: A_eth * X == X * B_eth
-    for i in range(len(rot_axes) - 1):
-        j = i + 1
-        T_A_eth = make_homo_transform(R_gripper2base_list[j], t_gripper2base_list[j]) @ np.linalg.inv(
-            make_homo_transform(R_gripper2base_list[i], t_gripper2base_list[i])
-        )
-        T_B_eth = make_homo_transform(R_target2cam_list[j], t_target2cam_list[j]) @ np.linalg.inv(
-            make_homo_transform(R_target2cam_list[i], t_target2cam_list[i])
-        )
-        # 验证矩阵等式两端
-        left = T_A_eth @ T_base_cam_gt
-        right = T_base_cam_gt @ T_B_eth
-        residual = np.max(np.abs(left - right))
-        assert residual < 1e-12, f"回路方程残差超限: {residual}"
+    # 3. 实际调用 perform_hand_eye_calibration 求解外部相机在基座中的安装位姿
+    R_cam2base_est, t_cam2base_est = perform_hand_eye_calibration(
+        R_gripper2base_list, t_gripper2base_list,
+        R_target2cam_list, t_target2cam_list,
+        eye_to_hand=True
+    )
 
-    print("✅ Eye-to-Hand 坐标转换与回路方程自闭环回代验证 100% 通过 (残差 < 1e-12)！")
+    # 4. 精确量化求解结果与真值的误差
+    rot_error = np.linalg.norm(R_cam2base_est - R_base_cam_gt)
+    trans_error = np.linalg.norm(t_cam2base_est.flatten() - t_base_cam_gt.flatten())
+
+    print(f"Eye-to-Hand 标定解算完成:")
+    print(f"  - 旋转矩阵 Frobenius 范数误差: {rot_error:.2e}")
+    print(f"  - 平移向量欧氏距离误差 (m):    {trans_error:.2e}")
+
+    assert rot_error < 1e-10, f"求解旋转误差超标: {rot_error}"
+    assert trans_error < 1e-10, f"求解平移误差超标: {trans_error}"
+    print("✅ perform_hand_eye_calibration() 求解结果与装配真值完全吻合 (误差 < 1e-10)，回代验证通过！")
 
 
 if __name__ == "__main__":
