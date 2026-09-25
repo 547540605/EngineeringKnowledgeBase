@@ -87,7 +87,7 @@ controller_manager:
 在由主循环定时触发的实时更新函数 `read()`、`update()` 与 `write()` 中，必须严格遵守以下**内核实时安全铁律**：
 
 1. **零动态内存分配**：严禁在实时主循环中调用 `malloc`、`free`、`new`、`delete` 或使用引起堆内存动态重扩容的容器操作（如 `std::vector::push_back`），必须在组件 `on_init()` 或 `on_configure()` 生命周期阶段预分配固定大小的内存；
-2. **零阻塞式系统调用与 I/O**：严禁在循环内执行磁盘文件读写、标准输出控制台打印（如 `printf`、`std::cout`，若需记录状态必须使用非阻塞无锁环形队列驱动的实时日志宏 `RCLCPP_INFO_THROTTLE`）；
+2. **零阻塞式系统调用与 I/O**：严禁在实时主循环内执行磁盘文件读写、标准输出控制台打印（如 `printf`、`std::cout`）或直接调用 ROS 2 普通日志宏（如 `RCLCPP_INFO`、`RCLCPP_INFO_THROTTLE`，普通日志宏内部包含字符串格式化堆内存分配与互斥锁竞争，不具备硬实时确定性保证）；若需对外输出状态或诊断信息，必须将数据写入无锁缓冲区（如 `realtime_tools::RealtimePublisher`），由低优先级的非实时异步工作线程接管发布与落盘；
 3. **无锁通信机制 (Lock-Free Inter-Thread Communication)**：非实时异步线程（如 ROS 话题/动作服务）与实时内核线程之间的数据交换，必须采用无锁数据结构（如 `realtime_tools::RealtimeBox` 或 `realtime_tools::RealtimeBuffer`），严禁使用互斥锁 `std::mutex`（防止发生低优先级线程阻塞实时线程的优先级反转 Priority Inversion 风险）。
 
 ---

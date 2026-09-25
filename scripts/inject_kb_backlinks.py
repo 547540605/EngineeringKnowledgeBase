@@ -262,7 +262,9 @@ MAPPING = {
     ),
     "ros2/04-3r-analytic-ik.html": (
         "../../Kinematics/Analytic-Inverse-Kinematics-Planar-2R/index.html",
-        "平面 2R 解析逆运动学双解法 (Analytic-Inverse-Kinematics-Planar-2R)"
+        "平面 2R 解析逆运动学双解法 (Analytic-Inverse-Kinematics-Planar-2R)",
+        "相关前置知识",
+        " <span style=\"color: #94a3b8; font-size: 0.85rem;\">（3R 空间解算通过基座回转角将三维目标降维至垂直平面 2R 模型）</span>"
     ),
     "ros2/05-ik-continuity-and-limits.html": (
         "../../Kinematics/Analytic-Inverse-Kinematics-Planar-2R/index.html",
@@ -327,7 +329,14 @@ MAPPING = {
 }
 
 
-def make_banner_html(target_url: str, target_title: str, is_ros2: bool, is_archive: bool) -> str:
+def make_banner_html(
+    target_url: str,
+    target_title: str,
+    is_ros2: bool,
+    is_archive: bool,
+    label: str = "对应知识图谱专题",
+    note: str = ""
+) -> str:
     if is_ros2:
         dashboard_url = "00-progress.html"
         dashboard_text = "返回 ROS 2 实验看板 ←"
@@ -341,7 +350,7 @@ def make_banner_html(target_url: str, target_title: str, is_ros2: bool, is_archi
     return (
         f'\n    <!-- 📚 知识图谱双向回链导航条 -->\n'
         f'    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">\n'
-        f'      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="{target_url}" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">{target_title} ↗</a></span>\n'
+        f'      <span style="color: #cbd5e1;">📚 {label}：<a href="{target_url}" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">{target_title} ↗</a>{note}</span>\n'
         f'      <a href="{dashboard_url}" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">{dashboard_text}</a>\n'
         f'    </nav>\n'
     )
@@ -349,11 +358,18 @@ def make_banner_html(target_url: str, target_title: str, is_ros2: bool, is_archi
 
 def main():
     modified_count = 0
-    for rel_path_str, (target_url, target_title) in MAPPING.items():
+    for rel_path_str, entry in MAPPING.items():
         file_path = LEARNING_LAB / rel_path_str
         if not file_path.exists():
             print(f"⚠️ 文件不存在: {file_path}")
             continue
+
+        if len(entry) == 4:
+            target_url, target_title, label, note = entry
+        else:
+            target_url, target_title = entry
+            label = "对应知识图谱专题"
+            note = ""
 
         content = file_path.read_text(encoding="utf-8")
         if 'class="kb-backlink-nav"' in content:
@@ -367,7 +383,7 @@ def main():
 
         is_ros2 = rel_path_str.startswith("ros2/")
         is_archive = rel_path_str.startswith("archive/")
-        banner = make_banner_html(target_url, target_title, is_ros2, is_archive)
+        banner = make_banner_html(target_url, target_title, is_ros2, is_archive, label=label, note=note)
 
         # Inject right after </h1>, or in header/reader-head
         if rel_path_str == "reader.html":

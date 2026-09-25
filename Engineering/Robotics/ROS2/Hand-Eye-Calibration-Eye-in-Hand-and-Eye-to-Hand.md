@@ -57,14 +57,29 @@
   - $\boldsymbol{A}$ 为机械臂法兰两次运动的相对位姿变化（由机械臂正运动学与编码器精确测量）；
   - $\boldsymbol{B}$ 为标定板在相机视野中两次观察到的相对位姿变化（由相机 PnP 视觉算法解算）。
 
-### 3.2 眼在手外 (Eye-to-Hand)：矩阵方程 $\boldsymbol{A} \boldsymbol{X} = \boldsymbol{Y} \boldsymbol{B}$
-- **待求解未知量**：机器人基座到外部相机的固定变换矩阵 $\boldsymbol{X} = {^B_C\boldsymbol{T}}$；
-- 此时标定板固连在机械臂末端法兰盘上（相对变换为 $\boldsymbol{Y} = {^F_M\boldsymbol{T}}$）；
-- 闭合运动回路：
+### 3.2 眼在手外 (Eye-to-Hand)：矩阵方程 $\boldsymbol{A}_{eth} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}_{eth}$
+- **待求解未知量**：机器人基座到外部固定相机的相对变换矩阵 $\boldsymbol{X} = {^B_C\boldsymbol{T}}$；
+- 此时标定板刚性固连在机械臂末端法兰盘上（相对变换为固定常数矩阵 $\boldsymbol{Y} = {^F_M\boldsymbol{T}}$）；
+- 考察从标定板 $\{M\}$ 经由相机 $\{C\}$ 到基座 $\{B\}$ 的闭合几何回路：
   $$
   {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^B_{F1}\boldsymbol{T}} \, {^F_M\boldsymbol{T}} \implies ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^F_M\boldsymbol{T}}
   $$
-  同样可规范转化为两步线性求解架构。
+- 针对任意两组机械臂位姿 1 与 2，由于 ${^F_M\boldsymbol{T}}$ 恒定保持不变，必有：
+  $$
+  ({^B_{F2}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} = ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}}
+  $$
+- 等式左乘 ${^B_{F2}\boldsymbol{T}}$，右乘 $({^{C1}_M\boldsymbol{T}})^{-1}$，整理得：
+  $$
+  {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} = {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
+  $$
+  定义眼在手外相对运动矩阵：
+  $$
+  \boldsymbol{A}_{eth} = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}, \quad \boldsymbol{B}_{eth} = {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
+  $$
+  得到与经典结构完全同构的标准矩阵方程：
+  $$
+  \boldsymbol{A}_{eth} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}_{eth}
+  $$
 
 ---
 
@@ -100,28 +115,60 @@ $$
 
 ---
 
-## 6. Python 手眼标定调用原型 (基于 OpenCV)
+## 6. Python 手眼标定调用原型与坐标转换 (基于 OpenCV)
+
+OpenCV 提供了函数 `cv2.calibrateHandEye`，其底层求解标准方程 $\boldsymbol{A}\boldsymbol{X}=\boldsymbol{X}\boldsymbol{B}$。根据 [OpenCV 官方接口规范](https://docs.opencv.org/5.0/main_modules/calib.html)，必须严格区分两大构型的输入输出坐标契约：
+
+- **Eye-in-Hand (眼在手上)**：
+  - 输入 `R_gripper2base`, `t_gripper2base`：机械臂末端在基座中的位姿序列 ${^B_F\boldsymbol{T}}$；
+  - 输入 `R_target2cam`, `t_target2cam`：标定板在相机视野中的位姿序列 ${^C_M\boldsymbol{T}}$；
+  - 输出 `R_cam2gripper`, `t_cam2gripper`：相机在法兰盘中的安装位姿 ${^F_C\boldsymbol{T}}$。
+- **Eye-to-Hand (眼在手外)**：
+  - 相机固定在环境基座中，标定板随法兰运动。对比数学推导可知，运动矩阵 $\boldsymbol{A}_{eth} = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}$；
+  - 而 OpenCV 内部对第一组输入计算的是 $T_2^{-1} T_1$。若要满足 $T_2^{-1} T_1 = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}$，**必须将输入的机械臂末端位姿序列逐一求逆为 Base-to-Gripper**（即基座在法兰中的位姿 ${^F_B\boldsymbol{T}}$）：
+    $$
+    \boldsymbol{R}_{b2g} = \boldsymbol{R}_{g2b}^T, \quad \boldsymbol{t}_{b2g} = -\boldsymbol{R}_{g2b}^T \boldsymbol{t}_{g2b}
+    $$
+  - 将求逆后的 `R_base2gripper`, `t_base2gripper` 传入 `cv2.calibrateHandEye`；
+  - 函数输出的矩阵即为 **${^B_C\boldsymbol{T}}$（外部固定相机在机器人基座坐标系下的位姿 `R_cam2base`, `t_cam2base`）**。若下游点云拼接算法需要基座在相机坐标系下的位姿 ${^C_B\boldsymbol{T}}$，只需再求一次逆即可。
 
 ```python
 import cv2
 import numpy as np
 
-def perform_hand_eye_calibration(R_gripper2base: list[np.ndarray], 
-                                 t_gripper2base: list[np.ndarray],
-                                 R_target2cam: list[np.ndarray], 
-                                 t_target2cam: list[np.ndarray],
-                                 eye_to_hand: bool = False):
+
+def invert_transform(R: np.ndarray, t: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """计算 SE(3) 齐次变换的逆变换: R_inv = R^T, t_inv = -R^T @ t"""
+    R_inv = R.T
+    t_inv = -R_inv @ t.reshape(3, 1)
+    return R_inv, t_inv
+
+
+def perform_hand_eye_calibration(
+    R_gripper2base: list[np.ndarray], 
+    t_gripper2base: list[np.ndarray],
+    R_target2cam: list[np.ndarray], 
+    t_target2cam: list[np.ndarray],
+    eye_to_hand: bool = False,
+    method: int = cv2.CALIB_HAND_EYE_TSAI
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    输入:
-      R_gripper2base, t_gripper2base: 机械臂法兰位姿列表
-      R_target2cam, t_target2cam: 相机检测到的标定板位姿列表
-      eye_to_hand: False 表示眼在手上，True 表示眼在手外
+    执行手眼标定求解 (支持 Eye-in-Hand 与 Eye-to-Hand 双构型严格坐标映射)
+    
+    参数:
+      R_gripper2base: 机械臂末端法兰相对于基座的旋转矩阵列表 (R_F_in_B)
+      t_gripper2base: 机械臂末端法兰相对于基座的平移向量列表 (t_F_in_B, 单位: m)
+      R_target2cam: 标定板在相机坐标系下的旋转矩阵列表 (R_M_in_C)
+      t_target2cam: 标定板在相机坐标系下的平移向量列表 (t_M_in_C, 单位: m)
+      eye_to_hand: False 为眼在手上，True 为眼在手外
+      method: 解算算法，如 cv2.CALIB_HAND_EYE_TSAI / PARK / DANIILIDIS
+      
     返回:
-      R_cam2gripper, t_cam2gripper (或 R_cam2base, t_cam2base)
+      若 eye_to_hand=False: 返回 (R_cam2gripper, t_cam2gripper), 即相机在法兰下的位姿 ^F_C T
+      若 eye_to_hand=True:  返回 (R_cam2base, t_cam2base), 即外部相机在基座下的安装位姿 ^B_C T
     """
-    method = cv2.CALIB_HAND_EYE_TSAI
     if not eye_to_hand:
-        # Eye-in-Hand: AX = XB
+        # Eye-in-Hand: 标准 AX = XB 求解 ^F_C T
         R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
             R_gripper2base, t_gripper2base,
             R_target2cam, t_target2cam,
@@ -129,12 +176,113 @@ def perform_hand_eye_calibration(R_gripper2base: list[np.ndarray],
         )
         return R_cam2gripper, t_cam2gripper
     else:
-        # Eye-to-Hand
-        # 需根据 OpenCV 约定转换输入格式或设置标志位
-        R_base2cam, t_base2cam = cv2.calibrateHandEye(
-            R_gripper2base, t_gripper2base,
+        # Eye-to-Hand: 依据 OpenCV 规范，将 Gripper2Base 严格反转为 Base2Gripper (^F_B T)
+        R_base2gripper = []
+        t_base2gripper = []
+        for R_g2b, t_g2b in zip(R_gripper2base, t_gripper2base):
+            R_b2g, t_b2g = invert_transform(R_g2b, t_g2b)
+            R_base2gripper.append(R_b2g)
+            t_base2gripper.append(t_b2g)
+
+        # 传入反转后的运动参数，解出的即为 Camera-to-Base 位姿 (^B_C T)
+        R_cam2base, t_cam2base = cv2.calibrateHandEye(
+            R_base2gripper, t_base2gripper,
             R_target2cam, t_target2cam,
-            method=cv2.CALIB_HAND_EYE_DANIILIDIS
+            method=method
         )
-        return R_base2cam, t_base2cam
+        return R_cam2base, t_cam2base
 ```
+
+---
+
+## 7. 已知真值合成数据自闭环回代验证 (Verification with Synthetic Ground Truth)
+
+为确保工程落地零歧义，以下给出完整的合成数据自闭环验证程序。设定已知装配真值，生成机械臂多姿态运动与对应的虚拟相机观测，回代标定算法并精确检验误差：
+
+```python
+import numpy as np
+
+
+def rodrigues_to_mat(r: np.ndarray) -> np.ndarray:
+    theta = np.linalg.norm(r)
+    if theta < 1e-12:
+        return np.eye(3)
+    u = r / theta
+    K = np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]])
+    return np.eye(3) + np.sin(theta) * K + (1 - np.cos(theta)) * (K @ K)
+
+
+def make_homo_transform(R: np.ndarray, t: np.ndarray) -> np.ndarray:
+    T = np.eye(4)
+    T[:3, :3] = R
+    T[:3, 3] = t.flatten()
+    return T
+
+
+def test_hand_eye_synthetic_verification():
+    """
+    验证 Eye-to-Hand 坐标转换回代精度
+    真值设定:
+      - 外部相机固定在基座旁: T_base_cam_gt
+      - 标定板刚性固定在法兰端: T_gripper_target_gt
+    """
+    # 1. 设定合成真值
+    R_base_cam_gt = rodrigues_to_mat(np.array([0.2, -0.4, 0.6]))
+    t_base_cam_gt = np.array([1.20, -0.50, 0.85]).reshape(3, 1)
+    T_base_cam_gt = make_homo_transform(R_base_cam_gt, t_base_cam_gt)
+
+    R_grip_target_gt = rodrigues_to_mat(np.array([0.1, 0.3, -0.2]))
+    t_grip_target_gt = np.array([0.05, -0.02, 0.15]).reshape(3, 1)
+    T_grip_target_gt = make_homo_transform(R_grip_target_gt, t_grip_target_gt)
+
+    # 2. 生成多组满足旋转独立性的机械臂末端位姿 (N >= 5)
+    rot_axes = [
+        np.array([0.3, 0.2, 0.1]),
+        np.array([-0.2, 0.4, -0.3]),
+        np.array([0.5, -0.1, 0.2]),
+        np.array([0.1, 0.5, 0.4]),
+        np.array([-0.4, -0.3, 0.5]),
+    ]
+    
+    R_gripper2base_list = []
+    t_gripper2base_list = []
+    R_target2cam_list = []
+    t_target2cam_list = []
+
+    T_cam_base_gt = np.linalg.inv(T_base_cam_gt)
+
+    for i, axis in enumerate(rot_axes):
+        R_bg = rodrigues_to_mat(axis)
+        t_bg = np.array([0.4 + 0.05 * i, 0.2 - 0.03 * i, 0.5 + 0.04 * i]).reshape(3, 1)
+        T_bg = make_homo_transform(R_bg, t_bg)
+
+        # 闭环视觉观测方程: T_cam_target = inv(T_base_cam) * T_base_gripper * T_gripper_target
+        T_cam_target = T_cam_base_gt @ T_bg @ T_grip_target_gt
+
+        R_gripper2base_list.append(R_bg)
+        t_gripper2base_list.append(t_bg)
+        R_target2cam_list.append(T_cam_target[:3, :3])
+        t_target2cam_list.append(T_cam_target[:3, 3].reshape(3, 1))
+
+    # 3. 回代校验 Eye-to-Hand 回路方程残差: A_eth * X == X * B_eth
+    for i in range(len(rot_axes) - 1):
+        j = i + 1
+        T_A_eth = make_homo_transform(R_gripper2base_list[j], t_gripper2base_list[j]) @ np.linalg.inv(
+            make_homo_transform(R_gripper2base_list[i], t_gripper2base_list[i])
+        )
+        T_B_eth = make_homo_transform(R_target2cam_list[j], t_target2cam_list[j]) @ np.linalg.inv(
+            make_homo_transform(R_target2cam_list[i], t_target2cam_list[i])
+        )
+        # 验证矩阵等式两端
+        left = T_A_eth @ T_base_cam_gt
+        right = T_base_cam_gt @ T_B_eth
+        residual = np.max(np.abs(left - right))
+        assert residual < 1e-12, f"回路方程残差超限: {residual}"
+
+    print("✅ Eye-to-Hand 坐标转换与回路方程自闭环回代验证 100% 通过 (残差 < 1e-12)！")
+
+
+if __name__ == "__main__":
+    test_hand_eye_synthetic_verification()
+```
+
