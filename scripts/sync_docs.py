@@ -39,7 +39,7 @@ def main() -> None:
             shutil.copy2(root_doc, DOCS / root_doc.name)
 
     ALLOWED_EXTENSIONS = {".md", ".svg", ".html", ".js", ".css", ".png", ".jpg", ".jpeg"}
-    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", ".git", ".agents", ".codex"}
+    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", "Career", ".git", ".agents", ".codex"}
 
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
         if not source_dir.exists():
@@ -50,8 +50,8 @@ def main() -> None:
                 continue
             if source_file.suffix.lower() not in ALLOWED_EXTENSIONS:
                 continue
-            # Security / Copyright boundary check: prevent copying excluded assets
-            if any(part in EXCLUDED_DIR_NAMES for part in source_file.parts):
+            # Security / Copyright / Privacy boundary check: prevent copying excluded assets or personal resumes
+            if any(part in EXCLUDED_DIR_NAMES for part in source_file.parts) or source_file.name.lower().startswith("resume."):
                 continue
             target_file = target_dir / source_file.relative_to(source_dir)
             target_file.parent.mkdir(parents=True, exist_ok=True)

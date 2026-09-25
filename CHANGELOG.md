@@ -8,7 +8,7 @@
 
 - 升级 `scripts/sync_docs.py`，支持 `.js`、`.css` 及静态媒体资源同步，同时设立 `EXCLUDED_DIR_NAMES` 排除边界，严格隔离未授权第三方教材扫描页与私有归档文件。
 - 初始化机器人学板块体系骨架：建立 `Engineering/Robotics/` 领域总览，创建 `Kinematics/`、`Dynamics/`、`Control/`、`ROS2/` 体系与 `LearningLab/` 交互实验区入口，全站通过 MkDocs 严格构建校验（`mkdocs build --strict`）。
-- 完成阶段 2 交互资产全量迁入：将 75 篇原生 HTML 学习页、11 个独立 JS 物理仿真台与题库引擎完整迁入 [LearningLab](Engineering/Robotics/LearningLab/index.md)，个人求职简历归入 `Engineering/Career/`。
+- 完成阶段 2 交互资产全量迁入：将 75 篇原生 HTML 学习页、11 个独立 JS 物理仿真台与题库引擎完整迁入 [LearningLab](Engineering/Robotics/LearningLab/index.md)。
 - 响应阶段 1–2 验收反馈完成整改：
   - 修复已生成网站中的全部 23 处未解析引用（解除 `archive/` 过度排除，修正 22 处指向 `.md` 源码的链接至编译后页面，修复历史大单页 31 的相对跳转）；
   - 修复 `34-pid-position-control.js` 中 `disturb` 变量未定义的运行时脚本 Bug；
