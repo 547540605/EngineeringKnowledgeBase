@@ -38,19 +38,23 @@ def main() -> None:
         if root_doc.exists():
             shutil.copy2(root_doc, DOCS / root_doc.name)
 
+    # Allowed extensions to sync into docs/
+    # Supports Markdown, interactive HTML, standalone simulation JS, stylesheets, and vector/raster graphics
+    ALLOWED_EXTENSIONS = {".md", ".svg", ".html", ".js", ".css", ".png", ".jpg", ".jpeg"}
+    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", ".git", ".agents", ".codex", "archive"}
+
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
+        if not source_dir.exists():
+            continue
         target_dir = DOCS / source_dir.name
-        for source_file in source_dir.rglob("*.md"):
-            target_file = target_dir / source_file.relative_to(source_dir)
-            target_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_file, target_file)
-
-        for source_file in source_dir.rglob("*.svg"):
-            target_file = target_dir / source_file.relative_to(source_dir)
-            target_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_file, target_file)
-
-        for source_file in source_dir.rglob("*.html"):
+        for source_file in source_dir.rglob("*"):
+            if not source_file.is_file():
+                continue
+            if source_file.suffix.lower() not in ALLOWED_EXTENSIONS:
+                continue
+            # Security / Copyright boundary check: prevent copying excluded assets
+            if any(part in EXCLUDED_DIR_NAMES for part in source_file.parts):
+                continue
             target_file = target_dir / source_file.relative_to(source_dir)
             target_file.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_file, target_file)
