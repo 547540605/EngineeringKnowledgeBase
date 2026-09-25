@@ -35,6 +35,16 @@
 <main>
   <p class="muted"><a href="00-progress.html">学习进度</a> · <a href="09-dh-single-link-transform.html">笔记 04：单段 DH 变换</a> · <a href="04-planar-two-link-forward-kinematics.html">笔记 04：二维两连杆</a></p>
   <h1>笔记 04：从 DH 表的一行，到机械臂末端</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Kinematics/DH-Table-to-Forward-Kinematics/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">DH 参数表到全局正运动学 (DH-Table-to-Forward-Kinematics) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
   <div class="card key"><strong>DH 表不是另一种计算。</strong>它只是把每一小段 <span data-tex="{}^{i-1}T_i"></span> 所需的四个数按行记下来。读一行，得到一个局部变换；按连杆顺序把这些局部变换相乘，就是正运动学。</div>
   <div class="card"><strong>这页的例子：</strong>一个平面两转动关节机械臂。两根关节轴都垂直屏幕，因此 <span data-tex="d_1=d_2=0,\alpha_1=\alpha_2=0"></span>；只有关节角 <span data-tex="q_1,q_2"></span> 变化，连杆长度 <span data-tex="L_1,L_2"></span> 固定。它正好把笔记 05 的二维两连杆，用 DH 的语言重新写一遍。</div>
 

@@ -33,6 +33,16 @@
 <body><main>
   <p class="small"><a href="00-progress.html">学习进度</a> · <a href="21-spatial-rigid-body-velocity.html">上一节：空间刚体上两点的速度</a></p>
   <h1>23. 速度递推：一节怎样把运动传给下一节</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Kinematics/Link-to-Link-Velocity-Propagation/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">连杆间速度与加速度递推外推 (Link-to-Link-Velocity-Propagation) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
   <p class="lead">上一节只研究同一根刚体杆的两点 A、B。这一页把 A 变成第一根连杆的末端、把 B 变成第二根连杆的末端：第 1 个关节转动，为什么后面两根杆都被带动；第 2 个关节转动，为什么只给末端加一份新速度。</p>
 
   <section class="derive"><p><strong>先给结论，但先按按钮看图：</strong>第 1 关节的角速度会带动 A 和 B；第 2 关节的角速度不会移动 A，却会让 B 相对 A 走切线。所谓“速度递推”，就是把前一节已经拥有的速度，传给后一节，再加上后一节自身关节造成的新速度。</p></section>

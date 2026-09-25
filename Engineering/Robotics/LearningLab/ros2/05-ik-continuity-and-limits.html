@@ -10,6 +10,14 @@
 <body><main>
   <p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="04-3r-analytic-ik.html">ROS2-04：单点解析 IK</a> · <a href="04-13-engineering-roadmap/index.html">04–13 路线</a></p>
   <h1>ROS 2 工程实战 05：IK 连续选支与关节限位</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../../Kinematics/Analytic-Inverse-Kinematics-Planar-2R/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">平面 2R 解析逆运动学双解法 (Analytic-Inverse-Kinematics-Planar-2R) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回 ROS 2 实验看板 ←</a>
+    </nav>
+
+    
+
   <p class="small">单点 IK 已经能给出两支候选解。本篇解决真正开始走路径时最危险的现象：目标只挪了一点，肘部却突然翻到另一侧。</p>
 
   <section class="card guide"><h2 style="margin-top:0;border:0;padding:0">工程痛点：数学上都对，运动上却可能很糟</h2><p>同一个目标位置通常对应两组合法关节角。若每一帧都“随便取第一组”，当候选排列、角度跨越 ±π 或限位状态改变时，控制输出就可能突然跳变。设备并不关心哪组解在纸上优雅；它只会执行你给它的关节目标。</p><p><strong>本篇原则：</strong>先留下所有合法候选，再在其中选择离上一帧关节姿态最近的一支。</p></section>

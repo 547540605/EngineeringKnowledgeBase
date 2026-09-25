@@ -42,14 +42,17 @@ $$
 对于冗余机械臂（例如 7 轴协作机械臂控制 6 自由度空间位姿，或平面 3R 机械臂控制 2 自由度末端位置），方程欠定，存在无穷多组关节速度解。
 
 ### 3.1 极小范数伪逆解 (Right Moore-Penrose Pseudoinverse)
-构建带拉格朗日乘子的凸优化问题：在满足末端速度约束的前提下，最小化关节速度欧氏范数（即瞬时动能最小）：
+构建带拉格朗日乘子的凸优化问题：在满足末端速度约束的前提下，最小化**关节速度欧氏 2-范数平方**：
 $$
-\min_{\dot{\boldsymbol{q}}} \frac{1}{2} \|\dot{\boldsymbol{q}}\|^2 \quad \text{s.t.} \quad \boldsymbol{J} \dot{\boldsymbol{q}} = \boldsymbol{v}_e
+\min_{\dot{\boldsymbol{q}}} \frac{1}{2} \|\dot{\boldsymbol{q}}\|^2 = \frac{1}{2} \dot{\boldsymbol{q}}^T \dot{\boldsymbol{q}} \quad \text{s.t.} \quad \boldsymbol{J} \dot{\boldsymbol{q}} = \boldsymbol{v}_e
 $$
 推导出右伪逆（Right Pseudoinverse）：
 $$
 \dot{\boldsymbol{q}} = \boldsymbol{J}^\dagger \boldsymbol{v}_e = \boldsymbol{J}^T (\boldsymbol{J} \boldsymbol{J}^T)^{-1} \boldsymbol{v}_e
 $$
+
+> **数学与物理边界辨析（重要）**：
+> 最小化欧氏范数 $\|\dot{\boldsymbol{q}}\|^2$ 仅意味着各关节角速度的平方和最小，**在物理上一般不等价于机械臂瞬时动能最小**。真实系统的瞬时动能由机械臂质量矩阵度量：$T = \frac{1}{2} \dot{\boldsymbol{q}}^T \boldsymbol{M}(\boldsymbol{q}) \dot{\boldsymbol{q}}$。只有当机械臂质量矩阵恰好退化为单位矩阵的标量倍（$\boldsymbol{M} = m \boldsymbol{I}$）时，两者才重合。若在动力学优化中追求严格的瞬时动能极小化，必须采用以惯性矩阵为权重的**加权伪逆 (Inertia-Weighted Pseudoinverse)**：$\boldsymbol{J}_M^\dagger = \boldsymbol{M}^{-1} \boldsymbol{J}^T (\boldsymbol{J} \boldsymbol{M}^{-1} \boldsymbol{J}^T)^{-1}$。
 
 ---
 

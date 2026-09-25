@@ -47,7 +47,9 @@ $$
 - $\sigma_1 \ge \sigma_2 \ge \cdots \ge \sigma_m \ge 0$ 为奇异值，指示**椭球各主轴的半长轴长度**；
 - $\boldsymbol{V} = [\boldsymbol{v}_1, \cdots, \boldsymbol{v}_n]$ 为关节空间的输入正交基。
 
-> **物理直观**：在 $\boldsymbol{u}_1$（最大奇异值对应方向）上，机械臂移动最敏捷、加速度最高；在 $\boldsymbol{u}_m$（最小奇异值对应方向）上，末端运动最迟钝。若 $\sigma_m = 0$，椭球退化扁平，即发生奇异！
+> **物理直观**：在 $\boldsymbol{u}_1$（对应最大奇异值 $\sigma_1$ 的方向）上，单位关节速度输入能够产生最大的末端线速度，即机构在该方向的速度传递增益最高；在 $\boldsymbol{u}_m$（对应最小奇异值 $\sigma_m$ 的方向）上，末端线速度传递增益最低。若 $\sigma_m = 0$，椭球在 $\boldsymbol{u}_m$ 方向退化扁平，即发生运动学奇异！
+> 
+> *注：速度椭球仅衡量一阶运动学速度映射，不可直接外推为末端加速度；机械臂真实的末端加速度输出能力还受到各轴电机峰值扭矩与质量矩阵约束，需由结合动力学的动态可操作度椭球（Dynamic Manipulability Ellipsoid, 基于 $\boldsymbol{J}\boldsymbol{M}^{-1}$）统领。*
 
 ---
 

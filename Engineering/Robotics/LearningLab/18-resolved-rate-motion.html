@@ -31,6 +31,16 @@
 <body><main>
   <p class="small"><a href="00-progress.html">学习进度</a> · <a href="17-planar-inverse-velocity.html">笔记 04：逆速度运动学</a></p>
   <h1>19. 用逆速度让末端一步步靠近目标</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Kinematics/Resolved-Rate-Motion-Control/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">速度分解运动控制 CLIK (Resolved-Rate-Motion-Control) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
   <p class="lead">笔记 04 只回答了一个瞬间：<em>此刻</em>想让末端朝某个方向走，关节该多快转。现在把这个瞬时关系放进一个很小的时间步里，就得到最基础的“末端往目标走”的控制过程。</p>
   <section class="card"><h2>resolved-rate 运动到底是什么</h2><p><strong>resolved-rate motion</strong> 常被叫作“速度分解控制”。它不是多了一个新的位置或角度，而是一种<strong>重复执行的小步方法</strong>：先决定末端现在该往哪儿、以多快走，再把这一个末端速度分解成每个关节此刻该有的角速度。</p><span class="math" data-tex="\underbrace{e=g-p(q)}_{\text{还差多远}}\ \longrightarrow\ \underbrace{\dot p_{\mathrm{desired}}=ke}_{\text{末端现在该怎么走}}\ \longrightarrow\ \underbrace{\dot q=J(q)^{-1}\dot p_{\mathrm{desired}}}_{\text{各关节现在该转多快}}\ \longrightarrow\ \underbrace{q_{\mathrm{next}}\approx q+\dot q\Delta t}_{\text{前向欧拉法：只走一小步}}"></span><p><strong>rate</strong> 就是“随时间的变化率”，也就是速度；<strong>resolved</strong> 指把一个末端速度“拆解/分配”为多个关节速度。最后这一步的“前向欧拉法（Forward Euler method）”是数值计算里的标准方法，不是机器人学私造的公式：把当前瞬间的 <span data-tex="\dot q"></span> 暂时当作在极短时间 <span data-tex="\Delta t"></span> 内不变，于是角度增量近似为 <span data-tex="\Delta q\approx\dot q\Delta t"></span>。走完一小步后，当前位置和误差都变了，所以再从第一步重新算。这就是它和笔记 18 的区别：笔记 18 只解一次 <span data-tex="\dot q=J^{-1}\dot p"></span>；本页把这件事循环使用，让末端逐渐靠近目标。</p><p>因此自测题里的 <span data-tex="e=g-p(q)"></span> 只是这一轮计算的<strong>第一步</strong>：<span data-tex="g"></span> 是目标末端位置，<span data-tex="p(q)"></span> 是当前末端位置，所以 <span data-tex="e"></span> 是“从当前点指向目标点，还差多少”的位置误差，不是关节角误差。</p></section>
   <div class="lesson">

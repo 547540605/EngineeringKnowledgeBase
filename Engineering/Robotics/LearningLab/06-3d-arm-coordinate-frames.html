@@ -23,6 +23,16 @@
         
   </style></head>
 <body><main><p class="small"><a href="00-progress.html">学习进度</a> · <a href="05-3d-single-axis-rotations.html">笔记 04：三维单轴旋转（前置）</a></p><h1>笔记 04：三维机械臂与局部坐标系</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Kinematics/Spatial-Arm-Coordinate-Assignment/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">空间机械臂坐标系分配准则 (Spatial-Arm-Coordinate-Assignment) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
 <div class="card"><strong>这一页只解决一个问题：</strong>每个关节转动时，后面的连杆与坐标系为什么会一起动？答案是：它们被固定在同一个<strong>局部坐标系</strong>上。</div>
 <h2>自由观察三维机械臂</h2><p class="small">拖动画面旋转视角，滚轮缩放。所有坐标系与三个紫色关节角扇形始终同时显示；调任一关节角时，只更新对应角扇形的大小；每套坐标系使用图例中自己的颜色，轴上只标 x、y、z。</p><div class="card"><strong>先认准编号：</strong><span data-tex="\{0\}"></span> 固定在基座；<span data-tex="\{1\}"></span> 也在基座原点，只是经过第 1 关节转角 <span data-tex="q_1"></span> 后方向不同；<span data-tex="\{2\}"></span>、<span data-tex="\{3\}"></span> 分别在第二、第三关节；最右端标为 E。故 <span data-tex="{}^0T_1"></span> 的第四列为零，而 <span data-tex="a_1,a_2,a_3"></span> 从后面的局部变换第四列出现。</div><div class="card"><strong>紫色角扇形就是当前关节角：</strong>每处都有一根从关节出发的<strong>零位射线</strong>、一根<strong>当前射线</strong>，中间的弧精确按当前 <span data-tex="q_1,q_2,q_3"></span> 数值绘制。它们都是<strong>绕对应关节的蓝色局部 z 轴</strong>转过的有向角，而不是屏幕上的夹角；箭头按右手定则给出正方向。对应关系为 <span data-tex="q_1:\{0\}\to\{1\}"></span>、<span data-tex="q_2:\{1\}\to\{2\}"></span>、<span data-tex="q_3:\{2\}\to\{3\}"></span>。</div>
 <div class="lab"><div><div id="view" class="viewport" role="img" aria-label="具有三个关节和局部坐标系的三维机械臂"></div><div class="legend"><span><i class="dot" style="background:#f44336"></i>坐标系 {0}</span><span><i class="dot" style="background:#ffb300"></i>坐标系 {1}</span><span><i class="dot" style="background:#00bcd4"></i>坐标系 {2}</span><span><i class="dot" style="background:#ab47bc"></i>坐标系 {3}</span><span><i class="dot" style="background:#8bc34a"></i>末端坐标系 {E}</span><span><i class="dot" style="background:#e6a400"></i>机械臂连杆</span></div></div><div class="card"><div id="controls" class="controls"></div><button id="reset" class="reset" type="button">关节角归零</button><p id="state" class="small"></p></div></div>

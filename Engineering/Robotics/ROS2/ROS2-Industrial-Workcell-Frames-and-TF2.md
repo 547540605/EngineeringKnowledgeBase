@@ -5,7 +5,7 @@
 - **学科体系**：Engineering / Robotics / ROS2 (工业软件工程与空间几何管理)
 - **上游先修**：[运动学坐标变换链与多系复合](../Kinematics/Kinematic-Transformation-Chains.md)、[空间机械臂坐标系分配准则](../Kinematics/Spatial-Arm-Coordinate-Assignment.md)
 - **并列概念**：URDF / Xacro 机械臂连杆树
-- **下游应用**：[MoveIt 2 运动规划架构](MoveIt2-Motion-Planning-Architecture.md)、[TCP 工具中心点与手眼标定](TCP-and-Hand-Eye-Calibration.md)
+- **下游应用**：[MoveIt 2 运动规划架构](MoveIt2-Motion-Planning-Architecture.md)、[工具中心点 TCP 标定](TCP-Calibration-Four-Point-Method.md)、[手眼标定算法](Hand-Eye-Calibration-Eye-in-Hand-and-Eye-to-Hand.md)
 - **配套实验室**：[ROS 2 实验 10：TF2 工作站坐标拓扑管理 (LearningLab)](../LearningLab/ros2/10-tf2-workcell-frames.html)、[ROS 2 实验 02：URDF 机械臂建模](../LearningLab/ros2/02-urdf-and-arm-modeling.html)
 
 ---

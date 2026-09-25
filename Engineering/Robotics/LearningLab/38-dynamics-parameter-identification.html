@@ -4,6 +4,16 @@
 </style></head><body><main>
 <p class="crumb"><a href="00-progress.html">动力学与控制进度</a> · <a href="32-two-link-dynamics-structure.html">32：动力学结构</a> · <a href="35-computed-torque-control.html">35：CTC</a> · <a href="37-two-link-closed-loop-simulation.html">37：数值闭环</a> · 38：参数辨识</p>
 <h1>笔记 38：CTC 的模型从哪里来？——动力学参数辨识与独立残差验证</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Dynamics/Dynamics-Parameter-Identification-Regression/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">动力学参数线性回归辨识 (Dynamics-Parameter-Identification-Regression) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
 <p class="muted">37 已经展示：模型质量有偏差时，CTC 仍要靠反馈补救。工程上不能只说“把模型调准”，而要回答：记录了什么数据、哪些参数真的能从数据里区分、激励轨迹是否足够、拟合后的模型有没有在未见数据上变好。</p>
 
 <section class="card guide"><h2 style="margin-top:0;border:0;padding:0">辨识不是调一个神秘增益，而是闭合一条数据证据链</h2><span class="formula">受控激励轨迹 + 同步的 q,q̇,q̈,τ → 回归模型 → 参数 θ̂ → 未参与拟合的数据残差 → 决定是否可用于前馈</span><p>若只在一段数据上把误差调小，可能只是记住了那段运动。真正有用的模型必须在不同姿态、速度、加速度或负载条件下仍能解释主要力矩趋势。</p></section>

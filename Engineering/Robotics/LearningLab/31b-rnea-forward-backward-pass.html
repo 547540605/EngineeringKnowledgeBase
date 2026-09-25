@@ -4,6 +4,16 @@
 </style></head><body><main>
 <p class="crumb"><a href="00-progress.html">动力学进度</a> · <a href="31a-newton-euler-force-balance.html">31a：单连杆 F、N</a> · 31b：RNEA 双向递推</p>
 <h1>笔记 31b：从末端回收负担，递归得到每个关节力矩</h1>
+    <!-- 📚 知识图谱双向回链导航条 -->
+    <nav class="kb-backlink-nav" style="margin: 14px 0 20px; padding: 10px 16px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.92rem;">
+      <span style="color: #cbd5e1;">📚 对应知识图谱专题：<a href="../Dynamics/RNEA-Outward-Inward-Two-Passes/index.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">递归牛顿-欧拉算法 RNEA (RNEA-Outward-Inward-Two-Passes) ↗</a></span>
+      <a href="00-progress.html" style="color: #94a3b8; text-decoration: none; font-size: 0.86rem;">返回实验区看板 ←</a>
+    </nav>
+
+    
+
+    
+
 <p class="muted">31a 已经算出“每根连杆自己为了加速而需要的惯性力 <code>Fᵢ</code> 与惯性矩 <code>Nᵢ</code>”。但关节 1 还要承担后面所有连杆和工具的负担。RNEA 的核心价值，就是用两遍线性递推把这件事算出来，而不是为每一种连杆数手推一套巨型方程。</p>
 
 <section class="card guide"><h2 style="margin-top:0;border:0;padding:0">本篇地图：外推知道“每根杆怎样动”，内推知道“上游要扛多少”</h2><div class="steps"><div><b>外推 0→n：</b>把基座运动、关节速度/加速度逐节传到末端，得到每节 <code>ωᵢ, ω̇ᵢ, aᵢ, a_Cᵢ</code>。</div><div><b>局部动力学：</b>31a 用 <code>a_Cᵢ, ωᵢ, ω̇ᵢ</code> 算 <code>Fᵢ,Nᵢ</code>。</div><div><b>内推 n→1：</b>末端负载和下游连杆的力/力矩逐节旋转、平移回父连杆，叠加本节 <code>Fᵢ,Nᵢ</code>。</div><div><b>轴投影：</b>每节总力矩沿该关节转轴的分量，才是标量电机力矩 <code>τᵢ</code>。</div></div></section>

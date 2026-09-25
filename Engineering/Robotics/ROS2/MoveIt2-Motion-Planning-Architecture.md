@@ -101,10 +101,16 @@ void plan_and_execute(rclcpp::Node::SharedPtr node) {
     bool success = (move_group.plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
     
     if (success) {
-        RCLCPP_INFO(node->get_logger(), "规划成功，开始执行轨迹...");
-        move_group.execute(my_plan);
+        RCLCPP_INFO(node->get_logger(), "规划成功，发送轨迹至 ros2_control 控制器栈执行...");
+        // 关键工业规范：规划成功 != 执行成功，必须严格校验 execute 返回状态
+        auto exec_result = move_group.execute(my_plan);
+        if (exec_result == moveit::core::MoveItErrorCode::SUCCESS) {
+            RCLCPP_INFO(node->get_logger(), "轨迹执行顺利完成，末端到达目标容差。");
+        } else {
+            RCLCPP_ERROR(node->get_logger(), "轨迹执行失败或中断！错误码: %d（可能原因: 跟踪误差超限、被高优先级任务抢占或急停）", exec_result.val);
+        }
     } else {
-        RCLCPP_ERROR(node->get_logger(), "规划失败：目标位姿不可达或存在碰撞！");
+        RCLCPP_ERROR(node->get_logger(), "规划失败：目标位姿不可达、逆解无解或存在碰撞！");
     }
 }
 ```

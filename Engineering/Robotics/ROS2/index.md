@@ -21,8 +21,9 @@ Engineering/Robotics/ROS2/
 ├── 3. 硬件抽象与实时控制
 │   └── ros2_control 硬件接口抽象与实时控制栈 (ROS2-Control-Hardware-Interface-Abstraction)
 │
-└── 4. 空间度量与工业标定
-    └── 机器人 TCP 标定与手眼标定工程算法 (TCP-and-Hand-Eye-Calibration)
+├── 4. 空间度量与工业标定
+│   ├── 工具中心点 (TCP) 标定算法与精度评测 (TCP-Calibration-Four-Point-Method)
+│   └── 机器人手眼标定算法：眼在手上与眼在手外 (Hand-Eye-Calibration-Eye-in-Hand-and-Eye-to-Hand)
 ```
 
 ---
@@ -42,12 +43,14 @@ Engineering/Robotics/ROS2/
 ### 第三模块 · 硬件抽象与实时控制
 
 3. [ros2_control 硬件接口抽象与实时控制栈 (ROS2-Control-Hardware-Interface-Abstraction)](ROS2-Control-Hardware-Interface-Abstraction.md)  
-   *Controller Manager、Command/State 接口强类型借出独占机制、1kHz 实时线程内核安全铁律（零 malloc、零阻塞 I/O）。*
+   *Controller Manager、Command/State 接口强类型借出独占机制、可配置控制循环频率 `update_rate` 与硬实时内核安全铁律。*
 
 ### 第四模块 · 空间度量与工业标定
 
-4. [机器人 TCP 标定与手眼标定工程算法 (TCP-and-Hand-Eye-Calibration)](TCP-and-Hand-Eye-Calibration.md)  
-   *工具尖点四点法最小二乘解耦求解、眼在手上 (Eye-in-Hand) 与眼在手外 (Eye-to-Hand) 变换矩阵方程 $AX=XB$ 与 Tsai-Lenz 解法。*
+4. [工具中心点 (TCP) 标定算法与精度评测 (TCP-Calibration-Four-Point-Method)](TCP-Calibration-Four-Point-Method.md)  
+   *工具尖点四点法最小二乘线性代数求解、六点法姿态标定、拟合残差球 RMSE 精度评估。*
+5. [机器人手眼标定算法：眼在手上与眼在手外 (Hand-Eye-Calibration-Eye-in-Hand-and-Eye-to-Hand)](Hand-Eye-Calibration-Eye-in-Hand-and-Eye-to-Hand.md)  
+   *眼在手上 (Eye-in-Hand: $AX=XB$) 与眼在手外 (Eye-to-Hand: $AX=YB$) 闭环回路推导、Tsai-Lenz 旋转平移解耦解法与纯平移退化规避。*
 
 ---
 

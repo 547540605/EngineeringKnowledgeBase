@@ -32,7 +32,7 @@
 │                                                                                     │
 │  Hardware Component (硬件插件：System / Actuator / Sensor Interface)                │
 └─────────────────────────────────────────┬───────────────────────────────────────────┘
-                                          │  实时控制更新循环 (1 kHz / 1 ms)
+                                          │  实时控制更新循环 (依据 update_rate 配置：如 100~1000 Hz)
                                           ▼
                                底层物理伺服 (EtherCAT / CANopen / USB-CAN)
 ```
@@ -75,13 +75,20 @@
 
 ---
 
-## 4. 硬实时安全准则 (Real-Time Safety Rules)
+## 4. 控制循环频率配置与实时安全铁律 (Real-Time Safety Rules)
 
-在运行频率为 1 kHz（周期 1 ms）的实时控制更新函数 `read()` 与 `write()` 中，必须严格遵守以下**内核安全铁律**：
+在 `controller_manager` 的参数配置中，控制循环的主频通过参数 `update_rate` 显式指定（例如工业 EtherCAT 伺服常设为 `500` 或 `1000` Hz，而 CANopen/串口总线常设为 `100`~`250` Hz）：
+```yaml
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # 控制循环基准频率 (Hz)，周期 = 1/update_rate 秒
+```
 
-1. **零动态内存分配**：严禁在 `update()` 中调用 `malloc`、`free`、`new`、`delete` 或使用引起内存重分配的 `std::vector::push_back`；
-2. **零阻塞式系统调用与 I/O**：严禁在循环内执行文件读写、打印控制台日志（如 `printf`、`std::cout`，必须使用基于无锁环形队列的实时日志 `RCLCPP_INFO_THROTTLE`）；
-3. **无锁通信机制 (Lock-Free)**：非实时线程（如 ROS 话题订阅）与实时控制线程之间的数据交换，必须采用无锁环形缓冲区（`realtime_tools::RealtimeBox` 或 `realtime_tools::RealtimeBuffer`），严禁使用互斥锁 `std::mutex`（防止发生优先级反转 Priority Inversion）。
+在由主循环定时触发的实时更新函数 `read()`、`update()` 与 `write()` 中，必须严格遵守以下**内核实时安全铁律**：
+
+1. **零动态内存分配**：严禁在实时主循环中调用 `malloc`、`free`、`new`、`delete` 或使用引起堆内存动态重扩容的容器操作（如 `std::vector::push_back`），必须在组件 `on_init()` 或 `on_configure()` 生命周期阶段预分配固定大小的内存；
+2. **零阻塞式系统调用与 I/O**：严禁在循环内执行磁盘文件读写、标准输出控制台打印（如 `printf`、`std::cout`，若需记录状态必须使用非阻塞无锁环形队列驱动的实时日志宏 `RCLCPP_INFO_THROTTLE`）；
+3. **无锁通信机制 (Lock-Free Inter-Thread Communication)**：非实时异步线程（如 ROS 话题/动作服务）与实时内核线程之间的数据交换，必须采用无锁数据结构（如 `realtime_tools::RealtimeBox` 或 `realtime_tools::RealtimeBuffer`），严禁使用互斥锁 `std::mutex`（防止发生低优先级线程阻塞实时线程的优先级反转 Priority Inversion 风险）。
 
 ---
 
