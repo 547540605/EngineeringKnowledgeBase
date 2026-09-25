@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 2 工程实战 12：MoveIt 位姿规划与碰撞场景</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1080px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}.crumb a,a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.step{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start;margin:12px 0}.n{height:32px;width:32px;display:grid;place-items:center;border-radius:50%;background:#283452;color:#e7ddff;font-weight:800}.table{border-collapse:collapse;width:100%}.table th,.table td{border-bottom:1px solid var(--l);text-align:left;vertical-align:top;padding:10px}.table th{color:var(--b);white-space:nowrap}.code{white-space:pre;overflow:auto;background:#050914;border:1px solid var(--l);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.6 ui-monospace,Consolas,monospace}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.flow span{border:1px solid var(--l);background:var(--p2);padding:8px 10px;border-radius:7px}.arrow{color:var(--v)}@media(max-width:760px){main{padding:22px 14px}.grid{grid-template-columns:1fr}.table{font-size:.9rem}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="11-six-axis-moveit-config.html">ROS2-11：六轴描述与配置</a> · <a href="04-13-engineering-roadmap.md">04–13 路线</a></p>
+<h1>ROS 2 工程实战 12：MoveIt 位姿规划与碰撞场景</h1><p class="muted">这一篇的产物不是“机械臂动了一下”，而是一条你能审查的无碰撞候选路径：它从哪个当前状态出发、要让哪个 TCP 达到什么位姿、避开哪些物体、为什么可以或不可以执行。</p>
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">先把整个请求链看成五个可检查节点</h2><div class="flow"><span>当前 robot state</span><b class="arrow">→</b><span>目标 Pose / constraints</span><b class="arrow">→</b><span>IK 候选</span><b class="arrow">→</b><span>碰撞 + 路径搜索</span><b class="arrow">→</b><span>trajectory（计划结果）</span></div><p><strong>MoveIt 不是替代 IK 的按钮。</strong>它会在目标求解、约束、碰撞场景与路径搜索之间协调。规划成功表示“找到一条在当前模型和场景下合法的路径”；不等于已经发给硬件执行。真实/假硬件执行会在 ROS2-13 进入控制器层。</p></section>
+<h2>1. 四个对象的关系：先别把它们都叫“目标”</h2><table class="table"><thead><tr><th>对象</th><th>它是什么</th><th>本篇里怎样验证</th></tr></thead><tbody><tr><td>Robot State</td><td>此刻每个关节的位置；规划的起点</td><td>从 joint states/当前状态取，不凭空假设 home</td></tr><tr><td>Pose Goal</td><td><code>tool0</code> 在某个 frame 下的位置 + 朝向容差</td><td>检查目标 frame、TCP link、单位、姿态四元数</td></tr><tr><td>Planning Scene</td><td>机器人、工位几何、允许/禁止碰撞规则的快照</td><td>RViz 中看到桌、箱体、围栏；碰撞查询有依据</td></tr><tr><td>RobotTrajectory</td><td>关节位置随时间的序列</td><td>在 RViz DisplayTrajectory 里预览，再决定是否执行</td></tr></tbody></table>
+<section class="card warn"><strong>最常见的语义错误：</strong>把目标写成“世界坐标的 x/y/z”，但没说明 TCP、参考 frame 与姿态；或者从 RViz 拖动 marker 看到一条动画，就以为已经安全执行。前者目标不完整，后者只是可视化预览。</section>
+<h2>2. 用 RViz 做第一轮：每次只增加一个变量</h2><div class="grid"><section class="card"><h3>第一轮：没有障碍物</h3><ol><li>选择正确的 Planning Group；</li><li>确认 End Effector Link 为 <code>tool0</code>；</li><li>设一个附近的 Pose Goal；</li><li>Plan，查看成功/失败与轨迹；</li><li>只在 fake hardware 下才允许 Execute。</li></ol><p>这一轮只验证模型、IK 和规划管线连通。</p></section><section class="card"><h3>第二轮：加入一个桌面 box</h3><ol><li>以 <code>base_link</code> 为参考添加 box；</li><li>让直觉上的“直达”路径穿过它；</li><li>重新 Plan，观察路径绕开或报告无解；</li><li>移动/移除 box 后再 Plan，对比结果。</li></ol><p>这一轮验证 Planning Scene 真正参与了规划。</p></section></div>
+<h2>3. 从程序视角理解：Plan 和 Execute 是两道闸</h2><pre class="code"># 伪代码：方法名随 MoveItPy / MoveItCpp API 版本略有不同，语义不变。
+arm.set_start_state_to_current_state()       # 起点来自当前关节状态
+arm.set_pose_target(target_pose, "tool0")   # target_pose.header.frame_id 必须明确
+
+plan = arm.plan()                            # 只计算，不驱动电机
+if not plan.success:
+    report(plan.error_code)                  # 不要盲目重试；查可达性/碰撞/约束
+preview_in_rviz(plan.trajectory)
+
+# 仅确认场景、起点没有变化，并且当前是 fake/授权硬件时：
+# arm.execute(plan.trajectory)               # ROS2-13 再接入执行层</pre>
+<div class="grid"><section class="card"><h3>MoveItPy 与 MoveItCpp</h3><p><strong>MoveItPy</strong> 是 Python 接口；<strong>MoveItCpp</strong> 是 C++ 接口。两者都在调用 MoveIt 的规划能力，差别是宿主语言/API，并非一套“Python MoveItCpp”。本阶段先选一种跟通，不混写。</p></section><section class="card"><h3>失败要能归类</h3><ul><li>IK 不可达：目标姿态/位置超出工作空间；</li><li>碰撞：目标或路径进入了场景物体；</li><li>约束过紧：容差几乎不允许任何解；</li><li>起点不新鲜：真实 joint state 与规划起点不一致；</li><li>超时：搜索空间或规划参数需要调整。</li></ul></section></div>
+<h2>4. 直线 Cartesian Path 不是“Pose Goal 自动直线”</h2><p>普通 Pose planning 的目标是“到达”，关节空间路径不承诺 TCP 在笛卡尔空间走直线。若工艺要求直线，需要给一串笛卡尔 waypoints，再要求 MoveIt 按小步长求解。</p><pre class="code">waypoints = [start_pose, pose_at_25_percent, pose_at_50_percent,
+             pose_at_75_percent, target_pose]
+trajectory, fraction = arm.compute_cartesian_path(
+    waypoints, eef_step=0.005, jump_threshold=...)
+
+if fraction &lt; 1.0:
+    # 这不是“差一点就无所谓”：说明只有前 fraction 段被成功计算。
+    # 禁止把未完成轨迹当成完整工艺路径执行。
+    inspect_joint_limit_collision_or_singularity()</pre>
+<section class="card ok"><strong>本篇验收：</strong>你能在 RViz 中创建一个明确 frame 下的 <code>tool0</code> Pose 目标；对同一个目标分别在“无障碍/有桌面障碍”场景中规划；并能说清普通规划的到达路径与 Cartesian path 的直线要求不是同一件事。下一篇才把已批准的轨迹交给 ros2_control 执行并监测结果。</section>
+</main></body></html>

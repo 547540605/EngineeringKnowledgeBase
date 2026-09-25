@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>笔记 35：计算力矩控制 CTC</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1120px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.formula{display:block;text-align:center;background:#080e1b;border:1px solid var(--l);border-radius:10px;padding:13px;margin:13px 0;overflow:auto;font:16px/1.7 ui-monospace,Consolas,monospace}.table{border-collapse:collapse;width:100%}.table th,.table td{padding:10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:top}.table th{color:var(--b);white-space:nowrap}.lab{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px}.controls{display:grid;gap:10px}.control{background:var(--p2);border:1px solid var(--l);border-radius:8px;padding:10px}.row{display:grid;grid-template-columns:1fr 74px;gap:8px;align-items:center;margin:6px 0}.row input{grid-column:1/-1;width:100%;accent-color:var(--b)}output{background:#050914;border-radius:5px;padding:3px 6px;text-align:right;font:700 .9rem ui-monospace,Consolas,monospace}.stage{background:#060b15;border:1px solid var(--l);border-radius:10px;overflow:hidden}.stage canvas{display:block;width:100%;height:auto}.legend{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--l);font-size:.85rem;color:var(--m)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{background:#081222;border:1px solid var(--l);border-radius:8px;padding:10px}.metric b{display:block;color:var(--m);font-size:.8rem}.metric output{display:block;background:none;padding:2px 0;text-align:left;font-size:1.03rem}.term{border-left:4px solid var(--color);padding:10px 12px;background:var(--p2);border-radius:7px;margin:8px 0}.term b{color:var(--color)}details{background:#0b1425;border:1px solid var(--l);border-radius:8px;padding:10px 13px;margin:10px 0}summary{cursor:pointer;font-weight:700;color:#dceaff}@media(max-width:800px){main{padding:22px 14px}.grid,.lab{grid-template-columns:1fr}.table{font-size:.9rem}}@media(max-width:450px){.numbers{grid-template-columns:1fr}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">动力学与控制进度</a> · <a href="32-two-link-dynamics-structure.html">32：M/h/g</a> · <a href="33-trajectory-time-laws.html">33：轨迹</a> · <a href="34-pid-position-control.html">34：PID</a> · 35：CTC</p>
+<h1>笔记 35：计算力矩控制——先预估“需要多少力矩”，再用反馈收尾</h1>
+<p class="muted">两连杆高速协同运动时，关节 1 的力矩会受关节 2 姿态、速度、加速度和重力影响。只靠 PID 可以纠错，但它必须等偏差出现后才行动。计算力矩控制（Computed Torque Control, CTC）把已知的动力学模型作为前馈：在误差还没有产生时，先给出大致正确的努力量。</p>
+
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">四张笔记在这里第一次闭环</h2><span class="formula">33: (q_d,q̇_d,q̈_d) + 32: M,h,g + 34: 误差 PD  →  τ_cmd  →  两连杆实际状态 (q,q̇)</span><p>这不是四套独立公式：33 提供“希望怎么动”，32 说明“这种运动需要承担哪些惯性、耦合和重力”，34 提供“模型不准时如何拉回”。</p></section>
+
+<h2>1. 从两连杆动力学式开始，而不是背一条新控制律</h2>
+<span class="formula">M(q)q̈ + h(q,q̇) + g(q) = τ</span>
+<table class="table"><thead><tr><th>动力学量</th><th>32 中的意义</th><th>CTC 怎么用</th></tr></thead><tbody>
+<tr><td><code>M(q)</code></td><td>构型相关的惯性矩阵</td><td>把“希望的虚拟加速度”换算成对应力矩。</td></tr>
+<tr><td><code>h(q,q̇)</code></td><td>速度耦合项（常写作 C(q,q̇)q̇）</td><td>提前抵消运动中可预测的耦合负担。</td></tr>
+<tr><td><code>g(q)</code></td><td>重力矩</td><td>提前托住当前姿态的负载，而不是等它下垂后用误差拉回。</td></tr>
+<tr><td><code>q_d,q̇_d,q̈_d</code></td><td>33 的连续参考轨迹</td><td>定义要实现的运动，而不只是终点位置。</td></tr>
+</tbody></table>
+
+<h2>2. CTC 控制律：模型前馈 + 误差反馈</h2>
+<p>取 <code>e=q_d-q</code> 与 <code>ė=q̇_d-q̇</code>，先构造一个虚拟加速度：</p>
+<span class="formula">v = q̈_d + K_d ė + K_p e</span>
+<p>再通过模型把它转换成关节力矩：</p>
+<span class="formula">τ_CTC = M̂(q)v + ĥ(q,q̇) + ĝ(q)</span>
+<div class="grid"><section class="card ok"><h3>模型完全正确时，发生什么？</h3><p>若 <code>M̂=M, ĥ=h, ĝ=g</code>，代回真实动力学式可得：</p><span class="formula">ë + K_d ė + K_p e = 0</span><p>原本互相耦合的非线性二连杆，误差动力学被近似整理成两个可按二阶系统理解的闭环通道。</p></section><section class="card warn"><h3>帽子（^）为什么不能省略？</h3><p>控制器手中的是估计模型，不是上帝视角。负载变化、摩擦、装配误差和柔性都会造成 <code>M̂,ĥ,ĝ</code> 与真实对象不同；所以 CTC 必须保留反馈和全部限幅，不能把前馈当成安全保证。</p></section></div>
+
+<h2>3. 纯 PD 与 CTC 的分工差异</h2>
+<div class="grid"><section class="card"><h3>纯 PD</h3><span class="formula">τ_PD = K_p e + K_d ė</span><p>不显式知道重力和耦合。遇到未知扰动也能靠偏差纠正，但通常要允许更大误差或更激进的增益，才换来同等的跟踪。</p></section><section class="card"><h3>CTC</h3><span class="formula">τ_CTC = 前馈(M̂,ĥ,ĝ) + M̂(K_pe+K_dė)</span><p>用模型处理可预测部分，用 PD 处理模型残差。优势不是“永远精确”，而是让反馈不必独自扛全部动力学负担。</p></section></div>
+<div class="term" style="--color:#fbbf24"><b>别混淆：</b>CTC 中的 <code>M̂(q)</code> 不只乘 <code>q̈_d</code>；它还乘反馈生成的 <code>K_d ė+K_p e</code>。若只写 <code>M̂q̈_d+ĥ+ĝ+K_pe+K_dė</code>，量纲虽可拼出来，但反馈增益与不同姿态惯量之间的关系已被改变。</div>
+
+<h2>4. 交互对照：同一条两关节轨迹，为什么前馈会有帮助</h2>
+<section class="lab card"><div class="controls"><div class="control"><h3>反馈增益（两关节相同）</h3><div class="row"><label for="kp">Kp</label><output id="kpo"></output><input id="kp" type="range" min="4" max="100" step="2" value="32"></div><div class="row"><label for="kd">Kd</label><output id="kdo"></output><input id="kd" type="range" min="1" max="32" step="1" value="10"></div></div><div class="control"><h3>真实负载与控制器模型</h3><div class="row"><label for="payload">真实小臂/负载质量倍数</label><output id="payloado"></output><input id="payload" type="range" min="0.5" max="2.5" step="0.1" value="1"></div><div class="row"><label for="mismatch">模型质量偏差</label><output id="mismatcho"></output><input id="mismatch" type="range" min="-50" max="50" step="5" value="0"></div><div class="row"><label for="limit">每关节 |τ| 上限</label><output id="limito"></output><input id="limit" type="range" min="8" max="80" step="2" value="40"></div></div><p class="small">蓝线=纯 PD，绿线=CTC；虚线=参考。教学模型为竖直平面 2R，包含 32 的 M/h/g，不代表任意真实机器人。将模型偏差调大，观察前馈为何不能脱离反馈独立工作。</p></div><div class="stage"><canvas id="plot" width="800" height="720" aria-label="两连杆纯PD和计算力矩控制跟踪对照"></canvas><div class="legend"><span><i class="dot" style="background:#a78bfa"></i>参考 q_d</span><span><i class="dot" style="background:#38bdf8"></i>纯 PD</span><span><i class="dot" style="background:#34d399"></i>CTC</span><span>三图：q₁、q₂、关节误差范数 ‖e‖₂。</span></div></div></section>
+<section class="card"><div class="numbers"><div class="metric"><b>纯 PD 最大 ‖e‖₂</b><output id="pdPeak">—</output></div><div class="metric"><b>CTC 最大 ‖e‖₂</b><output id="ctcPeak">—</output></div><div class="metric"><b>纯 PD 饱和次数</b><output id="pdSat">—</output></div><div class="metric"><b>CTC 饱和次数</b><output id="ctcSat">—</output></div><div class="metric"><b>当前解释</b><output id="hint">—</output></div><div class="metric"><b>仿真窗口</b><output>5.0 s</output></div></div></section>
+
+<h2>5. 工程上必须补齐的四个边界</h2>
+<ol><li><strong>单位和坐标：</strong><code>q</code> 用 rad、<code>q̈</code> 用 rad/s²、<code>τ</code> 用 N·m；关节正方向、重力方向与动力学模型一致才能谈前馈。</li><li><strong>力矩/速度/位置限幅：</strong>CTC 可能在起步或模型突变时索要过大的力矩；输出必须过限幅、速率限制和硬件安全链。</li><li><strong>辨识与负载更新：</strong>更换夹具或工件后，质量、质心、惯量都应作为模型参数更新，而不是只把 PID 增益调大。</li><li><strong>控制频率和延迟：</strong>模型项、状态反馈与轨迹采样必须在统一时间语义下工作；过时状态会把前馈变成错时的扰动。</li></ol>
+
+<details><summary>CTC 是否等于“逆动力学”？</summary><p>逆动力学是“给定状态与期望加速度，求所需力矩”的计算；CTC 使用该计算构成一个闭环控制器，并加上误差反馈。前者是模型运算，后者是控制架构。</p></details>
+<details><summary>为什么 CTC 还用实际 q、q̇，而不是全用参考 q_d、q̇_d？</summary><p>这是常见实现选择之一：用实际状态计算模型项可更贴近当前对象，但仍受噪声和模型误差影响。也有按期望状态计算的前馈变体。无论选哪种，都要明确使用的状态、时间戳和误差反馈如何闭环。</p></details>
+<details><summary>能把这个仿真结论直接推广到真实六轴吗？</summary><p>不能。六轴还涉及完整惯量参数、传动柔性、摩擦、驱动器内部环、采样/通信延迟和安全策略。这里证明的是公式连接关系与模型失配趋势；真实接入必须先在厂商控制接口和安全边界内逐级验证。</p></details>
+<p class="small">下一主线：36 力控制、阻抗与导纳。届时控制目标不再只是“严格到某个位置”，而是规定接触时允许怎样的力—位移关系。</p>
+</main><script defer src="35-computed-torque-control.js"></script></body></html>

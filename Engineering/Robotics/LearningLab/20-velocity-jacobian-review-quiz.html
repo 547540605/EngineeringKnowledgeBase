@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>雅可比与速度运动学阶段自测</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}main{max-width:960px;margin:auto;padding:28px 20px 72px}h1,h2{line-height:1.28}h2{margin-top:2.35rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.card,.q{border:1px solid var(--line);border-radius:11px;padding:16px;margin:14px 0}.intro{background:var(--soft)}.q h3{margin:0 0 .72rem;font-size:1rem}.choice{display:block;margin:.45rem 0}input[type=text],textarea{width:100%;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit}textarea{min-height:100px}details{margin-top:12px;background:var(--ans);border-radius:8px;padding:0 13px}summary{cursor:pointer;font-weight:720;padding:8px 0}.answer{padding:0 0 11px}.answer p{margin:.7rem 0}.math{display:block;text-align:center;margin:.8rem 0;overflow:auto}.muted{color:color-mix(in srgb,var(--fg) 62%,var(--bg))}.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-right:5px;font-size:.84rem}.checklist li{margin:.35rem 0}@media(max-width:580px){main{padding:22px 14px}.q,.card{padding:13px}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body><main>
+  <p class="muted"><a href="00-progress.html">学习进度</a> · <a href="14-planar-two-link-jacobian.html">笔记 04：雅可比</a> · <a href="19-time-varying-position-velocity.html">笔记 04：时间与速度</a></p>
+  <h1>雅可比与速度运动学阶段自测</h1>
+  <div class="card intro"><p><strong>范围：笔记 15–20。</strong>这套题不要求你死背一个大公式。核心是能把三件事接起来：</p><span class="math" data-tex="\text{关节速度 }\dot q\quad\xrightarrow{\ J(q)\ }\quad\text{末端速度 }\dot p\quad\xrightarrow{\ \Delta t\ }\quad\text{下一小步姿态 }q_{\mathrm{next}}"></span><p><span class="tag">10 选择</span><span class="tag">10 填空</span><span class="tag">10 判断</span><span class="tag">5 手算</span>先自行作答；每题都可展开答案。手算题请在 iPad 上完整写，再对照推导。</p></div>
+  <div id="root"></div>
+  <div class="card"><strong>做完后只检查这四点：</strong><ol class="checklist"><li>我能说清 <span data-tex="J"></span> 的行、列分别在数什么。</li><li>我知道奇异不是“某个数字坏了”，而是可用的末端瞬时方向变少了。</li><li>我会按 <span data-tex="\dot q=J^{-1}\dot p_{\mathrm{desired}}"></span> 解一次非奇异的二维例子。</li><li>我能区分有限时间平均速度、瞬时速度与欧拉小步。</li></ol></div>
+</main>
+<script>
+const K=t=>'<span data-tex="'+t+'"></span>',B=t=>'<span class="math" data-tex="'+t+'"></span>',A=(href,label)=>'<a href="'+href+'">'+label+'</a>',L=['A','B','C','D'];
+const qs=[
+['choice','雅可比关系 '+K('\\dot p=J(q)\\dot q')+' 的输入与输出分别是：',['输入末端位置，输出关节角','输入关节速度，输出末端速度','输入关节速度，输出末端位置','输入关节角，输出末端速度'],'B',''+K('\\dot q')+' 是各关节的角速度；'+K('\\dot p=[\\dot x,\\dot y]^T')+' 是末端线速度。当前位置 '+K('q')+' 决定此刻的 '+K('J(q)')+'。'],
+['choice','两连杆二维雅可比的第 2 列最准确表示什么？',['两个关节同时以单位速度转动的结果','只让关节 2 以单位速度转动时的末端速度','末端 y 坐标','第二根连杆的长度'],'B','把 '+K('\\dot q=[0,1]^T')+' 代入 '+K('\\dot p=J\\dot q')+'，结果正好取出第 2 列。因此一列对应“只开一个关节”的速度贡献。'],
+['choice','在 '+K('q_2=0')+' 或 '+K('\\pi')+' 时，两连杆平面机械臂通常奇异，直接的几何原因是：',['两根连杆长度变为 0','雅可比两列共线，独立的末端方向少了一个','末端速度一定为 0','关节角不能再变化'],'B','伸直或完全折回时，两个关节各自产生的瞬时末端速度都沿同一条切线方向；两列共线，所以不能覆盖整个二维平面。'],
+['choice','若 '+K('J')+' 可逆，给定期望末端速度 '+K('\\dot p_d')+' 后，应求：',[''+K('q=J\\dot p_d')+'',''+K('\\dot q=J^{-1}\\dot p_d')+'',''+K('\\dot p=J^{-1}q')+'',''+K('q=J^{-1}\\dot q')+''],'B','这叫逆速度运动学：已知“希望末端此刻怎么走”，反求“各关节此刻要转多快”。'],
+['choice','resolved-rate 运动中 '+K('e=g-p(q)')+' 表示：',['关节角误差','目标位置减当前位置的末端位置误差','雅可比行列式','时间步长'],'B',''+K('g')+' 是目标点，'+K('p(q)')+' 是当前末端点；相减得到从当前位置指向目标的误差向量。它是 resolved-rate 每一轮的第一步：'+K('e\\to\\dot p_{\\mathrm{desired}}\\to\\dot q\\to q_{next}')+'。完整拆解见笔记 19 开头。'],
+['choice','欧拉小步 '+K('q_{next}\\approx q+\\dot q\\Delta t')+' 的正确理解是：',['一次就精确到达目标','把当前瞬时角速度暂时看作常数，走很短一步','把关节角直接替换为末端速度','只适用于奇异位形'],'B','它只是很短时间内的近似。每走一步后，姿态和 '+K('J(q)')+' 都会改变，必须重新计算。'],
+['choice','单连杆长度 '+K('L')+'、关节角速度 '+K('\\dot q')+' 时，末端速度大小为 '+K('L|\\dot q|')+'，其中单竖线表示：',['向量的模','标量绝对值','行列式','转置'],'B',''+K('\\dot q')+' 是一个带正负的标量；'+K('|\\dot q|')+' 只取它的大小。向量模使用双竖线，例如 '+K('\\|\\dot p\\|')+'。'],
+['choice','对于刚性单连杆转动，'+K('p^T\\dot p=0')+' 表示：',['速度沿连杆方向','位置向量与速度向量垂直','末端静止','连杆长度为 0'],'B',''+K('p')+' 是半径方向，'+K('\\dot p')+' 是切线方向。点积为 0 正是两者垂直的代数表达。'],
+['choice','有限时间平均速度 '+K('\\frac{p(t+h)-p(t)}h')+' 与瞬时速度 '+K('\\dot p(t)')+' 的关系是：',['任何 '+K('h')+' 下都完全相同','前者是区间割线速度；'+K('h\\to0')+' 时趋近后者','前者只用于静止物体','后者一定沿连杆'],'B','有限 '+K('h')+' 时机械臂已经转过一小段，割线方向和起点切线一般不同；时间段缩小时才趋近。'],
+['choice','若 '+K('\\dot q=[0,0]^T')+'，在任意非奇异姿态下 '+K('\\dot p')+' 为：',[''+K('[1,1]^T')+'',''+K('J^{-1}')+'','零向量','无法确定'],'C','矩阵乘以零向量仍为零向量：'+K('\\dot p=J(q)\\begin{bmatrix}0\\\\0\\end{bmatrix}=\\begin{bmatrix}0\\\\0\\end{bmatrix}')+'。'],
+
+['fill','补全速度雅可比：'+K('\\dot p=\\underline{\\hspace{2.2cm}}\\dot q'),'J(q)','空格填 '+K('J(q)')+'。'+K('\\dot q')+' 是关节角速度（两连杆时为 '+K('[\\dot q_1,\\dot q_2]^T')+'），'+K('\\dot p')+' 是末端线速度（为 '+K('[\\dot x,\\dot y]^T')+'）。在当前姿态，雅可比矩阵把前者换算成后者：'+B('\\dot p=J(q)\\dot q')+'两连杆时，若 '+K('\\dot q=[1,0]^T')+'，结果取出 '+K('J')+' 的第 1 列；若 '+K('\\dot q=[0,1]^T')+'，结果取第 2 列，所以每列就是一个关节单独转动的速度贡献。<p><strong>回看：</strong>'+A('16-planar-jacobian-velocity.html','笔记 17「先把点挪一点改写成点每秒挪多少」')+'。</p>'],
+['fill','二维两连杆奇异判断：'+K('\\det J=L_1L_2\\underline{\\hspace{2cm}}'),'\\sin q_2','空格填 '+K('\\sin q_2')+'。二维 '+K('2\\times2')+' 矩阵先按 '+K('\\det J=ad-bc')+' 展开；把两连杆的完整 '+K('J(q)')+' 代入后，含 '+K('q_1')+' 的项抵消，剩下 '+K('L_1L_2\\sin q_2')+'。因此两根杆完全伸直或折回时，'+K('q_2=0')+' 或 '+K('\\pi')+'，于是 '+K('\\sin q_2=0')+'，行列式为 0，两列共线。<p><strong>回看：</strong>'+A('15-planar-two-link-singularity.html','笔记 16「不开图时，怎样判断两列是否共线」')+'，其中有逐行化简。</p>'],
+['fill','补全逆速度公式：'+K('\\dot q=\\underline{\\hspace{2.5cm}}\\dot p_d'),'J(q)^{-1}','空格填 '+K('J(q)^{-1}')+'。已知正向速度关系 '+K('\\dot p_d=J(q)\\dot q')+'；当 '+K('J(q)')+' 可逆时，在等式左边乘它的逆：'+B('J(q)^{-1}\\dot p_d=J(q)^{-1}J(q)\\dot q=I\\dot q=\\dot q')+'这只限行列式不为 0 的非奇异姿态；接近奇异时不能把“乘逆”当成可靠解。<p><strong>回看：</strong>'+A('17-planar-inverse-velocity.html','笔记 18「二维 2×2 矩阵怎样求逆」')+'。</p>'],
+['fill','目标位置误差：'+K('e=\\underline{\\hspace{3cm}}'),'g-p(q)','空格填 '+K('g-p(q)')+'。这是“终点减起点”的向量：若当前末端 '+K('p(q)=[x,y]^T')+'、目标 '+K('g=[g_x,g_y]^T')+'，则'+B('e=g-p(q)=\\begin{bmatrix}g_x-x\\\\g_y-y\\end{bmatrix}')+'所以它从当前末端指向目标，描述“还差多少位置”，不是关节角误差。<p><strong>回看：</strong>'+A('18-resolved-rate-motion.html','笔记 19「resolved-rate 运动到底是什么」')+'。</p>'],
+['fill','把误差变成期望速度：'+K('\\dot p_d=\\underline{\\hspace{3cm}}'),'ke=k(g-p(q))','空格填 '+K('ke=k(g-p(q))')+'。这里先有位置误差 '+K('e')+'，再人为规定“误差越大，就要求末端此刻走得越快”：'+B('\\dot p_d=ke')+'单位也能检查：'+K('e')+' 的单位是长度，'+K('k')+' 的单位是 '+K('1/\\mathrm{s}')+'，相乘才是长度/秒。'+K('k')+' 不是从运动学推导出来的几何量，而是这个靠近目标策略设定的比例系数。<p><strong>回看：</strong>'+A('18-resolved-rate-motion.html','笔记 19「从一个瞬间的速度到一小段运动」')+'。</p>'],
+['fill','欧拉更新：'+K('q_{next}\\approx\\underline{\\hspace{3cm}}'),'q+\\dot q\\Delta t','空格填 '+K('q+\\dot q\\Delta t')+'。先把“角速度乘短时间”变成角度增量：'+B('\\Delta q\\approx\\dot q\\Delta t')+'再把这一步的角度加回当前角度：'+B('q_{next}\\approx q+\\Delta q=q+\\dot q\\Delta t')+'近似号来自前向欧拉法：在很短的 '+K('\\Delta t')+' 内，暂时把当前 '+K('\\dot q')+' 当成不变；走完后要重新算。<p><strong>回看：</strong>'+A('18-resolved-rate-motion.html','笔记 19「展开：欧拉积分到底在近似什么」')+'。</p>'],
+['fill','单连杆位置：'+K('p=\\begin{bmatrix}\\underline{\\hspace{1.3cm}}\\\\L\\sin q\\end{bmatrix}'),'L\\cos q','空格填 '+K('L\\cos q')+'。连杆长度 '+K('L')+' 是斜边，关节角 '+K('q')+' 从 x 轴量起；末端横坐标是水平投影，故为 '+K('x=L\\cos q')+'，纵坐标是竖直投影，故为 '+K('y=L\\sin q')+'：'+B('p=\\begin{bmatrix}L\\cos q\\\\L\\sin q\\end{bmatrix}')+'<p><strong>回看：</strong>'+A('19-time-varying-position-velocity.html','笔记 20「先把位置写成随时间变化的量」')+'。</p>'],
+['fill','单连杆 x 速度：'+K('\\dot x=\\underline{\\hspace{3cm}}'),'-L\\sin q\\,\\dot q','空格填 '+K('-L\\sin q\\,\\dot q')+'。从 '+K('x(t)=L\\cos q(t)')+' 出发，'+K('q')+' 本身也随时间变，所以不能只写 '+K('-L\\sin q')+'，还要乘链式法则里的 '+K('dq/dt=\\dot q')+'：'+B('\\dot x=\\frac{d}{dt}(L\\cos q(t))=-L\\sin q(t)\\,\\dot q')+'<p><strong>回看：</strong>'+A('19-time-varying-position-velocity.html','笔记 20「不跳步：从位置公式算出速度公式」')+'。</p>'],
+['fill','刚性单连杆的正交条件：'+K('p^T\\dot p=\\underline{\\hspace{1cm}}'),'0','空格填 '+K('0')+'。刚性连杆长度不变，因此任何时刻都满足 '+K('x^2+y^2=L^2')+'。两边对时间求导：'+B('2x\\dot x+2y\\dot y=0\\quad\\Rightarrow\\quad x\\dot x+y\\dot y=0')+'而 '+K('x\\dot x+y\\dot y')+' 正是 '+K('p^T\\dot p')+'，所以位置向量（半径方向）与速度向量（切线方向）垂直。<p><strong>回看：</strong>'+A('19-time-varying-position-velocity.html','笔记 20「为什么速度一定沿切线，而不是沿连杆」')+'。</p>'],
+['fill','末端速度大小：'+K('\\|\\dot p\\|=\\underline{\\hspace{2.4cm}}'),'L|\\dot q|','空格填 '+K('L|\\dot q|')+'。将 '+K('\\dot x=-L\\sin q\\,\\dot q')+'、'+K('\\dot y=L\\cos q\\,\\dot q')+' 代入速度长度：'+B('\\|\\dot p\\|^2=\\dot x^2+\\dot y^2=L^2\\dot q^2(\\sin^2q+\\cos^2q)=L^2\\dot q^2')+'再取非负平方根，就有 '+K('\\|\\dot p\\|=L|\\dot q|')+'。负号只表示顺逆时针，不会让“速度大小”为负。<p><strong>回看：</strong>'+A('19-time-varying-position-velocity.html','笔记 20「为什么速度一定沿切线，而不是沿连杆」')+'的速度大小部分。</p>'],
+
+['judge','雅可比矩阵一旦从正运动学推导出来，就不再随关节姿态改变。','错',''+K('J(q)')+' 的元素含有 '+K('\\sin q_1,\\cos(q_1+q_2)')+' 等当前角度；机械臂动了，就应重新计算。'],
+['judge','在奇异位形，机械臂的关节仍可能转动，但末端瞬时可实现的独立方向减少。','对','对。不是关节被冻结，而是不同关节速度产生的末端速度贡献变得共线或相关。'],
+['judge','若 '+K('J')+' 不可逆，则把 '+K('\\dot p_d')+' 乘 '+K('J^{-1}')+' 一定能得到关节速度。','错','不可逆时 '+K('J^{-1}')+' 根本不存在。还可能有某些方向不可达，或有无穷多种关节速度对应同一末端速度。'],
+['judge',''+K('\\dot p=J\\dot q')+' 中 '+K('\\dot p')+' 的单位是长度/秒，'+K('\\dot q')+' 的单位是弧度/秒。','对','对。雅可比的量纲相当于长度；弧度在单位代数中视作无量纲，但保留它有助于识别角速度。'],
+['judge','把 '+K('h')+' 取得足够小后，'+K('\\frac{p(t+h)-p(t)}h')+' 与 '+K('\\dot p(t)')+' 更接近，但有限的 '+K('h')+' 下不必完全相等。','对','对。前者是区间平均速度，后者是起点这一刻的导数；极限才把两者接上。'],
+['judge',''+K('\\dot q<0')+' 时，'+K('\\|\\dot p\\|=L|\\dot q|')+' 说明末端速度大小为负。','错','双竖线表示大小，不能为负。'+K('\\dot q')+' 的负号只把切线运动方向反过来。'],
+['judge','只让关节 1 以单位速度转动时的末端速度，等于雅可比的第 1 列。','对','对：令 '+K('\\dot q=[1,0]^T')+'，则 '+K('J\\dot q')+' 正好抽出第一列。'],
+['judge','resolved-rate 中若期望速度总是指向目标，采用一次欧拉更新后就一定精确到达目标。','错','它每次只走很短一步。一般需要重复“算误差 → 算速度 → 走一步 → 重算”的闭环过程。'],
+['judge','对单连杆，末端位置 '+K('p')+' 与速度 '+K('\\dot p')+' 点积为 0，等价于末端到原点的距离此刻不变。','对','对。'+K('\\frac d{dt}(p^Tp)=2p^T\\dot p')+'；点积为 0 表示半径平方的变化率为 0。'],
+['judge','两连杆完全伸直时，末端可以通过关节的瞬时小转动沿连杆方向向外再走一点。','错','先把完全伸直姿态放在 x 轴上：'+K('q_1=q_2=0')+'，末端的 x 坐标已经是最大值 '+K('x=L_1+L_2')+'。让两关节分别产生很小角度 '+K('\\delta_1,\\delta_2')+' 后：'+B('x=L_1\\cos\\delta_1+L_2\\cos(\\delta_1+\\delta_2)\\approx L_1+L_2-\\frac12\\left[L_1\\delta_1^2+L_2(\\delta_1+\\delta_2)^2\\right]')+'方括号里都是平方，非负，所以 '+K('\\Delta x\\le0')+'：微小弯曲只会让末端仍在原处或略微向内，绝不可能超过 '+K('L_1+L_2')+' 向外走。与此同时，y 分量的一阶近似为 '+K('y\\approx L_1\\delta_1+L_2(\\delta_1+\\delta_2)')+'，它随角度的一次方改变；这就是雅可比在完全伸直时只给出竖直切线方向的原因。所谓“高阶小量”就是这里的 '+K('\\delta^2')+' 项：角度缩小 10 倍，它会缩小 100 倍，所以瞬时速度（一阶）看不见它。<p><strong>回看：</strong>'+A('15-planar-two-link-singularity.html','笔记 16「完全伸直时，为什么少了一个方向」')+'；切线方向的几何直觉见 '+A('19-time-varying-position-velocity.html','笔记 20「为什么速度一定沿切线，而不是沿连杆」')+'。</p>'],
+
+['work','手算 1：从雅可比算末端速度','设 '+K('L_1=2,L_2=1,q_1=0^\\circ,q_2=90^\\circ')+'，且 '+K('\\dot q=[0.5,-0.4]^T\\,\\mathrm{rad/s}')+'。写出 '+K('J(q)')+' 并求 '+K('\\dot p')+'。',B('J=\\begin{bmatrix}-1&-1\\\\2&0\\end{bmatrix},\\qquad\\dot p=\\begin{bmatrix}-0.10\\\\1.00\\end{bmatrix}\\ \\text{长度/s}'),'先写二维两连杆雅可比：'+B('J=\\begin{bmatrix}-L_1\\sin q_1-L_2\\sin(q_1+q_2)&-L_2\\sin(q_1+q_2)\\\\L_1\\cos q_1+L_2\\cos(q_1+q_2)&L_2\\cos(q_1+q_2)\\end{bmatrix}')+'这里 '+K('q_1+q_2=90^\\circ')+'。逐项代入：'+B('J=\\begin{bmatrix}-2\\sin0^\\circ-1\\sin90^\\circ&-1\\sin90^\\circ\\\\2\\cos0^\\circ+1\\cos90^\\circ&1\\cos90^\\circ\\end{bmatrix}=\\begin{bmatrix}-1&-1\\\\2&0\\end{bmatrix}')+'最后每一列各乘自己的关节速度再相加：'+B('\\dot p=\\begin{bmatrix}-1\\\\2\\end{bmatrix}(0.5)+\\begin{bmatrix}-1\\\\0\\end{bmatrix}(-0.4)=\\begin{bmatrix}-0.50\\\\1.00\\end{bmatrix}+\\begin{bmatrix}0.40\\\\0\\end{bmatrix}=\\begin{bmatrix}-0.10\\\\1.00\\end{bmatrix}')],
+['work','手算 2：看懂一个奇异位形','设 '+K('L_1=2,L_2=1,q_1=0^\\circ,q_2=0^\\circ')+'。写出 '+K('J')+'，说明两列为何不独立，并判断末端瞬时能否沿 x 轴向右移动。',B('J=\\begin{bmatrix}0&0\\\\3&1\\end{bmatrix}'),'此时 '+K('q_1+q_2=0^\\circ')+'：'+B('J=\\begin{bmatrix}-2\\sin0^\\circ-1\\sin0^\\circ&-1\\sin0^\\circ\\\\2\\cos0^\\circ+1\\cos0^\\circ&1\\cos0^\\circ\end{bmatrix}=\\begin{bmatrix}0&0\\\\3&1\end{bmatrix}')+'第一列 '+K('[0,3]^T')+' 与第二列 '+K('[0,1]^T')+' 都沿 y 轴，是共线的；无论 '+K('\\dot q_1,\\dot q_2')+' 取什么，'+B('\\dot p=\\begin{bmatrix}0\\\\3\\dot q_1+\\dot q_2\\end{bmatrix}')+'x 分量永远为 0。因此末端不能靠瞬时小转动沿 x 轴向右移动。'],
+['work','手算 3：逆速度运动学','设 '+K('L_1=L_2=1,q_1=0^\\circ,q_2=90^\\circ')+'，希望末端此刻速度为 '+K('\\dot p_d=[0.2,0.3]^T\\,\\text{长度/s}')+'。求 '+K('\\dot q')+'。',B('\\dot q=\\begin{bmatrix}0.30\\\\-0.50\end{bmatrix}\\ \\mathrm{rad/s}'),'先由手算 1 的同一姿态（长度改为 1）写出：'+B('J=\\begin{bmatrix}-1&-1\\\\1&0\end{bmatrix}')+'不要急着背逆矩阵，直接把 '+K('J\\dot q=\\dot p_d')+' 拆成两行：'+B('\\begin{cases}-\\dot q_1-\\dot q_2=0.2\\\\\\dot q_1=0.3\\end{cases}')+'第二行直接给出 '+K('\\dot q_1=0.3')+'。代回第一行：'+B('-0.3-\\dot q_2=0.2\\quad\\Rightarrow\\quad\\dot q_2=-0.5')+'验证：'+B('\\begin{bmatrix}-1&-1\\\\1&0\end{bmatrix}\\begin{bmatrix}0.3\\\\-0.5\end{bmatrix}=\\begin{bmatrix}0.2\\\\0.3\end{bmatrix}')],
+['work','手算 4：resolved-rate 的一小步','仍取 '+K('L_1=L_2=1,q=[0^\\circ,90^\\circ]^T')+'，当前位置为 '+K('p=[1,1]^T')+'。目标 '+K('g=[0.8,1.3]^T')+'，取 '+K('k=1/\\mathrm{s},\\Delta t=0.1\\,\\mathrm{s}')+'。求 '+K('e,\\dot p_d,\\dot q,q_{next}')+'。',B('e=\\begin{bmatrix}-0.2\\\\0.3\end{bmatrix},\\quad\\dot q=\\begin{bmatrix}0.3\\\\-0.1\end{bmatrix},\\quad q_{next}=\\begin{bmatrix}0.03\\\\\\pi/2-0.01\end{bmatrix}'),'第 1 步，先算位置误差：'+B('e=g-p=\\begin{bmatrix}0.8\\\\1.3\end{bmatrix}-\\begin{bmatrix}1\\\\1\end{bmatrix}=\\begin{bmatrix}-0.2\\\\0.3\end{bmatrix}')+'第 2 步，'+K('k=1')+'，所以期望末端速度数值相同：'+B('\\dot p_d=ke=\\begin{bmatrix}-0.2\\\\0.3\end{bmatrix}')+'此姿态的 '+K('J')+' 仍为 '+K('\\begin{bmatrix}-1&-1\\\\1&0\\end{bmatrix}')+'。拆方程：'+B('\\begin{cases}-\\dot q_1-\\dot q_2=-0.2\\\\\\dot q_1=0.3\end{cases}\\Rightarrow\\dot q_2=-0.1')+'第 3 步走欧拉小步：'+B('q_{next}=q+\\dot q\\Delta t=\\begin{bmatrix}0\\\\\\pi/2\end{bmatrix}+\\begin{bmatrix}0.3\\\\-0.1\end{bmatrix}(0.1)=\\begin{bmatrix}0.03\\\\\\pi/2-0.01\end{bmatrix}\\ \\mathrm{rad}')+'这还不是直接到达 '+K('g')+'；下一步要用新的 '+K('q_{next}')+' 重新算位置、误差与雅可比。'],
+['work','手算 5：单连杆的速度、大小与方向','单连杆 '+K('L=2.6')+'，当前 '+K('q=60^\\circ')+'，角速度 '+K('\\dot q=1\\,\\mathrm{rad/s}')+'。求当前位置 '+K('p')+'、速度 '+K('\\dot p')+'、速度大小，并验证 '+K('p^T\\dot p=0')+'。',B('p=\\begin{bmatrix}1.30\\\\2.25\end{bmatrix},\\quad\\dot p=\\begin{bmatrix}-2.25\\\\1.30\end{bmatrix}\\ \\text{长度/s},\\quad\\|\\dot p\\|=2.6'),'先用位置公式：'+B('p=\\begin{bmatrix}2.6\\cos60^\\circ\\\\2.6\\sin60^\\circ\end{bmatrix}=\\begin{bmatrix}1.30\\\\2.6\\cdot\\sqrt3/2\\end{bmatrix}\\approx\\begin{bmatrix}1.30\\\\2.25\end{bmatrix}')+'再对位置求导：'+B('\\dot p=\\begin{bmatrix}-2.6\\sin60^\\circ\\\\2.6\\cos60^\\circ\end{bmatrix}(1)\\approx\\begin{bmatrix}-2.25\\\\1.30\end{bmatrix}')+'速度大小：'+B('\\|\\dot p\\|=L|\\dot q|=2.6\\cdot1=2.6')+'最后检验垂直：'+B('p^T\\dot p\\approx(1.30)(-2.25)+(2.25)(1.30)=0')+'这说明速度不沿橙色连杆的半径方向，而沿圆轨迹的切线方向。']
+];
+function answer(a,e){return '<details><summary>显示答案与讲解</summary><div class="answer"><p><strong>答案：</strong>'+a+'</p>'+e+'</div></details>'}
+function render(){let out='',section='';qs.forEach((q,i)=>{const kind=q[0],next=kind==='choice'?'概念选择':kind==='fill'?'公式填空':kind==='judge'?'判断':'手算题';if(next!==section){section=next;out+='<h2>'+section+'</h2>'}let body='';if(kind==='choice')body=q[2].map((x,j)=>'<label class="choice"><input type="radio" name="q'+i+'"> '+L[j]+'. '+x+'</label>').join('');else if(kind==='judge')body='<label class="choice"><input type="radio" name="q'+i+'"> 对</label><label class="choice"><input type="radio" name="q'+i+'"> 错</label>';else if(kind==='fill')body='<input type="text" aria-label="第 '+(i+1)+' 题作答">';else body='<p>'+q[2]+'</p><textarea aria-label="第 '+(i+1)+' 题演算过程"></textarea>';const solution=(kind==='choice'||kind==='work')?answer(q[3],q[4]):kind==='fill'?answer(K(q[2]),q[3]):answer(q[2],q[3]);out+='<section class="q"><h3>'+(i+1)+'. '+q[1]+'</h3>'+body+solution+'</section>'});document.getElementById('root').innerHTML=out}
+function math(){if(!window.katex)return setTimeout(math,80);document.querySelectorAll('[data-tex]').forEach(n=>katex.render(n.dataset.tex,n,{displayMode:n.classList.contains('math'),throwOnError:false}))}
+render();addEventListener('load',math);
+</script>
+</body></html>

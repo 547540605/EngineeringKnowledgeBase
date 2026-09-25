@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔记 04：两连杆空间加速度两级外推——手肘基底传递与 3D 动力学仿真（Craig 原书 §6.2）</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #040711;
+      --card-bg: #090f1d;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #c084fc;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      padding: 24px;
+    }
+    main { max-width: 1060px; margin: 0 auto; }
+    h1 { font-size: 1.85rem; color: #fff; margin-bottom: 8px; font-weight: 800; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 12px; }
+    h2 { font-size: 1.35rem; color: var(--accent); margin: 32px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.1rem; color: #cbd5e1; margin: 20px 0 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .step-block { background: #040711; border-radius: 8px; padding: 18px; margin-bottom: 16px; position: relative; }
+    .step-tag { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+    .back-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.9rem; }
+    .back-nav a { color: var(--accent); text-decoration: none; font-weight: bold; }
+    .back-nav a:hover { text-decoration: underline; }
+    .interactive-container { background: #02050c; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 14px 0; }
+    .formula-pill { background: #0b1329; border: 1px solid #1e293b; border-radius: 6px; padding: 12px; margin: 8px 0; font-family: ui-monospace, monospace; }
+    .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+    .table-custom th, .table-custom td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    .table-custom th { background: #0f172a; color: var(--accent); font-weight: bold; }
+  </style>
+  <script>
+    (function initKaTeXBootloader() {
+      let attempts = 0;
+      function renderMath() {
+        if (typeof renderMathInElement === 'function') {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        } else if (attempts < 30) {
+          attempts++;
+          setTimeout(renderMath, 100);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderMath);
+      } else {
+        renderMath();
+      }
+      window.addEventListener('load', renderMath);
+    })();
+  </script>
+</head>
+<body>
+<main>
+  <h1>笔记 04：两连杆空间加速度两级外推——手肘基底传递与 3D 动力学仿真（Craig 原书 §6.2）</h1>
+  <div class="lead">以手肘原点线加速度为初始基底，逐级外推至小臂末端，深入探索串联刚体动力学两级递推传递链条。</div>
+<h2>1. 3D 空间两连杆线加速度两级外推递推仿真台（Craig 原书 §6.2）</h2>
+<div class="card">
+<!-- 步骤 3：空间两连杆线加速度两级外推递推与质心牛顿惯性力 -->
+    <div class="step-block" style="border:1px solid #eab308; margin-top:28px;">
+      <span class="step-tag" style="background:rgba(234,179,8,0.15); color:#eab308; border:1px solid rgba(234,179,8,0.35);">
+        ③ 进阶实战：空间两连杆（大臂 Link 1 + 小臂 Link 2）线加速度两级外推与质心受力
+      </span>
+
+      <!-- 1. 先说人话与物理场景 -->
+      <div style="background:#040711; border:1px solid #1e293b; border-radius:8px; padding:16px 18px; margin:12px 0; font-size:0.88rem; line-height:1.8;">
+        <div style="color:#eab308; font-weight:bold; font-size:1.02rem; margin-bottom:8px;">
+          💡 先说人话场景：小臂在空中挥舞时，它的“基底”到底是谁？
+        </div>
+        <div>
+          请在脑海中想象接力赛跑的画面：<br>
+          1. <strong>手肘（关节 2）不是静止的地面</strong>：当大臂在空中甩动加速时，手肘处已经具有了巨大的线加速度 $\dot{\boldsymbol{v}}_2$；<br>
+          2. <strong>小臂的运动是“站在狂飙的手肘上起跑”</strong>：小臂（连杆 2）自己再踩油门旋转时，小臂质心 $C_2$ 的加速度必须把<strong>【手肘传过来的基底加速度 $\dot{\boldsymbol{v}}_2$】</strong>与<strong>【小臂自己相对手肘旋转的切向/向心加速度】</strong>在三维空间中矢量相加！<br>
+          3. <strong>为什么要单独算质心加速度 $\dot{\boldsymbol{v}}_{C_2}$？</strong><br>
+             因为牛顿第二定律 $\boldsymbol{F} = m\boldsymbol{a}$ 是对<strong>质心（重心）</strong>成立的！关节原点只是一颗铁轴承，没有质量；只有算出整根小臂质心的绝对加速度 $\dot{\boldsymbol{v}}_{C_2}$，才能精确求出小臂在宇宙中产生的总惯性力 $\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C_2}$！
+        </div>
+      </div>
+
+      <!-- 2. Craig 原书定理与公式逐项深度拆解卡片 -->
+      <div style="background:#091222; border:1px solid #38bdf8; border-radius:8px; padding:16px 18px; margin:14px 0; font-size:0.86rem; line-height:1.85;">
+        <div style="color:#38bdf8; font-weight:bold; font-size:1.02rem; margin-bottom:10px;">
+          📖 CRAIG 原书定理深度拆解：式 6.47（原点外推）与 式 6.48（质心外推）的本质区别
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin-bottom:12px;">
+          <!-- 式 6.47 关节原点外推 -->
+          <div style="background:#040711; border:1px solid #38bdf8; border-radius:6px; padding:12px 14px;">
+            <div style="color:#38bdf8; font-weight:bold; font-size:0.92rem; margin-bottom:4px;">
+              🔹 关节原点线加速度递推（Craig 式 6.47）
+            </div>
+            $${}^{i+1}\dot{\boldsymbol{v}}_{i+1} = {}^{i+1}_i\boldsymbol{R} \left( {}^i\dot{\boldsymbol{\omega}}_i \times {}^i\boldsymbol{P}_{i+1} + {}^i\boldsymbol{\omega}_i \times ({}^i\boldsymbol{\omega}_i \times {}^i\boldsymbol{P}_{i+1}) + {}^i\dot{\boldsymbol{v}}_i \right)$$
+            <div style="font-size:0.8rem; color:#94a3b8; margin-top:6px; border-top:1px dashed #1e293b; padding-top:4px;">
+              • <strong>位置向量 ${}^i\boldsymbol{P}_{i+1}$</strong>：从关节 $i$ 到关节 $i+1$ 的<strong>整节杆长向量</strong>；<br>
+              • <strong>核心用途</strong>：算出<strong>下一个关节轴承的绝对加速度</strong>，作为下一节连杆的基底！
+            </div>
+          </div>
+
+          <!-- 式 6.48 连杆质心外推 -->
+          <div style="background:#040711; border:1px solid #c084fc; border-radius:6px; padding:12px 14px;">
+            <div style="color:#c084fc; font-weight:bold; font-size:0.92rem; margin-bottom:4px;">
+              🟣 连杆质心线加速度递推（Craig 式 6.48）
+            </div>
+            $${}^i\dot{\boldsymbol{v}}_{C_i} = {}^i\dot{\boldsymbol{\omega}}_i \times {}^i\boldsymbol{P}_{C_i} + {}^i\boldsymbol{\omega}_i \times ({}^i\boldsymbol{\omega}_i \times {}^i\boldsymbol{P}_{C_i}) + {}^i\dot{\boldsymbol{v}}_i$$
+            <div style="font-size:0.8rem; color:#94a3b8; margin-top:6px; border-top:1px dashed #1e293b; padding-top:4px;">
+              • <strong>位置向量 ${}^i\boldsymbol{P}_{C_i}$</strong>：从关节 $i$ 到本杆质心 $C_i$ 的<strong>质心位置向量</strong>（通常在连杆中点）；<br>
+              • <strong>核心用途</strong>：专门给牛顿方程 $\boldsymbol{F}_i = m_i {}^i\dot{\boldsymbol{v}}_{C_i}$ 算惯性力！
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#040711; border:1px solid #334155; border-radius:6px; padding:10px 14px; font-size:0.82rem; color:#cbd5e1; line-height:1.7;">
+          <strong>🎯 为什么乘旋转矩阵 ${}^{i+1}_i\boldsymbol{R}$？</strong><br>
+          括号里算出的加速度是在第 $i$ 节坐标系表达的，乘以 ${}^{i+1}_i\boldsymbol{R}$ 只是把方向投影对齐到第 $i+1$ 节坐标系的 $X, Y, Z$ 轴上，物理矢量本身的大小和指向丝毫没有改变！
+        </div>
+      </div>
+    </div>
+
+    <!-- 3D 交互全景透视台 -->
+    <div style="background:#060c18; border:1px solid #eab308; border-radius:10px; padding:20px; margin:22px 0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <div>
+          <div style="color:#eab308; font-weight:bold; font-size:1.2rem; display:flex; align-items:center; gap:8px;">
+            <span>🌐 空间两连杆（大臂 Link 1 + 小臂 Link 2）线加速度外推递推 3D 交互全景透视台</span>
+          </div>
+          <span style="font-size:0.86rem; color:var(--muted);">
+            支持鼠标左键 360° 空间拖拽自由旋转透视：看清<strong>大臂（连杆 $i$）如何将转动加速度传给小臂（连杆 $i+1$）</strong>并在小臂质心合成出最终的牛顿惯性力！
+          </span>
+        </div>
+        
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btn-lin3d-play" style="background:#eab308; color:#0b1120; border:none; border-radius:4px; padding:6px 14px; font-size:0.84rem; font-weight:bold; cursor:pointer;">⏸️ 暂停 / 继续</button>
+          <button id="btn-lin3d-step" style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:6px 10px; font-size:0.84rem; font-weight:bold; cursor:pointer;">⏭️ 单步前进</button>
+          <button id="btn-lin3d-speed" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:6px 10px; font-size:0.84rem; cursor:pointer;">🐢 0.5x 慢速</button>
+          <button id="btn-lin3d-reset" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:6px 10px; font-size:0.84rem; cursor:pointer;">🔄 重置姿态</button>
+        </div>
+      </div>
+
+      <!-- 视角切换预设条 -->
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:8px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.85rem;">
+        <span style="color:#38bdf8; font-weight:bold;">🎥 3D 视角预设 (按住鼠标左键在画布上拖拽可 360° 自由旋转)：</span>
+        <div style="display:flex; gap:6px;">
+          <button id="btn-lin3d-cam-iso" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:4px 10px; font-size:0.82rem; cursor:pointer;">👁️ 45° 鸟瞰透视</button>
+          <button id="btn-lin3d-cam-top" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:4px 10px; font-size:0.82rem; cursor:pointer;">⬇️ 正俯视 (看两连杆平面画圆)</button>
+          <button id="btn-lin3d-cam-side" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:4px 10px; font-size:0.82rem; cursor:pointer;">➡️ 正侧视 (看基座上下升降)</button>
+        </div>
+      </div>
+
+      <!-- 阶梯式分步透视模式 Tab -->
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:0.86rem;">
+        <span style="color:#eab308; font-weight:bold;">🪜 递推分步聚焦（一键净化画布）：</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button id="btn-tab-step1" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:5px 12px; font-size:0.82rem; font-weight:bold; cursor:pointer;">① 基底加速 (v̇₀ → v̇₂)</button>
+          <button id="btn-tab-step2" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:5px 12px; font-size:0.82rem; cursor:pointer;">② 质心牛顿受力 (v̇₂ → v̇_C2 → F₂)</button>
+          <button id="btn-tab-step3" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:5px 12px; font-size:0.82rem; cursor:pointer;">③ 末端总加速度 (v̇₂ → v̇₃)</button>
+          <button id="btn-tab-all" style="background:#334155; color:#fff; border:none; border-radius:4px; padding:5px 12px; font-size:0.82rem; cursor:pointer;">🌐 全景展开</button>
+        </div>
+      </div>
+
+      <!-- 3D 大画布 -->
+      <div style="background:#040711; border:1px solid #1e293b; border-radius:8px; padding:10px; position:relative; margin-bottom:16px;">
+        <canvas id="linacc-3d-canvas" width="920" height="480" style="width:100%; aspect-ratio:1.91; background:#040711; border-radius:6px; display:block; cursor:grab;"></canvas>
+        
+        <!-- 悬浮图例说明 -->
+        <div style="position:absolute; bottom:14px; left:14px; background:rgba(11,17,32,0.92); border:1px solid #334155; border-radius:6px; padding:10px 14px; font-size:0.82rem; color:#cbd5e1; pointer-events:none; backdrop-filter:blur(4px); line-height:1.7;">
+          <div>🟡 <strong style="color:#eab308;">v̇₀</strong>：基座整体平移/升降加速度</div>
+          <div>🔵 <strong style="color:#38bdf8;">v̇₂</strong>：大臂末端绝对总加速度（小臂的初始基底）</div>
+          <div>🟣 <strong style="color:#c084fc;">v̇_C2 (F₂)</strong>：小臂质心加速度与牛顿净惯性力 $\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C2}$</div>
+          <div>🟢 <strong style="color:#10b981;">v̇₃</strong>：小臂末端绝对总加速度</div>
+        </div>
+
+        <div style="position:absolute; top:14px; right:14px; background:rgba(11,17,32,0.85); border:1px solid #0284c7; border-radius:6px; padding:6px 10px; font-size:0.8rem; color:#38bdf8; pointer-events:none;">
+          🖱️ <strong>按住鼠标左键拖拽可 360° 旋转视角</strong>
+        </div>
+      </div>
+
+      <!-- 控制面板与实时数学 HUD -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:16px;">
+        
+        <!-- 调节滑块面板 (大臂与小臂两级控制) -->
+        <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:16px;">
+          <div style="color:#eab308; font-weight:bold; font-size:1.02rem; margin-bottom:12px;">🎛️ 空间两连杆运动参数调节：</div>
+
+          <!-- 1. 基座平动加速度与方向选择 -->
+          <div style="margin-bottom:12px; font-size:0.88rem; background:#090f1d; padding:10px 12px; border-radius:6px; border:1px solid #1e293b;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="color:#eab308; font-weight:bold;">① 基座平动加速度 $\dot{\boldsymbol{v}}_0$：</span>
+              <span id="val-lin3d-v0" style="color:#eab308; font-weight:bold; font-family:monospace;">2.0 m/s²</span>
+            </div>
+            <input type="range" id="rng-lin3d-v0" min="-6" max="6" step="0.5" value="2.0" style="width:100%; accent-color:#eab308; margin-bottom:8px;">
+            
+            <div style="display:flex; gap:14px; align-items:center; font-size:0.82rem; border-top:1px dashed #1e293b; padding-top:6px;">
+              <span style="color:#94a3b8;">平动方向：</span>
+              <label style="color:#cbd5e1; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <input type="radio" name="lin3d-v0-dir" id="opt-lin3d-dir-horiz" value="horiz" style="accent-color:#eab308;"> 🚗 水平平移
+              </label>
+              <label style="color:#cbd5e1; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <input type="radio" name="lin3d-v0-dir" id="opt-lin3d-dir-vert" value="vert" checked style="accent-color:#eab308;"> 🏢 竖直升降
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. 大臂 Link 1 控制 -->
+          <div style="margin-bottom:12px; font-size:0.88rem; background:#090f1d; padding:8px 10px; border-radius:6px; border:1px solid #1e293b;">
+            <div style="color:#38bdf8; font-weight:bold; margin-bottom:6px;">🦾 大臂（连杆 1，长度 $L_1 = 1.0\text{m}$）：</div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>• 大臂转速 $\omega_1$：</span>
+              <span id="val-lin3d-w1" style="color:#38bdf8; font-weight:bold; font-family:monospace;">1.5 r/s</span>
+            </div>
+            <input type="range" id="rng-lin3d-w1" min="-4" max="4" step="0.5" value="1.5" style="width:100%; accent-color:#38bdf8;">
+            
+            <div style="display:flex; justify-content:space-between; margin-top:6px; margin-bottom:2px;">
+              <span>• 大臂角加速度 $\dot{\omega}_1$：</span>
+              <span id="val-lin3d-dw1" style="color:#38bdf8; font-weight:bold; font-family:monospace;">3.0 r/s²</span>
+            </div>
+            <input type="range" id="rng-lin3d-dw1" min="-8" max="8" step="1" value="3.0" style="width:100%; accent-color:#38bdf8;">
+          </div>
+
+          <!-- 3. 小臂 Link 2 控制 -->
+          <div style="margin-bottom:6px; font-size:0.88rem; background:#090f1d; padding:8px 10px; border-radius:6px; border:1px solid #1e293b;">
+            <div style="color:#10b981; font-weight:bold; margin-bottom:6px;">🦾 小臂（连杆 2，长度 $L_2 = 0.8\text{m}$）：</div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>• 小臂相对转速 $\dot{\theta}_2$：</span>
+              <span id="val-lin3d-w2" style="color:#10b981; font-weight:bold; font-family:monospace;">2.0 r/s</span>
+            </div>
+            <input type="range" id="rng-lin3d-w2" min="-4" max="4" step="0.5" value="2.0" style="width:100%; accent-color:#10b981;">
+            
+            <div style="display:flex; justify-content:space-between; margin-top:6px; margin-bottom:2px;">
+              <span>• 小臂相对角加速度 $\ddot{\theta}_2$：</span>
+              <span id="val-lin3d-dw2" style="color:#10b981; font-weight:bold; font-family:monospace;">4.0 r/s²</span>
+            </div>
+            <input type="range" id="rng-lin3d-dw2" min="-8" max="8" step="1" value="4.0" style="width:100%; accent-color:#10b981;">
+          </div>
+        </div>
+
+        <!-- 实时数学 HUD -->
+        <div style="background:#090f1d; border:1px solid #eab308; border-radius:8px; padding:16px; font-size:0.85rem; line-height:1.75;">
+          <div style="color:#eab308; font-weight:bold; font-size:0.98rem; margin-bottom:8px;">📊 两连杆线加速度两级外推实时解算 HUD：</div>
+          
+          <!-- 第 1 级递推 -->
+          <div style="background:#040711; border:1px solid #1e293b; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-family:ui-monospace, monospace;">
+            <div style="color:#38bdf8; font-weight:bold; margin-bottom:2px;">【第 1 级外推：基座 $\to$ 关节 2 原点】</div>
+            <div>• 大臂切向加速度：$|a_{t1}| = |\dot{\omega}_1| L_1 = $ <span id="hud-lin3d-at1" style="color:#f97316; font-weight:bold;">3.0</span> m/s²</div>
+            <div>• 大臂向心加速度：$|a_{n1}| = \omega_1^2 L_1 = $ <span id="hud-lin3d-an1" style="color:#ef4444; font-weight:bold;">2.25</span> m/s²</div>
+            <div style="color:#38bdf8; font-weight:bold; border-top:1px dashed #334155; margin-top:4px; padding-top:2px;">
+              • 关节 2 原点线加速度 ${}^1\dot{\boldsymbol{v}}_2 = \dot{\boldsymbol{v}}_0 + a_{t1} + a_{n1} = $ <span id="hud-lin3d-v2" style="font-size:0.95rem;">4.22</span> m/s²
+            </div>
+          </div>
+
+          <!-- 第 2 级递推 -->
+          <div style="background:#040711; border:1px solid #1e293b; border-radius:6px; padding:10px 12px; font-family:ui-monospace, monospace;">
+            <div style="color:#c084fc; font-weight:bold; margin-bottom:2px;">【第 2 级外推：关节 2 $\to$ 小臂质心 $C_2$ & 末端】</div>
+            <div>• 小臂空间总角速度：$\omega_2 = \omega_1 + \dot{\theta}_2 = $ <span id="hud-lin3d-w2sum" style="color:#10b981; font-weight:bold;">3.5</span> r/s</div>
+            <div>• 小臂质心切向加速度：$|a_{t2,C}| = |\dot{\omega}_2| P_{C2} = $ <span id="hud-lin3d-at2c" style="color:#f97316;">2.80</span> m/s²</div>
+            <div>• 小臂质心向心加速度：$|a_{n2,C}| = \omega_2^2 P_{C2} = $ <span id="hud-lin3d-an2c" style="color:#ef4444;">4.90</span> m/s²</div>
+            <div style="color:#c084fc; font-weight:bold; border-top:1px dashed #334155; margin-top:4px; padding-top:2px;">
+              • 小臂质心总线加速度 $|\dot{\boldsymbol{v}}_{C2}| = $ <span id="hud-lin3d-vc2" style="font-size:0.95rem;">7.15</span> m/s²
+            </div>
+            <div style="color:#c084fc; font-weight:bold;">
+              • 小臂牛顿净惯性力 ($m_2 = 2.0\text{kg}$)：$\boldsymbol{F}_2 = m_2 \cdot \dot{\boldsymbol{v}}_{C2} = $ <span id="hud-lin3d-f2" style="font-size:1.05rem; color:#c084fc;">14.30</span> N
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 3D 矢量符号与物理意义完全速查表 -->
+      <div style="background:#090f1d; border:1px solid #eab308; border-radius:8px; padding:14px 18px; margin-top:14px; font-size:0.88rem; line-height:1.75;">
+        <div style="color:#eab308; font-weight:bold; font-size:0.98rem; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <span>📖 两连杆 3D 图中矢量符号与物理意义完整对照速查表：</span>
+          <span style="font-size:0.8rem; color:#94a3b8; font-family:monospace;">Craig 式 6.47 & 6.48</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+          <div style="background:#0f172a; border-left:3px solid #eab308; border-radius:4px; padding:8px 12px;">
+            <div style="color:#eab308; font-weight:bold;">🟡 符号 $\dot{\boldsymbol{v}}_0$ —— 基座平动</div>
+            <div style="font-size:0.82rem; color:#cbd5e1; margin-top:2px;">
+              • <strong>含义</strong>：底座/车身自身的平移加速；<br>
+              • <strong>作用</strong>：整台机器人所有连杆共同共享的平移初值。
+            </div>
+          </div>
+
+          <div style="background:#0f172a; border-left:3px solid #38bdf8; border-radius:4px; padding:8px 12px;">
+            <div style="color:#38bdf8; font-weight:bold;">🔵 符号 $\dot{\boldsymbol{v}}_2$ —— 手肘原点加速度</div>
+            <div style="font-size:0.82rem; color:#cbd5e1; margin-top:2px;">
+              • <strong>含义</strong>：大臂末端（关节 2 原点）在空间的绝对加速度（Craig 式 6.47）；<br>
+              • <strong>作用</strong>：作为<strong>小臂（连杆 2）运动的初始基底</strong>！
+            </div>
+          </div>
+
+          <div style="background:#0f172a; border-left:3px solid #c084fc; border-radius:4px; padding:8px 12px;">
+            <div style="color:#c084fc; font-weight:bold;">🟣 符号 $\dot{\boldsymbol{v}}_{C_2}$ 与 $\boldsymbol{F}_2$ —— 质心加速度与惯性力</div>
+            <div style="font-size:0.82rem; color:#cbd5e1; margin-top:2px;">
+              • <strong>含义</strong>：小臂质心点 $C_2$ 的空间绝对加速度（Craig 式 6.48）；<br>
+              • <strong>核心受力</strong>：$\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C_2}$，直接决定小臂电机的负载力矩！
+            </div>
+          </div>
+
+          <div style="background:#0f172a; border-left:3px solid #10b981; border-radius:4px; padding:8px 12px;">
+            <div style="color:#10b981; font-weight:bold;">🟢 符号 $\dot{\boldsymbol{v}}_3$ —— 小臂末端加速度</div>
+            <div style="font-size:0.82rem; color:#cbd5e1; margin-top:2px;">
+              • <strong>含义</strong>：小臂末端执行器（法兰/手爪）在宇宙中的绝对总加速度；<br>
+              • <strong>作用</strong>：若后方还有第 3 节连杆，则作为第 3 节连杆的基底！
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <!-- 2. 两连杆空间两级外推总结速查 -->
+  <h2>2. 两连杆空间两级外推总结速查（Craig 原书 §6.2）</h2>
+  <div class="card">
+    <p style="font-size:0.95rem; line-height:1.75; margin-bottom:14px;">
+      两连杆原点线加速度外推公式（Craig 式 6.47 递归标准形式）：
+      $${}^{i+1}\dot{\boldsymbol{v}}_{i+1} = {}^{i+1}_i\boldsymbol{R} \cdot \left[ {}^i\dot{\boldsymbol{\omega}}_i \times {}^i\boldsymbol{P}_{i+1} + {}^i\boldsymbol{\omega}_i \times ({}^i\boldsymbol{\omega}_i \times {}^i\boldsymbol{P}_{i+1}) + {}^i\dot{\boldsymbol{v}}_i \right]$$
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+      <div style="background:#090f1d; border-left:3px solid #38bdf8; border-radius:4px; padding:10px 14px;">
+        <strong style="color:#38bdf8;">🔵 1. 手肘基底线加速度 ${}^1\dot{\boldsymbol{v}}_2$</strong>
+        <div style="font-size:0.84rem; color:#cbd5e1; margin-top:4px;">由大臂自转与底座平动共同合成，作为小臂运动的地基起点。</div>
+      </div>
+      <div style="background:#090f1d; border-left:3px solid #10b981; border-radius:4px; padding:10px 14px;">
+        <strong style="color:#10b981;">🟢 2. 小臂末端总加速度 ${}^1\dot{\boldsymbol{v}}_3$</strong>
+        <div style="font-size:0.84rem; color:#cbd5e1; margin-top:4px;">在手肘基底上叠加上小臂自身切向与向心加速度。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 下篇承接卡片 -->
+  <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left:4px solid #38bdf8; padding:20px 24px; margin-top:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div>
+        <h3 style="margin:0 0 6px; color:#38bdf8; font-size:1.15rem;">🎯 两连杆 3D 外推通关！下一步：进入小臂质心动力学正交解耦与牛顿力标定！</h3>
+        <p style="font-size:0.92rem; color:#cbd5e1; margin:0; line-height:1.65;">
+          在<strong>笔记 04</strong>中，我们将深入小臂质心 $C_2$ 的 2D/3D 正交几何分解（步骤 C & D），并验证牛顿第二定律惯性合力 $\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C2}$！
+        </p>
+      </div>
+      <a href="27-recursive-newton-euler-dynamics.html" style="background:#38bdf8; color:#040711; text-decoration:none; font-weight:bold; font-size:0.95rem; padding:10px 22px; border-radius:6px; white-space:nowrap; display:inline-block;">
+        进入笔记 04：小臂质心正交解耦与牛顿力标定 →
+      </a>
+    </div>
+  </div>
+
+  <div class="back-nav" style="margin-top:30px;">
+    <a href="index.html">← 返回课程主目录</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">上一篇：29. 单连杆线加速度空间解耦</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">下一篇：31. 小臂质心正交解耦与牛顿力标定 →</a>
+  </div>
+</main>
+<script>
+  // =========================================================================
+  // 全局高对比度 2D 矢量与胶囊标签绘制工具函数
+  // =========================================================================
+  function drawBadge2D(ctx, text, x, y, bgColor = 'rgba(15,23,42,0.92)', textColor = '#cbd5e1', borderColor = '#334155', align = 'center') {
+    ctx.save();
+    ctx.font = 'bold 11px ui-monospace, monospace, -apple-system, sans-serif';
+    const metrics = ctx.measureText(text);
+    const paddingX = 8;
+    const w = metrics.width + paddingX * 2;
+    const h = 20;
+    let rx = x - w / 2;
+    if (align === 'left') rx = x;
+    else if (align === 'right') rx = x - w;
+    const ry = y - h / 2;
+
+    ctx.fillStyle = bgColor;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rx, ry, w, h, 4);
+    else ctx.rect(rx, ry, w, h);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, rx + w / 2, ry + h / 2);
+    ctx.restore();
+  }
+
+  function draw2DArrow(ctx, from, to, color = '#38bdf8', lineWidth = 2.5) {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    ctx.lineTo(to[0], to[1]);
+    ctx.stroke();
+
+    const headlen = Math.min(10, Math.max(6, lineWidth * 2.5));
+    const angle = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(to[0], to[1]);
+    ctx.lineTo(to[0] - headlen * Math.cos(angle - Math.PI / 6), to[1] - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(to[0] - headlen * Math.cos(angle + Math.PI / 6), to[1] - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+// 实验 2：3D 空间两连杆线加速度两级外推递推仿真引擎 (linacc-3d-canvas)
+  // =========================================================================
+  (() => {
+    const canvas = document.getElementById('linacc-3d-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const rngV0 = document.getElementById('rng-lin3d-v0');
+    const rngW1 = document.getElementById('rng-lin3d-w1');
+    const rngDW1 = document.getElementById('rng-lin3d-dw1');
+    const rngW2 = document.getElementById('rng-lin3d-w2');
+    const rngDW2 = document.getElementById('rng-lin3d-dw2');
+
+    const valV0 = document.getElementById('val-lin3d-v0');
+    const valW1 = document.getElementById('val-lin3d-w1');
+    const valDW1 = document.getElementById('val-lin3d-dw1');
+    const valW2 = document.getElementById('val-lin3d-w2');
+    const valDW2 = document.getElementById('val-lin3d-dw2');
+
+    const hudAt1 = document.getElementById('hud-lin3d-at1');
+    const hudAn1 = document.getElementById('hud-lin3d-an1');
+    const hudV2 = document.getElementById('hud-lin3d-v2');
+    const hudW2Sum = document.getElementById('hud-lin3d-w2sum');
+    const hudAt2C = document.getElementById('hud-lin3d-at2c');
+    const hudAn2C = document.getElementById('hud-lin3d-an2c');
+    const hudVc2 = document.getElementById('hud-lin3d-vc2');
+    const hudF2 = document.getElementById('hud-lin3d-f2');
+
+    const chkArm = document.getElementById('chk-lin3d-arm');
+    const chkV0 = document.getElementById('chk-lin3d-v0');
+    const chkLink1 = document.getElementById('chk-lin3d-link1');
+    const chkLink2 = document.getElementById('chk-lin3d-link2');
+    const chkVc = document.getElementById('chk-lin3d-vc');
+
+    const btnPlay = document.getElementById('btn-lin3d-play');
+    const btnStep = document.getElementById('btn-lin3d-step');
+    const btnSpeed = document.getElementById('btn-lin3d-speed');
+    const btnReset = document.getElementById('btn-lin3d-reset');
+
+    const btnCamIso = document.getElementById('btn-lin3d-cam-iso');
+    const btnCamTop = document.getElementById('btn-lin3d-cam-top');
+    const btnCamSide = document.getElementById('btn-lin3d-cam-side');
+
+    let isPlaying = true;
+    let timeScale = 0.5;
+    let q1 = 0.35; // 大臂关节角 (弧度)
+    let q2 = 0.75; // 小臂关节角 (弧度)
+    let simTime = 0;
+    let lastTime = performance.now();
+
+    // 3D 摄像机参数
+    let rotX = 0.48;  // pitch
+    let rotY = -0.58; // yaw
+    let isDragging = false;
+    let startMouseX = 0, startMouseY = 0;
+    let startRotX = 0, startRotY = 0;
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startMouseX = e.clientX;
+      startMouseY = e.clientY;
+      startRotX = rotX;
+      startRotY = rotY;
+      canvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startMouseX;
+      const dy = e.clientY - startMouseY;
+      rotY = startRotY + dx * 0.008;
+      rotX = Math.max(-1.4, Math.min(1.4, startRotX + dy * 0.008));
+      render();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+      }
+    });
+
+    let focusStep = 'step1'; // 'step1', 'step2', 'step3', 'all'
+    const btnTabStep1 = document.getElementById('btn-tab-step1');
+    const btnTabStep2 = document.getElementById('btn-tab-step2');
+    const btnTabStep3 = document.getElementById('btn-tab-step3');
+    const btnTabAll = document.getElementById('btn-tab-all');
+
+    function updateTabs() {
+      const tabs = [
+        { id: 'step1', btn: btnTabStep1 },
+        { id: 'step2', btn: btnTabStep2 },
+        { id: 'step3', btn: btnTabStep3 },
+        { id: 'all', btn: btnTabAll }
+      ];
+      tabs.forEach(t => {
+        if (!t.btn) return;
+        if (t.id === focusStep) {
+          t.btn.style.background = '#0284c7';
+          t.btn.style.fontWeight = 'bold';
+        } else {
+          t.btn.style.background = '#334155';
+          t.btn.style.fontWeight = 'normal';
+        }
+      });
+      render();
+    }
+
+    if (btnTabStep1) btnTabStep1.onclick = () => { focusStep = 'step1'; updateTabs(); };
+    if (btnTabStep2) btnTabStep2.onclick = () => { focusStep = 'step2'; updateTabs(); };
+    if (btnTabStep3) btnTabStep3.onclick = () => { focusStep = 'step3'; updateTabs(); };
+    if (btnTabAll) btnTabAll.onclick = () => { focusStep = 'all'; updateTabs(); };
+
+    // 触控支持
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startMouseX = e.touches[0].clientX;
+        startMouseY = e.touches[0].clientY;
+        startRotX = rotX;
+        startRotY = rotY;
+      }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - startMouseX;
+      const dy = e.touches[0].clientY - startMouseY;
+      rotY = startRotY + dx * 0.008;
+      rotX = Math.max(-1.4, Math.min(1.4, startRotX + dy * 0.008));
+      render();
+    });
+
+    window.addEventListener('touchend', () => { isDragging = false; });
+
+    // 视角预设
+    if (btnCamIso) {
+      btnCamIso.onclick = () => {
+        rotX = 0.48; rotY = -0.58;
+        btnCamIso.style.background = '#0284c7';
+        btnCamTop.style.background = '#334155';
+        btnCamSide.style.background = '#334155';
+        render();
+      };
+    }
+    if (btnCamTop) {
+      btnCamTop.onclick = () => {
+        rotX = 1.48; rotY = 0;
+        btnCamIso.style.background = '#334155';
+        btnCamTop.style.background = '#0284c7';
+        btnCamSide.style.background = '#334155';
+        render();
+      };
+    }
+    if (btnCamSide) {
+      btnCamSide.onclick = () => {
+        rotX = 0.02; rotY = 0;
+        btnCamIso.style.background = '#334155';
+        btnCamTop.style.background = '#334155';
+        btnCamSide.style.background = '#0284c7';
+        render();
+      };
+    }
+
+    // 控制面板事件绑定
+    [rngV0, rngW1, rngDW1, rngW2, rngDW2].forEach(input => {
+      if (input) input.addEventListener('input', () => {
+        if (valV0) valV0.innerText = `${parseFloat(rngV0.value).toFixed(1)} m/s²`;
+        if (valW1) valW1.innerText = `${parseFloat(rngW1.value).toFixed(1)} r/s`;
+        if (valDW1) valDW1.innerText = `${parseFloat(rngDW1.value).toFixed(1)} r/s²`;
+        if (valW2) valW2.innerText = `${parseFloat(rngW2.value).toFixed(1)} r/s`;
+        if (valDW2) valDW2.innerText = `${parseFloat(rngDW2.value).toFixed(1)} r/s²`;
+        render();
+      });
+    });
+
+    if (btnPlay) {
+      btnPlay.onclick = () => {
+        isPlaying = !isPlaying;
+        btnPlay.innerText = isPlaying ? '⏸️ 暂停' : '▶️ 继续';
+        btnPlay.style.background = isPlaying ? '#eab308' : '#10b981';
+      };
+    }
+
+    if (btnStep) {
+      btnStep.onclick = () => {
+        isPlaying = false;
+        btnPlay.innerText = '▶️ 继续';
+        btnPlay.style.background = '#10b981';
+        q1 += (10 * Math.PI / 180);
+        q2 += (15 * Math.PI / 180);
+        render();
+      };
+    }
+
+    if (btnSpeed) {
+      btnSpeed.onclick = () => {
+        if (timeScale === 0.5) {
+          timeScale = 0.2;
+          btnSpeed.innerText = '🐌 0.2x 极慢';
+          btnSpeed.style.background = '#0284c7';
+        } else if (timeScale === 0.2) {
+          timeScale = 1.0;
+          btnSpeed.innerText = '⚡ 1.0x 正常';
+          btnSpeed.style.background = '#334155';
+        } else {
+          timeScale = 0.5;
+          btnSpeed.innerText = '🐢 0.5x 慢速';
+          btnSpeed.style.background = '#334155';
+        }
+      };
+    }
+
+    if (btnReset) {
+      btnReset.onclick = () => {
+        q1 = 0.35;
+        q2 = 0.75;
+        simTime = 0;
+        rngV0.value = 2.0;
+        rngW1.value = 1.5;
+        rngDW1.value = 3.0;
+        rngW2.value = 2.0;
+        rngDW2.value = 4.0;
+        rotX = 0.48;
+        rotY = -0.58;
+        focusStep = 'step1';
+        updateTabs();
+        if (valV0) valV0.innerText = '2.0 m/s²';
+        if (valW1) valW1.innerText = '1.5 r/s';
+        if (valDW1) valDW1.innerText = '3.0 r/s²';
+        if (valW2) valW2.innerText = '2.0 r/s';
+        if (valDW2) valDW2.innerText = '4.0 r/s²';
+        if (btnCamIso) {
+          btnCamIso.style.background = '#0284c7';
+          btnCamTop.style.background = '#334155';
+          btnCamSide.style.background = '#334155';
+        }
+        render();
+      };
+    }
+
+    function project3D(p, w, h) {
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const x1 = p.x * cosY + p.z * sinY;
+      const y1 = p.y;
+      const z1 = -p.x * sinY + p.z * cosY;
+
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const x2 = x1;
+      const y2 = y1 * cosX - z1 * sinX;
+      const z2 = y1 * sinX + z1 * cosX;
+
+      const cameraDist = 750;
+      const fov = cameraDist / (cameraDist + z2);
+      return { x: w * 0.48 + x2 * fov, y: h * 0.58 - y2 * fov, z: z2 };
+    }
+
+    function drawPillLabel(text, x, y, bgColor, textColor, borderColor) {
+      ctx.save();
+      ctx.font = 'bold 11px ui-monospace, monospace, sans-serif';
+      const textWidth = ctx.measureText(text).width;
+      const padX = 5, padY = 2;
+      const boxW = textWidth + padX * 2;
+      const boxH = 17;
+
+      ctx.fillStyle = bgColor || 'rgba(11, 17, 32, 0.9)';
+      ctx.strokeStyle = borderColor || textColor;
+      ctx.lineWidth = 1.2;
+
+      ctx.beginPath();
+      ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    function draw3DArrow(pFrom, pTo, color, lineWidth, label, textColor) {
+      const from2D = project3D(pFrom, canvas.width, canvas.height);
+      const to2D = project3D(pTo, canvas.width, canvas.height);
+
+      const dx = to2D.x - from2D.x;
+      const dy = to2D.y - from2D.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 3) return;
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(from2D.x, from2D.y);
+      ctx.lineTo(to2D.x, to2D.y);
+      ctx.stroke();
+
+      const angle = Math.atan2(dy, dx);
+      const headLen = Math.min(13, len * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(to2D.x, to2D.y);
+      ctx.lineTo(to2D.x - headLen * Math.cos(angle - Math.PI / 6), to2D.y - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to2D.x - headLen * Math.cos(angle + Math.PI / 6), to2D.y - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      if (label) {
+        const labelX = to2D.x + Math.cos(angle) * 14;
+        const labelY = to2D.y + Math.sin(angle) * 14;
+        drawPillLabel(label, labelX, labelY, 'rgba(9, 15, 29, 0.92)', textColor || color, color);
+      }
+    }
+
+    const optDirHoriz = document.getElementById('opt-lin3d-dir-horiz');
+    const optDirVert = document.getElementById('opt-lin3d-dir-vert');
+    if (optDirHoriz) optDirHoriz.addEventListener('change', render);
+    if (optDirVert) optDirVert.addEventListener('change', render);
+
+    function render() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const v0Val = parseFloat(rngV0.value);
+      const w1Val = parseFloat(rngW1.value);
+      const dw1Val = parseFloat(rngDW1.value);
+      const w2Rel = parseFloat(rngW2.value);
+      const dw2Rel = parseFloat(rngDW2.value);
+      const isHoriz = optDirHoriz && optDirHoriz.checked;
+
+      // 物理与几何常量
+      const L1_metric = 1.0;
+      const L2_metric = 0.8;
+      const PC2_metric = 0.4;
+      const m2 = 2.0; // kg
+
+      const L1_px = 140;
+      const L2_px = 110;
+      const PC2_px = 55;
+
+      // 递推数值计算
+      const at1_mag = Math.abs(dw1Val) * L1_metric;
+      const an1_mag = (w1Val * w1Val) * L1_metric;
+      const v0_mag = Math.abs(v0Val);
+      const v2_mag = Math.sqrt(Math.pow(v0_mag, 2) + Math.pow(at1_mag, 2) + Math.pow(an1_mag, 2));
+
+      const w2_sum = w1Val + w2Rel;
+      const dw2_sum = dw1Val + dw2Rel;
+      const at2_c_mag = Math.abs(dw2_sum) * PC2_metric;
+      const an2_c_mag = (w2_sum * w2_sum) * PC2_metric;
+      const vc2_mag = Math.sqrt(Math.pow(v2_mag, 2) + Math.pow(at2_c_mag, 2) + Math.pow(an2_c_mag, 2));
+      const f2_mag = m2 * vc2_mag;
+
+      // 更新 HUD
+      if (hudAt1) hudAt1.innerText = at1_mag.toFixed(2);
+      if (hudAn1) hudAn1.innerText = an1_mag.toFixed(2);
+      if (hudV2) hudV2.innerText = v2_mag.toFixed(2);
+      if (hudW2Sum) hudW2Sum.innerText = w2_sum.toFixed(1);
+      if (hudAt2C) hudAt2C.innerText = at2_c_mag.toFixed(2);
+      if (hudAn2C) hudAn2C.innerText = an2_c_mag.toFixed(2);
+      if (hudVc2) hudVc2.innerText = vc2_mag.toFixed(2);
+      if (hudF2) hudF2.innerText = f2_mag.toFixed(2);
+
+      // 1. 绘制 3D 空间地面参考网格 (Y = -50)
+      ctx.save();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      const gridSize = 320;
+      const gridStep = 50;
+      for (let x = -gridSize; x <= gridSize; x += gridStep) {
+        const p1 = project3D({ x: x, y: -50, z: -gridSize }, w, h);
+        const p2 = project3D({ x: x, y: -50, z: gridSize }, w, h);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+      for (let z = -gridSize; z <= gridSize; z += gridStep) {
+        const p1 = project3D({ x: -gridSize, y: -50, z: z }, w, h);
+        const p2 = project3D({ x: gridSize, y: -50, z: z }, w, h);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 2. 基座平动动画 (水平地面平移 VS 竖直升降平移)
+      let baseOrigin;
+      let vBase3D;
+      const vScale = 12;
+
+      if (isHoriz) {
+        const baseDisplacementX = Math.sin(simTime * 3) * (v0Val * 4);
+        baseOrigin = { x: -80 + baseDisplacementX, y: -20, z: 0 };
+        vBase3D = { x: v0Val * vScale, y: 0, z: 0 };
+      } else {
+        const baseDisplacementY = Math.sin(simTime * 3) * (v0Val * 3);
+        baseOrigin = { x: -80, y: -20 + baseDisplacementY, z: 0 };
+        vBase3D = { x: 0, y: v0Val * vScale, z: 0 };
+      }
+
+      // 大臂几何点
+      const joint2Origin = {
+        x: baseOrigin.x + L1_px * Math.cos(q1),
+        y: baseOrigin.y,
+        z: baseOrigin.z - L1_px * Math.sin(q1)
+      };
+      const com1Origin = {
+        x: baseOrigin.x + L1_px * 0.5 * Math.cos(q1),
+        y: baseOrigin.y,
+        z: baseOrigin.z - L1_px * 0.5 * Math.sin(q1)
+      };
+
+      // 小臂几何点 (合成方位角 q1 + q2)
+      const qWorld2 = q1 + q2;
+      const com2Origin = {
+        x: joint2Origin.x + PC2_px * Math.cos(qWorld2),
+        y: joint2Origin.y,
+        z: joint2Origin.z - PC2_px * Math.sin(qWorld2)
+      };
+      const tip3Origin = {
+        x: joint2Origin.x + L2_px * Math.cos(qWorld2),
+        y: joint2Origin.y,
+        z: joint2Origin.z - L2_px * Math.sin(qWorld2)
+      };
+
+      const b2D = project3D(baseOrigin, w, h);
+      const j2_2D = project3D(joint2Origin, w, h);
+      const c1_2D = project3D(com1Origin, w, h);
+      const c2_2D = project3D(com2Origin, w, h);
+      const tip3_2D = project3D(tip3Origin, w, h);
+
+      // 3. 绘制大臂与小臂旋转轨迹圆 (水平面)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      for (let i = 0; i <= 60; i++) {
+        const a = (i / 60) * Math.PI * 2;
+        const pt = project3D({
+          x: baseOrigin.x + L1_px * Math.cos(a),
+          y: baseOrigin.y,
+          z: baseOrigin.z - L1_px * Math.sin(a)
+        }, w, h);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // 4. 绘制两连杆实体
+      ctx.save();
+      // 移动基座圆盘与立柱
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2;
+      const baseFloorPt = project3D({ x: baseOrigin.x, y: -50, z: baseOrigin.z }, w, h);
+      ctx.beginPath();
+      ctx.moveTo(b2D.x, b2D.y);
+      ctx.lineTo(baseFloorPt.x, baseFloorPt.y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(baseFloorPt.x, baseFloorPt.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // ① 大臂 Link 1 (深蓝粗连杆)
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 14;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(b2D.x, b2D.y);
+      ctx.lineTo(j2_2D.x, j2_2D.y);
+      ctx.stroke();
+
+      // ② 小臂 Link 2 (青绿粗连杆)
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(j2_2D.x, j2_2D.y);
+      ctx.lineTo(tip3_2D.x, tip3_2D.y);
+      ctx.stroke();
+
+      // 关节 1 球 {1}
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(b2D.x, b2D.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      drawPillLabel('{1}', b2D.x - 14, b2D.y + 16, '#0f172a', '#cbd5e1', '#334155');
+
+      // 关节 2 肘部球 {2}
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(j2_2D.x, j2_2D.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      drawPillLabel('{2}', j2_2D.x - 14, j2_2D.y + 16, '#0f172a', '#38bdf8', '#0284c7');
+
+      // 大臂质心 C1
+      ctx.fillStyle = '#38bdf8';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(c1_2D.x, c1_2D.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      drawPillLabel('C₁', c1_2D.x - 12, c1_2D.y - 12, '#0f172a', '#94a3b8', '#334155');
+
+      // 小臂质心 C2
+      ctx.fillStyle = '#c084fc';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(c2_2D.x, c2_2D.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      drawPillLabel('C₂', c2_2D.x - 12, c2_2D.y - 14, '#0f172a', '#c084fc', '#7e22ce');
+
+      // 末端执行器球 {3}
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(tip3_2D.x, tip3_2D.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      drawPillLabel('{3}', tip3_2D.x + 14, tip3_2D.y + 4, '#0f172a', '#10b981', '#059669');
+
+      ctx.restore();
+
+      // 5. 绘制 3D 动力学线加速度矢量 (根据 focusStep 干净展示)
+      const at1_3D = {
+        x: -Math.sin(q1) * at1_mag * vScale * (dw1Val >= 0 ? 1 : -1),
+        y: 0,
+        z: -Math.cos(q1) * at1_mag * vScale * (dw1Val >= 0 ? 1 : -1)
+      };
+      const an1_3D = {
+        x: -Math.cos(q1) * an1_mag * vScale * 0.5,
+        y: 0,
+        z: Math.sin(q1) * an1_mag * vScale * 0.5
+      };
+      const v2_3D = {
+        x: vBase3D.x + at1_3D.x + an1_3D.x,
+        y: vBase3D.y + at1_3D.y + an1_3D.y,
+        z: vBase3D.z + at1_3D.z + an1_3D.z
+      };
+      const v2End = { x: joint2Origin.x + v2_3D.x, y: joint2Origin.y + v2_3D.y, z: joint2Origin.z + v2_3D.z };
+
+      // ① 基座平动分量 v_dot_0 (黄色)
+      if ((focusStep === 'step1' || focusStep === 'all') && Math.abs(v0Val) > 0.05) {
+        const baseRootEnd = { x: baseOrigin.x + vBase3D.x, y: baseOrigin.y + vBase3D.y, z: baseOrigin.z + vBase3D.z };
+        draw3DArrow(baseOrigin, baseRootEnd, '#eab308', 3, 'v̇₀', '#eab308');
+      }
+
+      // ② 大臂末端加速度 v_dot_2 (蓝色)
+      if (focusStep === 'step1' || focusStep === 'step2' || focusStep === 'step3' || focusStep === 'all') {
+        draw3DArrow(joint2Origin, v2End, '#38bdf8', 4, 'v̇₂', '#38bdf8');
+      }
+
+      // ③ 小臂质心加速度与牛顿净惯性力 F2 = m2 * vc2 (紫色矢量)
+      const at2c_3D = {
+        x: -Math.sin(qWorld2) * at2_c_mag * vScale * (dw2_sum >= 0 ? 1 : -1),
+        y: 0,
+        z: -Math.cos(qWorld2) * at2_c_mag * vScale * (dw2_sum >= 0 ? 1 : -1)
+      };
+      const an2c_3D = {
+        x: -Math.cos(qWorld2) * an2_c_mag * vScale * 0.4,
+        y: 0,
+        z: Math.sin(qWorld2) * an2_c_mag * vScale * 0.4
+      };
+      const vc2_3D = {
+        x: v2_3D.x + at2c_3D.x + an2c_3D.x,
+        y: v2_3D.y + at2c_3D.y + an2c_3D.y,
+        z: v2_3D.z + at2c_3D.z + an2c_3D.z
+      };
+      const vc2End = { x: com2Origin.x + vc2_3D.x, y: com2Origin.y + vc2_3D.y, z: com2Origin.z + vc2_3D.z };
+
+      if (focusStep === 'step2' || focusStep === 'all') {
+        draw3DArrow(com2Origin, vc2End, '#c084fc', 4, 'v̇_C2 (F₂)', '#c084fc');
+      }
+
+      // ④ 小臂末端总加速度 v_dot_3 (绿色矢量)
+      if (focusStep === 'step3' || focusStep === 'all') {
+        const at2end_mag = Math.abs(dw2_sum) * L2_metric;
+        const an2end_mag = (w2_sum * w2_sum) * L2_metric;
+        const v3_3D = {
+          x: v2_3D.x - Math.sin(qWorld2) * at2end_mag * vScale * (dw2_sum >= 0 ? 1 : -1) - Math.cos(qWorld2) * an2end_mag * vScale * 0.4,
+          y: v2_3D.y,
+          z: v2_3D.z - Math.cos(qWorld2) * at2end_mag * vScale * (dw2_sum >= 0 ? 1 : -1) + Math.sin(qWorld2) * an2end_mag * vScale * 0.4
+        };
+        const v3End = { x: tip3Origin.x + v3_3D.x, y: tip3Origin.y + v3_3D.y, z: tip3Origin.z + v3_3D.z };
+        draw3DArrow(tip3Origin, v3End, '#10b981', 3.5, 'v̇₃', '#10b981');
+      }
+    }
+
+    function loopLin3d(timestamp) {
+      if (isPlaying) {
+        const dt = (timestamp - lastTime) / 1000;
+        const w1Val = parseFloat(rngW1.value);
+        const w2Rel = parseFloat(rngW2.value);
+        q1 += w1Val * dt * timeScale;
+        q2 += w2Rel * dt * timeScale;
+        simTime += dt * timeScale;
+        render();
+      }
+      lastTime = timestamp;
+      requestAnimationFrame(loopLin3d);
+    }
+
+    render();
+    requestAnimationFrame(loopLin3d);
+  })();
+});
+</script>
+</body>
+</html>

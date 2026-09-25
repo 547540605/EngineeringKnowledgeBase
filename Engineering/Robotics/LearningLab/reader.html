@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>机器人学入门笔记</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 system-ui, "Microsoft YaHei", sans-serif; overflow: hidden; }
+    .book { display: grid; grid-template-columns: 282px minmax(0, 1fr); height: 100%; }
+    aside { display: flex; min-height: 0; flex-direction: column; background: var(--rail); border-right: 1px solid var(--line); }
+    .brand { padding: 22px 20px 17px; border-bottom: 1px solid var(--line); }
+    .brand a { color: inherit; text-decoration: none; }
+    .brand small { display: block; color: var(--muted); margin-bottom: 5px; }
+    .brand strong { display: block; font-size: 1.18rem; }
+    nav { min-height: 0; overflow-y: auto; padding: 13px 10px 24px; }
+    details { border-radius: 8px; margin: 3px 0; }
+    details[open] { background: color-mix(in srgb, var(--soft) 40%, transparent); }
+    summary { cursor: pointer; padding: 8px 10px; font-weight: 720; list-style-position: inside; }
+    summary::marker { color: var(--muted); }
+    .nav-link { display: block; color: inherit; border-radius: 7px; padding: 7px 9px 7px 24px; margin: 2px 3px; text-decoration: none; }
+    .nav-link:hover { background: color-mix(in srgb, var(--soft) 76%, transparent); }
+    .nav-link.active { background: var(--accent); color: white; font-weight: 700; }
+    .number { display: inline-block; width: 27px; color: var(--muted); font: 12px/1.5 ui-monospace, "Cascadia Mono", monospace; }
+    .active .number { color: color-mix(in srgb, white 82%, transparent); }
+    .rail-footer { border-top: 1px solid var(--line); padding: 12px 15px; color: var(--muted); font-size: .82rem; }
+    .reader { min-width: 0; min-height: 0; display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+    .reader-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    #current-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reader-head a { color: var(--muted); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .reader-head a:hover { color: var(--accent); text-decoration: underline; }
+    iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--bg); }
+    .menu { display: none; color: inherit; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); padding: 5px 9px; font: inherit; }
+    @media (max-width: 800px) {
+      body { overflow: hidden; }
+      .book { display: block; }
+      aside { position: fixed; z-index: 5; inset: 0 auto 0 0; width: min(82vw, 310px); transform: translateX(-102%); transition: transform .18s ease; box-shadow: 8px 0 24px rgb(0 0 0 / .18); }
+      body.menu-open aside { transform: translateX(0); }
+      body.menu-open::after { content: ""; position: fixed; z-index: 4; inset: 0; background: rgb(0 0 0 / .26); }
+      .reader { height: 100%; }
+      .menu { display: block; }
+      .reader-head { padding: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="book">
+    <aside aria-label="全书目录">
+      <div class="brand"><a href="#note=00-progress.html"><small>机器人学入门 · 交互式笔记</small><strong>学习目录</strong></a></div>
+      <nav id="book-nav"></nav>
+      <div class="rail-footer">提示：点击章节在右侧阅读，不会打开新标签页。</div>
+    </aside>
+    <section class="reader" aria-label="笔记阅读区">
+      <header class="reader-head"><button class="menu" id="menu" aria-expanded="false">目录</button><span id="current-title">加载中…</span><a id="open-page" href="00-progress.html" target="_blank" rel="noopener">单独打开 ↗</a></header>
+      <iframe id="reader" title="机器人学入门笔记" src="00-progress.html"></iframe>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const chapters = [
+        { name: '🎯 学习指挥与考核中心', items: [
+          ['🧭', 'Craig 全景学习总指挥看板', '00-progress.html'],
+          ['🏆', '智能题库与考核中心 (续考/每日三题)', 'quiz-center.html']
+        ] },
+        { name: '第一部分 · 坐标与变换', items: [
+          ['01', '坐标系中的点', '01-coordinate-frames.html'],
+          ['02', '齐次变换矩阵', '02-homogeneous-transform.html'],
+          ['03', '变换链', '03-transform-chains.html']
+        ] },
+        { name: '第二部分 · 旋转与两连杆', items: [
+          ['04', '二维两连杆正运动学', '04-planar-two-link-forward-kinematics.html'],
+          ['05', '三维单轴旋转', '05-3d-single-axis-rotations.html'],
+          ['06', '三维机械臂坐标系', '06-3d-arm-coordinate-frames.html']
+        ] },
+        { name: '阶段自测 · 基础', items: [['07', '基础复习自测', '07-foundation-review-quiz.html']] },
+        { name: '第三部分 · DH 与正运动学', items: [
+          ['08', 'DH 坐标系分配', '08-dh-coordinate-assignment.html'],
+          ['09', '单节 DH 变换', '09-dh-single-link-transform.html'],
+          ['10', 'DH 表到正运动学', '10-dh-table-to-forward-kinematics.html']
+        ] },
+        { name: '阶段自测 · DH', items: [['11', 'DH 复习自测', '11-dh-review-quiz.html']] },
+        { name: '第四部分 · 逆运动学', items: [['12', '二维两连杆逆运动学', '12-planar-two-link-inverse-kinematics.html']] },
+        { name: '阶段自测 · 正逆运动学', items: [['13', '正逆运动学混合自测', '13-planar-forward-inverse-quiz.html']] },
+        { name: '第五部分 · 雅可比与微分运动', items: [
+          ['14', '二维两连杆雅可比矩阵', '14-planar-two-link-jacobian.html'],
+          ['15', '二维两连杆奇异位形', '15-planar-two-link-singularity.html'],
+          ['16', '二维两连杆的速度雅可比', '16-planar-jacobian-velocity.html'],
+          ['17', '二维两连杆的逆速度运动学', '17-planar-inverse-velocity.html'],
+          ['18', '用逆速度让末端靠近目标', '18-resolved-rate-motion.html'],
+          ['19', '位置随时间变化与速度', '19-time-varying-position-velocity.html']
+        ] },
+        { name: '阶段自测 · 雅可比与速度', items: [['20', '雅可比与速度运动学自测', '20-velocity-jacobian-review-quiz.html']] },
+        { name: '第六部分 · 空间刚体速度', items: [
+          ['21', '空间刚体上两点的速度', '21-spatial-rigid-body-velocity.html'],
+          ['22', '速度递推：一节怎样传给下一节', '22-velocity-propagation.html'],
+          ['23', '三维角速度递推', '23-angular-velocity-propagation.html'],
+          ['24', '三维线速度递推', '24-linear-velocity-propagation.html'],
+          ['25', '两连杆速度递推实算', '25-two-link-velocity-recursion.html']
+        ] },
+        { name: '第七部分 · Newton-Euler 动力学', items: [
+          ['26', '单关节动力学：惯性、重力与摩擦', '26-single-joint-dynamics.html'],
+          ['27', '多连杆空间角速度与角加速度递推', '27-recursive-newton-euler-dynamics.html'],
+          ['28', '单连杆线加速度空间解耦', '28-recursive-newton-euler-dynamics.html'],
+          ['29', '两连杆空间加速度两级外推', '29-recursive-newton-euler-dynamics.html'],
+          ['30', '小臂质心正交解耦与牛顿力标定', '30-recursive-newton-euler-dynamics.html'],
+          ['31', '递归 Newton-Euler 动力学算法总览', '31-rnea-overview.html'],
+          ['31a', '单杆 Newton–Euler 受力与受矩', '31a-newton-euler-force-balance.html'],
+          ['31b', 'RNEA 外推与内推双向递推', '31b-rnea-forward-backward-pass.html'],
+          ['31c', '两连杆惯性力与关节力矩仿真台', '31c-rnea-two-link-simulation-lab.html'],
+          ['31d', 'RNEA 四类力矩来源逐项深推导', '31d-rnea-four-torque-terms.html'],
+          ['32', '两连杆动力学结构式：M(q)、h、g', '32-two-link-dynamics-structure.html']
+        ] },
+        { name: '第八部分 · 轨迹规划、控制与辨识 (Ch 07~11)', items: [
+          ['33', '轨迹时间律：三次、五次、LSPB', '33-trajectory-time-laws.html'],
+          ['34', '单关节 PD / PID 位置闭环控制', '34-pid-position-control.html'],
+          ['35', '计算力矩控制 CTC：动力学解耦前馈', '35-computed-torque-control.html'],
+          ['36', '力控制、阻抗控制与导纳顺应', '36-force-impedance-admittance-control.html'],
+          ['37', '两连杆端到端闭环动力学仿真', '37-two-link-closed-loop-simulation.html'],
+          ['38', '动力学参数辨识与基参数回归', '38-dynamics-parameter-identification.html'],
+          ['39', '伺服三环级联与驱动器接口限幅', '39-servo-cascade-and-limits.html']
+        ] },
+        { name: '专题专栏 · 基础支撑', items: [
+          ['理论支撑', '线性代数与齐次坐标', 'linear-algebra-homogeneous-coordinates.html'],
+          ['基础专栏', '矩阵乘向量列视角与坐标变换本质', 'ref-matrix-multiplication-and-frame-transform.html'],
+          ['基础专栏', '刚体转动本质与四角记号法字典', 'ref-rigid-body-rotation-foundations.html'],
+          ['基础专栏', '求导顺序之谜：坐标导数与投影速度', 'ref-velocity-derivative-vs-projection.html'],
+          ['基础专栏', '动力学前置补课：力矩、惯量与物理直觉', 'ref-dynamics-foundations-force-torque-inertia.html'],
+          ['基础专栏', '空间惯性张量与欧拉转动方程深入解析', 'ref-spatial-inertia-tensor-euler-equations.html']
+        ] },
+        { name: '实战项目复盘 · 算法答辩', items: [['实战项目', '自研便携四轴机械手：运动学与二分最优解搜索', 'project-01-portable-4axis-robot.html']] },
+        { name: 'ROS 2 现代机器人工程实战', items: [
+          ['ROS2-00', 'ROS 2 实战全景看板与进阶路线', 'ros2/00-progress.html'],
+          ['ROS2-01', '节点（Node）与话题（Topic）通信底座', 'ros2/01-nodes-and-topics.html'],
+          ['ROS2-02', 'URDF 机械臂建模与 Launch 一键编排', 'ros2/02-urdf-and-arm-modeling.html'],
+          ['ROS2-03', 'Python 轨迹发布与三节点解耦流水线', 'ros2/03-python-trajectory-control.html'],
+          ['ROS2-04', '3R 机械臂几何与解析逆运动学 (IK)', 'ros2/04-3r-analytic-ik.html'],
+          ['ROS2-05', '逆解多分支连续性选择与关节限位过滤', 'ros2/05-ik-continuity-and-limits.html'],
+          ['ROS2-06', '笛卡尔直线插补与五次时间律', 'ros2/06-cartesian-line-and-time-law.html'],
+          ['ROS2-07', 'RViz 空间轨迹 Marker 可视化', 'ros2/07-rviz-trajectory-markers.html'],
+          ['ROS2-08', '3R 位置 Jacobian 与有限差分验证', 'ros2/08-3r-position-jacobian.html'],
+          ['ROS2-09', '微分 IK：阻尼最小二乘 (DLS) 与奇异规避', 'ros2/09-differential-ik-and-singularity.html'],
+          ['ROS2-10', 'TF2 工位坐标：world、base、tool、target', 'ros2/10-tf2-workcell-frames.html'],
+          ['ROS2-11', '六轴 MoveIt 2 配置与规划组', 'ros2/11-six-axis-moveit-config.html'],
+          ['ROS2-12', 'MoveIt 规划场景与避障路径', 'ros2/12-moveit-pose-and-planning-scene.html'],
+          ['ROS2-13', 'ros2_control、轨迹 Action 与 fake hardware', 'ros2/13-ros2-control-and-fake-hardware.html'],
+          ['ROS2-15', 'MoveIt Servo：在线笛卡尔速度伺服', 'ros2/15-moveit-servo-online-control.html'],
+          ['ROS2-16', 'TCP 标定、工位对齐与误差预算', 'ros2/16-tcp-calibration-and-accuracy.html'],
+          ['ROS2-17', '手眼标定与视觉闭环数据流', 'ros2/17-hand-eye-calibration-and-visual-loop.html'],
+          ['ROS2-18', '动力学前馈、轨迹约束与力控柔顺', 'ros2/18-dynamics-trajectory-and-compliance.html'],
+          ['ROS2-19', '任务状态机、I/O 交互与异常恢复', 'ros2/19-task-state-machine-and-io.html'],
+          ['ROS2-20', '系统诊断、rosbag 记录与回归部署', 'ros2/20-diagnostics-bag-and-regression.html']
+        ] }
+      ];
+      const entries = chapters.flatMap(chapter => chapter.items.map(item => ({ number: item[0], title: item[1], file: item[2], chapter: chapter.name })));
+      const nav = document.getElementById('book-nav');
+      const reader = document.getElementById('reader');
+      const title = document.getElementById('current-title');
+      const openPage = document.getElementById('open-page');
+      const menu = document.getElementById('menu');
+
+      function itemFor(file) { return entries.find(item => item.file === file) || entries[0]; }
+      function requestedFile() { const match = location.hash.match(/^#note=(.+)$/); return match ? decodeURIComponent(match[1]) : '00-progress.html'; }
+      function renderNav() {
+        nav.innerHTML = chapters.map((chapter, index) => `<details data-chapter="${chapter.name}" ${index === 0 ? 'open' : ''}><summary>${chapter.name}</summary>${chapter.items.map(([number, label, file]) => `<a class="nav-link" href="#note=${encodeURIComponent(file)}" data-file="${file}"><span class="number">${number}</span>${label}</a>`).join('')}</details>`).join('');
+      }
+
+      function updateActive() {
+        const file = requestedFile();
+        const item = itemFor(file);
+        document.querySelectorAll('.nav-link').forEach(link => {
+          const isActive = link.dataset.file === file;
+          link.classList.toggle('active', isActive);
+          if (isActive) {
+            const parentDetails = link.closest('details');
+            if (parentDetails) parentDetails.open = true;
+          }
+        });
+        if (reader.getAttribute('src') !== file) reader.src = file;
+        title.textContent = `${item.number} ${item.title}`;
+        openPage.href = file;
+        document.title = `${item.title} · 机器人学入门笔记`;
+        document.body.classList.remove('menu-open');
+        if (menu) menu.setAttribute('aria-expanded', 'false');
+      }
+
+      function syncReaderHash() {
+        try {
+          const currentFrameFile = reader.contentWindow.location.pathname.split('/').pop();
+          if (currentFrameFile && currentFrameFile !== requestedFile()) {
+            location.hash = `#note=${encodeURIComponent(currentFrameFile)}`;
+          }
+        } catch (_) {}
+      }
+
+      if (menu) {
+        menu.addEventListener('click', () => {
+          const isOpen = document.body.classList.toggle('menu-open');
+          menu.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
+      renderNav();
+      updateActive();
+      window.addEventListener('hashchange', updateActive);
+      reader.addEventListener('load', syncReaderHash);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Craig《机器人学导论》全景学习总指挥看板</title>
+  
+  <!-- KaTeX 依赖 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body, {delimiters: [{left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+      padding-bottom: 80px;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 18px;
+    }
+
+    /* 顶部仪表盘 HUD */
+    .dashboard-hero {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(16, 185, 129, 0.15));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 18px;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 4px 0;
+    }
+
+    /* 快速入口 Banner */
+    .exam-banner {
+      background: linear-gradient(90deg, #1e1b4b, #172554);
+      border: 1px solid var(--purple);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-blue { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
+    .badge-amber { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
+    .badge-purple { background: rgba(168, 85, 247, 0.2); color: var(--purple); }
+    .badge-gray { background: #334155; color: #94a3b8; }
+
+    .btn-action {
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-action:hover { background: #0369a1; text-decoration: none; }
+
+    /* 章节知识图谱卡片 */
+    .chapter-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: border-color 0.15s;
+    }
+    .chapter-card:hover {
+      border-color: var(--primary);
+    }
+    .chapter-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .note-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .note-item {
+      background: var(--card-sub);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s;
+    }
+    .note-item:hover {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.05);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- 顶部总指挥看板 (Master Cockpit Hero) -->
+  <div class="dashboard-hero">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div>
+        <span class="badge badge-purple" style="font-size:0.85rem;">工作区唯一基准目标教材</span>
+        <h1 style="margin:6px 0 4px 0; color:#fff; font-size:1.6rem;">Craig《机器人学导论》(第4版) 全景学习总指挥看板</h1>
+        <small style="color:var(--muted);">紧扣原书 11 章主干理论 · 物理矢量生根 · 零跳步微积分推导 · 交互实验台与题库考核一体化</small>
+      </div>
+      <div>
+        <a href="quiz-center.html" class="btn-action" style="background:#10b981; font-size:0.95rem; padding:10px 20px;">
+          🏆 启动智能考核中心
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 大核心指标数据卡片 -->
+    <div class="hero-grid">
+      <div class="stat-card">
+        <div style="color:var(--muted); font-size:0.85rem;">Craig 核心进度</div>
+        <div class="stat-val" style="color:#10b981;">58.3%</div>
+        <small style="color:var(--muted);">运动学全通 · 攻坚动力学</small>
+      </div>
+      <div class="stat-card">
+        <div style="color:var(--muted); font-size:0.85rem;">已产出交互笔记</div>
+        <div class="stat-val">31 <span style="font-size:1rem; color:var(--muted);">篇</span></div>
+        <small style="color:var(--muted);">27 正文 + 3 专栏 + 1 实战</small>
+      </div>
+      <div class="stat-card">
+        <div style="color:var(--muted); font-size:0.85rem;">交互物理实验室</div>
+        <div class="stat-val" style="color:var(--warn);">12 <span style="font-size:1rem; color:var(--muted);">个</span></div>
+        <small style="color:var(--muted);">拖拽/动画/实时物理响应</small>
+      </div>
+      <div class="stat-card">
+        <div style="color:var(--muted); font-size:0.85rem;">题库考核中心</div>
+        <div class="stat-val" style="color:var(--purple);">100+ <span style="font-size:1rem; color:var(--muted);">题</span></div>
+        <small style="color:var(--muted);">动态抽题 · 续考 · 每日三题</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- 考核中心快捷直达 Banner -->
+  <div class="exam-banner">
+    <div>
+      <div style="font-weight:bold; font-size:1.05rem; color:#fff; display:flex; align-items:center; gap:8px;">
+        <span>🎯 智能题库与章节考核中心现已就绪</span>
+        <span class="badge badge-green">支持随时中断·无缝续考</span>
+      </div>
+      <div style="color:#94a3b8; font-size:0.86rem; margin-top:4px;">
+        支持单选、不定项多选题（漏选得一半）、数值填空与零跳步手算推导题。做一半随时退出，明天一键接着做！
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="quiz-center.html#practice" class="btn-action" style="background:#0284c7;">
+        📖 自由刷题 (随做随看)
+      </a>
+      <a href="quiz-center.html#daily" class="btn-action" style="background:#7c3aed;">
+        ⚡ 每日三题挑战
+      </a>
+      <a href="quiz-center.html#exams" class="btn-action" style="background:#10b981;">
+        🏆 模块完整考核 (10题)
+      </a>
+    </div>
+  </div>
+
+  <!-- ROS 2 现代机器人工程实战专栏 -->
+  <div class="chapter-card" style="border: 1px solid var(--accent); background: linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(16, 185, 129, 0.08));">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-purple">【🤖 现代工程实战基座】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">ROS 2 现代机器人工程实战专栏</strong>
+        <span class="badge badge-green" style="margin-left:8px;">第一阶段 100% 已通关 (3 篇)</span>
+      </div>
+      <div>
+        <a href="ros2/00-progress.html" class="btn-action" style="background:#0284c7; font-size:0.85rem; padding:6px 14px;">
+          🚀 进入 ROS 2 全景看板
+        </a>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 10px 0;">
+      紧扣理论算法在现代开源机器人操作系统中的工程落地：从节点话题通信、URDF 机械臂建模，到 50Hz 数字孪生状态驱动与三节点解耦流水线；再按 3R 原理 → 六轴 MoveIt/控制器 → 在线 Servo、标定、动力学与工位工程化的顺序推进。
+    </p>
+    <div class="note-list">
+      <a href="ros2/01-nodes-and-topics.html" class="note-item">
+        <span><strong>ROS2-01</strong> 节点（Node）与话题（Topic）通信底座</span>
+        <span class="badge badge-green">已完成</span>
+      </a>
+      <a href="ros2/02-urdf-and-arm-modeling.html" class="note-item">
+        <span><strong>ROS2-02</strong> URDF 机械臂建模与 Launch 一键编排</span>
+        <span class="badge badge-green">已完成</span>
+      </a>
+      <a href="ros2/03-python-trajectory-control.html" class="note-item">
+        <span><strong>ROS2-03</strong> Python 轨迹发布与三节点解耦流水线</span>
+        <span class="badge badge-green">已完成</span>
+      </a>
+      <a href="ros2/04-13-engineering-roadmap.md" class="note-item">
+        <span><strong>ROS2-04～20</strong> 3R 逆解、轨迹、Jacobian、TF2、六轴 MoveIt、在线 Servo、标定、动力学与工位工程路线</span>
+        <span class="badge badge-amber">📋 可跟做计划</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Craig 原书 11 章全景路线与知识图谱卡片 -->
+  <h2 style="color:#fff; border-bottom:1px solid var(--line); padding-bottom:8px; margin-bottom:20px;">
+    🗺️ Craig 原书 11 章知识树与笔记罗盘
+  </h2>
+
+  <!-- Ch 01 -->
+  <div class="chapter-card">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-green">【✅ 100% 已完成】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 01 绪论与机械臂学全貌</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P12–P23)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">机械臂自由度、工业机器人结构形式、运控工程师必备知识体系与主干路线确立。</p>
+    <div class="note-list">
+      <a href="00-progress.html" class="note-item">
+        <span><strong>00</strong> 学习进度与全景地图</span>
+        <span class="badge badge-blue">当前看板</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ch 02 -->
+  <div class="chapter-card">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-green">【✅ 100% 已完成】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 02 空间描述与变换 (Spatial Descriptions & Transforms)</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P24–P55)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">系统确立四角记号法、三维单轴旋转矩阵、齐次变换矩阵 \(4\times 4\)、变换链式乘法与正交矩阵性质。</p>
+    <div class="note-list">
+      <a href="01-coordinate-frames.html" class="note-item">
+        <span><strong>01</strong> 坐标系中的点</span>
+        <span class="badge badge-blue">🕹️ 3D 位姿拖拽台</span>
+      </a>
+      <a href="02-homogeneous-transform.html" class="note-item">
+        <span><strong>02</strong> 齐次变换矩阵</span>
+        <span class="badge badge-blue">🕹️ 2D 变换几何图</span>
+      </a>
+      <a href="03-transform-chains.html" class="note-item">
+        <span><strong>03</strong> 坐标变换链</span>
+        <span class="badge badge-blue">🕹️ 三坐标系合成</span>
+      </a>
+      <a href="05-3d-single-axis-rotations.html" class="note-item">
+        <span><strong>05</strong> 三维单轴旋转与矩阵符号</span>
+        <span class="badge badge-blue">三维基底</span>
+      </a>
+      <a href="ref-matrix-multiplication-and-frame-transform.html" class="note-item" style="border-color:#38bdf8;">
+        <span><strong>基础专栏</strong> 矩阵乘向量列视角与坐标变换本质</span>
+        <span class="badge badge-purple">基石专栏</span>
+      </a>
+      <a href="ref-rigid-body-rotation-foundations.html" class="note-item">
+        <span><strong>基础专栏</strong> 刚体转动本质与记号字典</span>
+        <span class="badge badge-purple">专题专栏</span>
+      </a>
+      <div style="grid-column: 1 / -1; margin-top: 8px; padding: 10px 14px; background: rgba(56, 189, 248, 0.06); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <strong style="color:#38bdf8; font-size:0.92rem;">💡 理论支撑专题：线性代数与齐次坐标</strong>
+            <p style="color:#94a3b8; font-size:0.82rem; margin:3px 0 0; line-height:1.5;">
+              这不是主线下一章，而是用来解释笔记 02 中齐次坐标为什么成立的线代补充。建议学完 02 后按需阅读。
+            </p>
+          </div>
+          <a href="linear-algebra-homogeneous-coordinates.html" class="btn-action" style="background:#0284c7; font-size:0.82rem; padding:6px 14px; white-space:nowrap;">
+            打开实验专题 ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ch 03 -->
+  <div class="chapter-card">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-green">【✅ 100% 已完成】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 03 操作臂运动学与 DH 建模 (Manipulator Kinematics)</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P56–P79)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">二维两连杆正解、三维机械臂局部坐标系、Craig 标准 DH 坐标系分配 4 大法则与连杆变换推导。</p>
+    <div class="note-list">
+      <a href="04-planar-two-link-forward-kinematics.html" class="note-item">
+        <span><strong>04</strong> 二维两连杆正运动学</span>
+        <span class="badge badge-blue">🕹️ 机械臂运动台</span>
+      </a>
+      <a href="06-3d-arm-coordinate-frames.html" class="note-item">
+        <span><strong>06</strong> 三维机械臂与局部坐标系</span>
+        <span class="badge badge-blue">🕹️ 3D 机械臂仿真</span>
+      </a>
+      <a href="08-dh-coordinate-assignment.html" class="note-item">
+        <span><strong>08</strong> DH 建系——坐标系分配法则</span>
+        <span class="badge badge-amber">DH 核心法则</span>
+      </a>
+      <a href="09-dh-single-link-transform.html" class="note-item">
+        <span><strong>09</strong> 单节 DH 变换矩阵推导</span>
+        <span class="badge badge-gray">零跳步推导</span>
+      </a>
+      <a href="10-dh-table-to-forward-kinematics.html" class="note-item">
+        <span><strong>10</strong> DH 表到正运动学求解</span>
+        <span class="badge badge-green">全臂求解</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ch 04 -->
+  <div class="chapter-card">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-green">【✅ 100% 已完成】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 04 操作臂逆运动学 (Inverse Manipulator Kinematics)</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P80–P98)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">几何余弦定理解、代数求根法、肘上/肘下多解判定、可达工作空间极限与四轴实战复盘。</p>
+    <div class="note-list">
+      <a href="12-planar-two-link-inverse-kinematics.html" class="note-item">
+        <span><strong>12</strong> 二维两连杆逆运动学</span>
+        <span class="badge badge-blue">🕹️ 鼠标拖拽逆解台</span>
+      </a>
+      <a href="project-01-portable-4axis-robot.html" class="note-item">
+        <span><strong>项目 1</strong> 自研便携四轴机械手算法答辩</span>
+        <span class="badge badge-purple">实战项目复盘</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ch 05 -->
+  <div class="chapter-card">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-green">【✅ 100% 已完成】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 05 雅可比：速度与静力学 (Jacobians & Velocities)</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P99–P127)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">微分运动、雅可比矩阵偏导推导、奇异位形分析、逆速度伺服控制与空间刚体速度递推。</p>
+    <div class="note-list">
+      <a href="14-planar-two-link-jacobian.html" class="note-item">
+        <span><strong>14</strong> 两连杆雅可比矩阵推导</span>
+        <span class="badge badge-blue">🕹️ 速度椭圆实验台</span>
+      </a>
+      <a href="15-planar-two-link-singularity.html" class="note-item">
+        <span><strong>15</strong> 机械臂奇异位形剖析</span>
+        <span class="badge badge-amber">奇异点规避</span>
+      </a>
+      <a href="16-planar-jacobian-velocity.html" class="note-item">
+        <span><strong>16</strong> 速度雅可比与线速度</span>
+        <span class="badge badge-gray">微分变换</span>
+      </a>
+      <a href="17-planar-inverse-velocity.html" class="note-item">
+        <span><strong>17</strong> 逆速度运动学解算</span>
+        <span class="badge badge-green">求逆矩阵</span>
+      </a>
+      <a href="18-resolved-rate-motion.html" class="note-item">
+        <span><strong>18</strong> 闭环逆速度伺服逼近</span>
+        <span class="badge badge-blue">🕹️ 目标追踪仿真</span>
+      </a>
+      <a href="21-spatial-rigid-body-velocity.html" class="note-item">
+        <span><strong>21</strong> 空间刚体两点速度关系</span>
+        <span class="badge badge-blue">基点法公式</span>
+      </a>
+      <a href="22-velocity-propagation.html" class="note-item">
+        <span><strong>22</strong> 速度逐节递推基本思想</span>
+        <span class="badge badge-purple">递推总框架</span>
+      </a>
+      <a href="23-angular-velocity-propagation.html" class="note-item">
+        <span><strong>23</strong> 三维角速度递推方程</span>
+        <span class="badge badge-gray">旋转传递</span>
+      </a>
+      <a href="24-linear-velocity-propagation.html" class="note-item">
+        <span><strong>24</strong> 三维线速度递推方程</span>
+        <span class="badge badge-gray">平移传递</span>
+      </a>
+      <a href="25-two-link-velocity-recursion.html" class="note-item">
+        <span><strong>25</strong> 两连杆速度递推实算</span>
+        <span class="badge badge-blue">🕹️ 递推实算对照</span>
+      </a>
+      <a href="ref-velocity-derivative-vs-projection.html" class="note-item">
+        <span><strong>附录 2</strong> 求导顺序之谜与投影速度</span>
+        <span class="badge badge-purple">专题专栏</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ch 06 -->
+  <div class="chapter-card" style="border-left:4px solid var(--warn);">
+    <div class="chapter-head">
+      <div>
+        <span class="badge badge-amber">【🔄 50% 攻坚中】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 06 操作臂动力学 (Manipulator Dynamics)</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P128–P154)</span>
+      </div>
+      <div style="display:flex; gap:6px;"><a href="quiz-center.html#practice" class="badge badge-purple" style="font-size:0.8rem;">📖 自由刷题</a><a href="quiz-center.html#exams" class="badge badge-blue" style="font-size:0.8rem;">🏆 模块考核</a></div>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 8px 0;">力矩与力臂物理直觉、转动惯量微积分 (端点/质心/实心圆盘)、平行轴定理严格证明、平动转动双子星字典与单关节四大力矩模型。</p>
+    <div class="note-list">
+      <a href="ref-dynamics-foundations-force-torque-inertia.html" class="note-item" style="border-color:var(--warn);">
+        <span><strong>附录 3</strong> 动力学前置补课：力矩与转动惯量</span>
+        <span class="badge badge-amber">🕹️ 力矩与转动实验室</span>
+      </a>
+      <a href="ref-spatial-inertia-tensor-euler-equations.html" class="note-item" style="border-color:#c084fc;">
+        <span><strong>附录 4</strong> 进阶力学补课：空间惯性张量与欧拉转动方程</span>
+        <span class="badge badge-purple">🕹️ 3D 陀螺与张量实验室</span>
+      </a>
+      <a href="26-single-joint-dynamics.html" class="note-item">
+        <span><strong>26</strong> 单关节动力学：惯性/重力/摩擦</span>
+        <span class="badge badge-blue">🕹️ 闭环动力学实验台</span>
+      </a>
+      <a href="27-recursive-newton-euler-dynamics.html" class="note-item">
+        <span class="note-id">27</span>
+        <span class="note-title">多连杆空间角速度与角加速度递推</span>
+      </a>
+      <a href="27-recursive-newton-euler-dynamics.html" class="note-item">
+        <span class="note-id">28</span>
+        <span class="note-title">单连杆线加速度空间解耦</span>
+      </a>
+      <a href="29-recursive-newton-euler-dynamics.html" class="note-item">
+        <span class="note-id">29</span>
+        <span class="note-title">两连杆空间加速度两级外推</span>
+      </a>
+      <a href="30-recursive-newton-euler-dynamics.html" class="note-item">
+        <span class="note-id">30</span>
+        <span class="note-title">小臂质心正交解耦与牛顿力标定</span>
+      </a>
+      <a href="31-rnea-overview.html" class="note-item">
+        <span class="note-id">31</span>
+        <span class="note-title">递归 Newton-Euler 动力学算法</span>
+      </a>
+      <a href="31a-newton-euler-force-balance.html" class="note-item" style="border-color:var(--primary);">
+        <span class="note-id" style="color:var(--primary);">31a</span>
+        <span class="note-title">单连杆 Newton–Euler 受力与受矩：先隔离刚体，再看递归</span>
+      </a>
+      <a href="31b-rnea-forward-backward-pass.html" class="note-item" style="border-color:var(--primary);">
+        <span class="note-id" style="color:var(--primary);">31b</span>
+        <span class="note-title">RNEA 外推与内推：从末端负担回收到关节轴力矩</span>
+      </a>
+      <a href="31c-rnea-two-link-simulation-lab.html" class="note-item" style="border-color:var(--primary);">
+        <span class="note-id" style="color:var(--primary);">31c</span>
+        <span class="note-title">两连杆惯性力与关节力矩仿真台：参数变化即时可见</span>
+      </a>
+      <a href="31d-rnea-four-torque-terms.html" class="note-item" style="border-color:var(--primary);">
+        <span class="note-id" style="color:var(--primary);">31d</span>
+        <span class="note-title">RNEA 四类力矩来源：逐项拆开后再投影到关节轴</span>
+      </a>
+      <a href="31-recursive-newton-euler-refactor-plan.md" class="note-item" style="border-style:dashed;">
+        <span class="note-id" style="color:var(--warn);">31-R</span>
+        <span class="note-title">笔记 31 非破坏性拆分规格：保留推导与交互，消除超大文件</span>
+      </a>
+      <a href="32-two-link-dynamics-structure.html" class="note-item" style="border-color:var(--primary);">
+        <span class="note-id" style="color:var(--primary);">32</span>
+        <span class="note-title">两连杆动力学结构式：M(q)、速度耦合 h、重力 g 与扭矩账本</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Ch 07 ~ Ch 11 -->
+  <div class="chapter-card" style="opacity:0.9;">
+    <div class="chapter-head">
+      <div>
+      <span class="badge badge-amber">【▶ 控制主线已串联】</span>
+        <strong style="color:#fff; font-size:1.15rem; margin-left:8px;">Ch 07 ~ Ch 11 轨迹规划、控制、柔顺与参数辨识</strong>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:8px;">(PDF P155–P263)</span>
+      </div>
+      <span class="badge badge-amber">33–39 已可学习</span>
+    </div>
+    <p style="color:var(--muted); font-size:0.88rem; margin:0 0 10px 0;">包含三次/五次多项式轨迹插补、LSPB 梯形加减速、单关节 PID、计算力矩控制 (CTC)、阻抗/导纳、模型参数辨识，以及从上位轨迹到位置/速度/电流级联伺服与驱动接口的边界。</p>
+    <div class="note-list"><a href="33-trajectory-time-laws.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">33</span><span class="note-title">轨迹时间律：三次、五次、LSPB 与 q/q̇/q̈ 可视化对照</span></a><a href="34-pid-position-control.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">34</span><span class="note-title">单关节 PD / PID 位置闭环：参考轨迹、误差、饱和与整定顺序</span></a><a href="35-computed-torque-control.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">35</span><span class="note-title">计算力矩控制 CTC：M/h/g 前馈与 PD 反馈的两连杆对照</span></a><a href="36-force-impedance-admittance-control.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">36</span><span class="note-title">力控制、阻抗与导纳：接触后的力—位移关系与一维推墙对照</span></a><a href="37-two-link-closed-loop-simulation.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">37</span><span class="note-title">两连杆端到端闭环：轨迹 → CTC → 动力学积分 → 反馈账本</span></a><a href="38-dynamics-parameter-identification.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">38</span><span class="note-title">动力学参数辨识：回归项、残差模式、激励轨迹与独立验证</span></a><a href="39-servo-cascade-and-limits.html" class="note-item" style="border-color:var(--primary);"><span class="note-id" style="color:var(--primary);">39</span><span class="note-title">伺服三环与驱动器接口：位置/速度/努力限幅与调试边界</span></a></div>
+  </div>
+
+</div>
+
+</body>
+</html>

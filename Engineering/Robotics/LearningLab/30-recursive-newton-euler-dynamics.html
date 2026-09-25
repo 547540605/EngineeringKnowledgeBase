@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔记 04：小臂质心正交解耦与牛顿力标定——从平面合成到立面空间合力（Craig 原书 §6.2）</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #040711;
+      --card-bg: #090f1d;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #c084fc;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      padding: 24px;
+    }
+    main { max-width: 1060px; margin: 0 auto; }
+    h1 { font-size: 1.85rem; color: #fff; margin-bottom: 8px; font-weight: 800; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 12px; }
+    h2 { font-size: 1.35rem; color: var(--accent); margin: 32px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.1rem; color: #cbd5e1; margin: 20px 0 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .step-block { background: #040711; border-radius: 8px; padding: 18px; margin-bottom: 16px; position: relative; }
+    .step-tag { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+    .back-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.9rem; }
+    .back-nav a { color: var(--accent); text-decoration: none; font-weight: bold; }
+    .back-nav a:hover { text-decoration: underline; }
+    .interactive-container { background: #02050c; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 14px 0; }
+    .formula-pill { background: #0b1329; border: 1px solid #1e293b; border-radius: 6px; padding: 12px; margin: 8px 0; font-family: ui-monospace, monospace; }
+    .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+    .table-custom th, .table-custom td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    .table-custom th { background: #0f172a; color: var(--accent); font-weight: bold; }
+    button {
+      appearance: none; border: 1px solid #334155; border-radius: 5px; background: #1e293b;
+      color: #cbd5e1; padding: 7px 11px; font: 600 0.86rem/1.2 inherit; cursor: pointer;
+    }
+    button:hover { border-color: #64748b; color: #fff; }
+  </style>
+  <script>
+    (function initKaTeXBootloader() {
+      let attempts = 0;
+      function renderMath() {
+        if (typeof renderMathInElement === 'function') {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        } else if (attempts < 30) {
+          attempts++;
+          setTimeout(renderMath, 100);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderMath);
+      } else {
+        renderMath();
+      }
+      window.addEventListener('load', renderMath);
+    })();
+  </script>
+</head>
+<body>
+<main>
+  <h1>笔记 04：小臂质心正交解耦与牛顿力标定——从平面合成到立面空间合力（Craig 原书 §6.2）</h1>
+  <div class="lead">在 880px 宽幅 2D/3D 画布中实证两连杆小臂质心 C2 的两级平行四边形正交分解，并严格标定牛顿第二定律净惯性力 F₂ = m₂v̇_C2。</div>
+<h2>1. 小臂质心动力学正交解耦与牛顿力标定台（步骤 C & 步骤 D）</h2>
+<!-- 2D 物理两连杆小臂质心 C2 正交拆解剖面 (步骤 C 俯视 + 步骤 D 侧立面，上下独立大卡片) -->
+      <div style="margin-top:18px; background:#040711; border:1px solid #1e293b; border-radius:10px; padding:18px;">
+        <div style="color:#38bdf8; font-weight:bold; font-size:1.05rem; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>🔍 两连杆小臂质心 $C_2$ 正交几何拆解剖面（2D 物理连杆正交图 + 严格牛顿第二定律）：</span>
+          <span style="font-size:0.8rem; color:#94a3b8; font-family:monospace; background:#0b1329; padding:3px 10px; border-radius:4px; border:1px solid #334155;">📐 Craig 式 6.48 几何实证</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:22px;">
+          
+          <!-- 步骤 C：物理俯视正交投影 (上下通屏超大卡片) -->
+          <div style="background:#090f1d; border:1px solid #38bdf8; border-radius:8px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <div style="color:#38bdf8; font-size:1.05rem; font-weight:bold;">📐 步骤 C：先在同一张俯视图里合成平面加速度</div>
+                <div style="font-size:0.82rem; color:#94a3b8; margin-top:2px;">左边只回答“矢量从机构哪里来”；右边只回答“这三份怎样首尾相接”。</div>
+              </div>
+              <div style="color:#c084fc; font-family:monospace; font-size:0.88rem; background:#040711; padding:4px 12px; border-radius:4px; border:1px solid #c084fc; white-space:nowrap;">
+                $a_{C2,\text{平面}} = $ <span id="label-ortho2-plane-mag" style="font-weight:bold;">6.85</span> m/s²
+              </div>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; padding:10px 12px; background:#040711; border:1px solid #1e293b; border-radius:6px;">
+              <strong style="color:#cbd5e1; margin-right:6px;">看合成：</strong>
+              <button id="btn-ortho2-overview" type="button">总览：三份 → 总合量</button>
+              <button id="btn-ortho2-base" type="button">① 手肘基底</button>
+              <button id="btn-ortho2-normal" type="button">② 加向心</button>
+              <button id="btn-ortho2-tangent" type="button">③ 加切向</button>
+              <button id="btn-ortho2-result" type="button">④ 闭合验算</button>
+            </div>
+            <div id="ortho2-step-copy" style="font-size:0.9rem; line-height:1.7; color:#cbd5e1; min-height:28px; margin:0 0 10px;"></div>
+            <canvas id="canvas-ortho-plane-link2" width="880" height="430" style="width:100%; aspect-ratio:2.05; background:#02050c; border-radius:6px; display:block; border:1px solid #1e293b;"></canvas>
+            
+            <div style="font-size:0.85rem; color:#cbd5e1; margin-top:12px; line-height:1.75; background:#040711; padding:10px 16px; border-radius:6px; border:1px solid #172033; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:8px;">
+              <div>• <strong style="color:#38bdf8;">🔵 手肘基底 $\dot{\boldsymbol{v}}_{2}$</strong>：大臂末端甩出的加速度（小臂起跑地基）；</div>
+              <div>• <strong style="color:#f97316;">🟠 质心切向 $\boldsymbol{a}_{t2,C}$</strong>：小臂相对手肘切向冲出（$+Y_{C2}$ 轴）；</div>
+              <div>• <strong style="color:#ef4444;">🔴 质心向心 $\boldsymbol{a}_{n2,C}$</strong>：小臂旋转向心拉扯（$-X_{C2}$ 轴指向手肘 $\{2\}$）；</div>
+              <div>• <strong style="color:#c084fc;">🟣 质心平面合量</strong>：$\boldsymbol{a}_{C2,\text{平面}} = \dot{\boldsymbol{v}}_{2,\text{平面}} + \boldsymbol{a}_{t2,C} + \boldsymbol{a}_{n2,C}$。</div>
+            </div>
+          </div>
+
+          <!-- 步骤 D：物理侧立面正交投影 (上下通屏超大卡片) -->
+          <div style="background:#090f1d; border:1px solid #10b981; border-radius:8px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <div style="color:#10b981; font-size:1.05rem; font-weight:bold;">📐 步骤 D：原样接住 C 的紫色合量，再加基座的 +Z 平动</div>
+                <div style="font-size:0.82rem; color:#94a3b8; margin-top:2px;">C 的④不是消失或换方向：D 左右都保留同一张屏幕投影中的箭头方向；三维正交不靠篡改屏幕方向来凑图。</div>
+              </div>
+              <div style="color:#10b981; font-family:monospace; font-size:0.88rem; background:#040711; padding:4px 12px; border-radius:4px; border:1px solid #10b981; white-space:nowrap;">
+                $\\|\boldsymbol{F}_2\\| = $ <span id="label-ortho2-f2-mag" style="font-weight:bold;">14.30</span> N
+              </div>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; padding:10px 12px; background:#040711; border:1px solid #1e293b; border-radius:6px;">
+              <strong style="color:#cbd5e1; margin-right:6px;">看空间合成：</strong>
+              <button id="btn-ortho2-space-overview" type="button">总览：两份 → 加速度 → 力</button>
+              <button id="btn-ortho2-space-plane" type="button">① 接住 C 的紫色</button>
+              <button id="btn-ortho2-space-vertical" type="button">② 加基座 +Z 平动</button>
+              <button id="btn-ortho2-space-force" type="button">③ 乘质量得到力</button>
+            </div>
+            <div id="ortho2-space-copy" style="font-size:0.9rem; line-height:1.7; color:#cbd5e1; min-height:28px; margin:0 0 10px;"></div>
+            <canvas id="canvas-ortho-vert-link2" width="880" height="400" style="width:100%; aspect-ratio:2.2; background:#02050c; border-radius:6px; display:block; border:1px solid #1e293b;"></canvas>
+            
+            <div style="font-size:0.9rem; color:#cbd5e1; margin-top:12px; line-height:1.8; background:#040711; padding:12px 16px; border-radius:6px; border:1px solid #172033;">
+              <div style="padding-bottom:8px; border-bottom:1px solid #172033;">
+                <strong style="color:#c084fc;">🟣 紫色：C 的平面合量 $\boldsymbol{a}_{C2,\text{平面}}$</strong>
+                <span style="color:#64748b;"> + </span>
+                <strong style="color:#eab308;">🟡 黄色：基座沿 +Z 的平动加速度 $\dot{\boldsymbol{v}}_0$</strong>。
+              </div>
+              <div style="padding-top:8px;">
+                <strong style="color:#38bdf8;">🔵 先合成空间总加速度：</strong>
+                $|\dot{\boldsymbol{v}}_{C2}| = \sqrt{a_{C2,\text{平面}}^2 + \dot{v}_0^2} =$ <span id="label-ortho2-vc2-mag">7.15</span> m/s²；
+                <strong style="color:#10b981;">💥 再乘质量：</strong>
+                $\boldsymbol{F}_2 = m_2\dot{\boldsymbol{v}}_{C2}$，方向与蓝色总加速度相同。
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 空间两连杆小臂质心 3D 列向量代数加法与牛顿受力矩阵计算器 -->
+        <div style="background:#0f172a; border:1px solid #c084fc; border-radius:8px; padding:18px; margin-top:16px; font-family:ui-monospace, monospace; overflow-x:auto;">
+          <div style="color:#c084fc; font-weight:bold; font-size:1.05rem; margin-bottom:6px; text-align:center;">
+            📊 空间两连杆小臂质心线加速度与牛顿净受力 $\boldsymbol{F}_2$ 严格代数加法：
+          </div>
+          <div style="font-size:0.86rem; color:#cbd5e1; text-align:center; margin-bottom:14px; line-height:1.7;">
+            💡 <strong>小臂质心 $C_2$ 线加速度与牛顿力对号入座：</strong><br>
+            $\dot{\boldsymbol{v}}_{C2} = \underbrace{\dot{\boldsymbol{v}}_2}_{\text{手肘的完整三维基底}} + \underbrace{\dot{\boldsymbol{\omega}}_2 \times \boldsymbol{P}_{C2}}_{\text{C 的橙色切向}} + \underbrace{\boldsymbol{\omega}_2 \times (\boldsymbol{\omega}_2 \times \boldsymbol{P}_{C2})}_{\text{C 的红色向心}} \implies \boldsymbol{F}_2 = m_2 \cdot \dot{\boldsymbol{v}}_{C2}$
+          </div>
+
+          <div style="margin:0 0 14px; padding:12px 14px; border:1px solid #334155; border-left:4px solid #c084fc; border-radius:6px; background:#040711; font-family:inherit; font-size:0.9rem; line-height:1.8;">
+            <strong style="color:#f8fafc;">C、D 和公式的唯一对应关系：</strong><br>
+            公式第一项 <strong style="color:#38bdf8;">$\dot{\boldsymbol{v}}_2$</strong> 是手肘的<strong>完整三维</strong>加速度：它的平面分量在 C 中画成 <span style="color:#38bdf8; font-weight:bold;">🔵 蓝色基底</span>，它的 Z 分量在 D 中画成 <span style="color:#eab308; font-weight:bold;">🟡 黄色平动</span>。黄色不是公式额外的第四项。<br>
+            <span style="color:#f97316; font-weight:bold;">🟠 C 的切向</span> = 公式第二项；<span style="color:#ef4444; font-weight:bold;">🔴 C 的向心</span> = 公式第三项。<br>
+            <span style="color:#c084fc; font-weight:bold;">🟣 C 的④</span> = 蓝 + 橙 + 红在 <em>X–Y 平面</em>的中间合量；再加黄色后，得到 <span style="color:#38bdf8; font-weight:bold;">🔵 D 的空间总加速度 $\dot{\boldsymbol{v}}_{C2}$</span>，最后乘 $m_2$ 才是绿色力。
+          </div>
+
+          <div style="display:flex; justify-content:center; align-items:center; gap:12px; font-size:0.88rem; min-width:700px;">
+            <!-- 1. 手肘基底 v2 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(56,189,248,0.4); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#38bdf8; font-weight:bold; display:block; margin-bottom:4px;">🔵 公式第一项 $\dot{\boldsymbol{v}}_2$（C 蓝 + D 黄）</span>
+              <table style="border-left:2px solid #38bdf8; border-right:2px solid #38bdf8; border-collapse:collapse; margin:0 auto; color:#38bdf8; font-weight:bold; font-size:0.95rem;">
+                <tr><td id="vec-l2-v2-x" style="padding:1px 10px;">-2.1</td></tr>
+                <tr><td id="vec-l2-v2-y" style="padding:1px 10px;">2.0</td></tr>
+                <tr><td id="vec-l2-v2-z" style="padding:1px 10px;">-1.5</td></tr>
+              </table>
+            </div>
+
+            <span style="font-size:1.4rem; font-weight:bold; color:#94a3b8;">+</span>
+
+            <!-- 2. 小臂质心切向 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(249,115,22,0.4); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#f97316; font-weight:bold; display:block; margin-bottom:4px;">🟠 质心切向 $\dot{\boldsymbol{\omega}}_2 \times \boldsymbol{P}_{C2}$</span>
+              <table style="border-left:2px solid #f97316; border-right:2px solid #f97316; border-collapse:collapse; margin:0 auto; color:#f97316; font-weight:bold; font-size:0.95rem;">
+                <tr><td id="vec-l2-at-x" style="padding:1px 10px;">-1.8</td></tr>
+                <tr><td id="vec-l2-at-y" style="padding:1px 10px;">0.0</td></tr>
+                <tr><td id="vec-l2-at-z" style="padding:1px 10px;">2.1</td></tr>
+              </table>
+            </div>
+
+            <span style="font-size:1.4rem; font-weight:bold; color:#94a3b8;">+</span>
+
+            <!-- 3. 小臂质心向心 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(239,68,68,0.4); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#ef4444; font-weight:bold; display:block; margin-bottom:4px;">🔴 质心向心 $\boldsymbol{\omega}_2 \times (\boldsymbol{\omega}_2 \times \boldsymbol{P}_{C2})$</span>
+              <table style="border-left:2px solid #ef4444; border-right:2px solid #ef4444; border-collapse:collapse; margin:0 auto; color:#ef4444; font-weight:bold; font-size:0.95rem;">
+                <tr><td id="vec-l2-an-x" style="padding:1px 10px;">-3.2</td></tr>
+                <tr><td id="vec-l2-an-y" style="padding:1px 10px;">0.0</td></tr>
+                <tr><td id="vec-l2-an-z" style="padding:1px 10px;">-3.7</td></tr>
+              </table>
+            </div>
+
+            <span style="font-size:1.4rem; font-weight:bold; color:#94a3b8;">=</span>
+
+            <!-- 4. D 的空间总线加速度 vc2 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(56,189,248,0.6); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#38bdf8; font-weight:bold; display:block; margin-bottom:4px;">🔵 D 的空间总加速度 $\dot{\boldsymbol{v}}_{C2}$</span>
+              <table style="border-left:2px solid #38bdf8; border-right:2px solid #38bdf8; border-collapse:collapse; margin:0 auto; color:#38bdf8; font-weight:bold; font-size:1.0rem;">
+                <tr><td id="vec-l2-vc2-x" style="padding:1px 12px;">-7.1</td></tr>
+                <tr><td id="vec-l2-vc2-y" style="padding:1px 12px;">2.0</td></tr>
+                <tr><td id="vec-l2-vc2-z" style="padding:1px 12px;">-3.1</td></tr>
+              </table>
+            </div>
+
+            <span style="font-size:1.4rem; font-weight:bold; color:#94a3b8;">⇒</span>
+
+            <!-- 5. 牛顿净惯性力 F2 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(16,185,129,0.8); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#10b981; font-weight:bold; display:block; margin-bottom:4px;">💥 牛顿净惯性力 $\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C2}$</span>
+              <table style="border-left:2px solid #10b981; border-right:2px solid #10b981; border-collapse:collapse; margin:0 auto; color:#10b981; font-weight:bold; font-size:1.0rem;">
+                <tr><td id="vec-l2-f2-x" style="padding:1px 12px;">-14.2</td></tr>
+                <tr><td id="vec-l2-f2-y" style="padding:1px 12px;">4.0</td></tr>
+                <tr><td id="vec-l2-f2-z" style="padding:1px 12px;">-6.2</td></tr>
+              </table>
+            </div>
+            <span style="color:#10b981; font-weight:bold; margin-left:4px; font-size:1.0rem;">N</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. 空间加速度外推算法总览与递推公式速查 -->
+  <!-- ========================================================================= -->
+  <h2>2. 空间加速度外推算法总览与递推公式速查（Craig §6.2）</h2>
+  <div class="card">
+    <p style="font-size:0.95rem; line-height:1.75; margin-bottom:14px;">
+      到目前为止，我们已经完成了 <strong>Newton-Euler 动力学算法的第一大半程——外推传递（Outward Pass）</strong>。<br>
+                <tr><td id="vec-l2-vc2-x" style="padding:1px 12px;">-7.1</td></tr>
+                <tr><td id="vec-l2-vc2-y" style="padding:1px 12px;">2.0</td></tr>
+                <tr><td id="vec-l2-vc2-z" style="padding:1px 12px;">-3.1</td></tr>
+              </table>
+            </div>
+
+            <span style="font-size:1.4rem; font-weight:bold; color:#94a3b8;">⇒</span>
+
+            <!-- 5. 牛顿净惯性力 F2 -->
+            <div style="text-align:center; background:#090f1d; border:1px solid rgba(16,185,129,0.8); border-radius:6px; padding:8px 10px;">
+              <span style="font-size:0.8rem; color:#10b981; font-weight:bold; display:block; margin-bottom:4px;">💥 牛顿净惯性力 $\boldsymbol{F}_2 = m_2 \dot{\boldsymbol{v}}_{C2}$</span>
+              <table style="border-left:2px solid #10b981; border-right:2px solid #10b981; border-collapse:collapse; margin:0 auto; color:#10b981; font-weight:bold; font-size:1.0rem;">
+                <tr><td id="vec-l2-f2-x" style="padding:1px 12px;">-14.2</td></tr>
+                <tr><td id="vec-l2-f2-y" style="padding:1px 12px;">4.0</td></tr>
+                <tr><td id="vec-l2-f2-z" style="padding:1px 12px;">-6.2</td></tr>
+              </table>
+            </div>
+            <span style="color:#10b981; font-weight:bold; margin-left:4px; font-size:1.0rem;">N</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. 空间加速度外推算法总览与递推公式速查 -->
+  <!-- ========================================================================= -->
+  <h2>2. 空间加速度外推算法总览与递推公式速查（Craig §6.2）</h2>
+  <div class="card">
+    <p style="font-size:0.95rem; line-height:1.75; margin-bottom:14px;">
+      到目前为止，我们已经完成了 <strong>Newton-Euler 动力学算法的第一大半程——外推传递（Outward Pass）</strong>。<br>
+      从基座 $\{0\}$ 逐级向末端 $\{n\}$ 外推的核心公式速查表如下：
+    </p>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="background:#090f1d; border:1px solid #38bdf8; border-radius:6px; padding:14px;">
+        <strong style="color:#38bdf8; font-size:0.96rem;">1. 空间角速度外推（式 6.45）</strong>
+        <div style="margin-top:6px; overflow-x:auto; padding:6px 2px;">$${}^{i+1}\boldsymbol{\omega}_{i+1} = {}^{i+1}_i\boldsymbol{R} \cdot {}^i\boldsymbol{\omega}_i + \dot{\theta}_{i+1} {}^{i+1}\hat{\boldsymbol{Z}}_{i+1}$$</div>
+      </div>
+
+      <div style="background:#090f1d; border:1px solid #c084fc; border-radius:6px; padding:14px;">
+        <strong style="color:#c084fc; font-size:0.96rem;">2. 空间角加速度外推（式 6.46）</strong>
+        <div style="margin-top:6px; overflow-x:auto; padding:6px 2px;">$${}^{i+1}\dot{\boldsymbol{\omega}}_{i+1} = {}^{i+1}_i\boldsymbol{R} \cdot {}^i\dot{\boldsymbol{\omega}}_i + {}^{i+1}_i\boldsymbol{R} \cdot {}^i\boldsymbol{\omega}_i \times \dot{\theta}_{i+1} {}^{i+1}\hat{\boldsymbol{Z}}_{i+1} + \ddot{\theta}_{i+1} {}^{i+1}\hat{\boldsymbol{Z}}_{i+1}$$</div>
+      </div>
+
+      <div style="background:#090f1d; border:1px solid #eab308; border-radius:6px; padding:14px;">
+        <strong style="color:#eab308; font-size:0.96rem;">3. 连杆原点线加速度外推（式 6.47）</strong>
+        <div style="margin-top:6px; overflow-x:auto; padding:6px 2px;">$${}^{i+1}\dot{\boldsymbol{v}}_{i+1} = {}^{i+1}_i\boldsymbol{R} \left( {}^i\dot{\boldsymbol{\omega}}_i \times {}^i\boldsymbol{P}_{i+1} + {}^i\boldsymbol{\omega}_i \times ({}^i\boldsymbol{\omega}_i \times {}^i\boldsymbol{P}_{i+1}) + {}^i\dot{\boldsymbol{v}}_i \right)$$</div>
+      </div>
+
+      <div style="background:#090f1d; border:1px solid #10b981; border-radius:6px; padding:14px;">
+        <strong style="color:#10b981; font-size:0.96rem;">4. 连杆质心线加速度外推（式 6.48）</strong>
+        <div style="margin-top:6px; overflow-x:auto; padding:6px 2px;">$${}^i\dot{\boldsymbol{v}}_{C_i} = {}^i\dot{\boldsymbol{\omega}}_i \times {}^i\boldsymbol{P}_{C_i} + {}^i\boldsymbol{\omega}_i \times ({}^i\boldsymbol{\omega}_i \times {}^i\boldsymbol{P}_{C_i}) + {}^i\dot{\boldsymbol{v}}_i$$</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 下篇承接卡片 -->
+  <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left:4px solid #10b981; padding:20px 24px; margin-top:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div>
+        <h3 style="margin:0 0 6px; color:#10b981; font-size:1.15rem;">🎯 恭喜通关外推加速度！下一步：进入动力学受力与力矩内推！</h3>
+        <p style="font-size:0.92rem; color:#cbd5e1; margin:0; line-height:1.65;">
+          我们已经知道了每一节连杆质心被甩得有多快（加速度）。接下来在<strong>笔记 04</strong>中，我们将应用<strong>牛顿-欧拉方程</strong>将加速度转化为惯性力，并从机械臂末端逐级<strong>内推回基座</strong>，最终解算出各关节电机的驱动力矩！
+        </p>
+      </div>
+      <a href="27-recursive-newton-euler-dynamics.html" style="background:#10b981; color:#040711; text-decoration:none; font-weight:bold; font-size:0.95rem; padding:10px 22px; border-radius:6px; white-space:nowrap; display:inline-block;">
+        进入笔记 04：递归 Newton-Euler 动力学算法 →
+      </a>
+    </div>
+  </div>
+
+  <div class="back-nav" style="margin-top:30px;">
+    <a href="index.html">← 返回课程主目录</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">上一篇：30. 两连杆空间加速度两级外推</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">下一篇：32. 递归 Newton-Euler 动力学算法 →</a>
+  </div>
+</main><script>
+  // =========================================================================
+  // 全局高对比度 2D 矢量与胶囊标签绘制工具函数
+  // =========================================================================
+  function drawBadge2D(ctx, text, x, y, bgColor = 'rgba(15,23,42,0.92)', textColor = '#cbd5e1', borderColor = '#334155', align = 'center') {
+    ctx.save();
+    ctx.font = 'bold 11px ui-monospace, monospace, -apple-system, sans-serif';
+    const metrics = ctx.measureText(text);
+    const paddingX = 8;
+    const w = metrics.width + paddingX * 2;
+    const h = 20;
+    let rx = x - w / 2;
+    if (align === 'left') rx = x;
+    else if (align === 'right') rx = x - w;
+    const ry = y - h / 2;
+
+    ctx.fillStyle = bgColor;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rx, ry, w, h, 4);
+    else ctx.rect(rx, ry, w, h);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, rx + w / 2, ry + h / 2);
+    ctx.restore();
+  }
+
+  function draw2DArrow(ctx, from, to, color = '#38bdf8', lineWidth = 2.5) {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    ctx.lineTo(to[0], to[1]);
+    ctx.stroke();
+
+    const headlen = Math.min(10, Math.max(6, lineWidth * 2.5));
+    const angle = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(to[0], to[1]);
+    ctx.lineTo(to[0] - headlen * Math.cos(angle - Math.PI / 6), to[1] - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(to[0] - headlen * Math.cos(angle + Math.PI / 6), to[1] - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+// =========================================================================
+  // 两连杆小臂质心 C2 空间矢量多视角解耦剖面 (支持 3D 等轴测 / 正俯视 / 正侧视 自由切换)
+  // 严格动态物理传导：大臂动力学真实生成手肘基底 v̇₂ -> 平行传导至质心 C₂ -> 与小臂向心/切向严格合成
+  // =========================================================================
+  var ortho2ViewMode = 'top'; // 默认：'top' (正俯视), 'iso' (3D 等轴测), 'side' (正侧视)
+  var ortho2SynthMode = 'box'; // 'box' (两级平行四边形), 'chain' (首尾相接折线多边形)
+
+  // 绑定视角切换按钮
+  const btnViewTop = document.getElementById('btn-view-ortho2-top');
+  const btnViewIso = document.getElementById('btn-view-ortho2-iso');
+  const btnViewSide = document.getElementById('btn-view-ortho2-side');
+  const btnSynthBox = document.getElementById('btn-synth-ortho2-box');
+  const btnSynthChain = document.getElementById('btn-synth-ortho2-chain');
+
+  function updateViewBtnUI() {
+    [
+      { btn: btnViewTop, mode: 'top' },
+      { btn: btnViewIso, mode: 'iso' },
+      { btn: btnViewSide, mode: 'side' }
+    ].forEach(item => {
+      if (item.btn) {
+        if (ortho2ViewMode === item.mode) {
+          item.btn.style.background = '#0284c7';
+          item.btn.style.color = '#ffffff';
+          item.btn.style.border = '1px solid #38bdf8';
+        } else {
+          item.btn.style.background = '#334155';
+          item.btn.style.color = '#cbd5e1';
+          item.btn.style.border = 'none';
+        }
+      }
+    });
+
+    [
+      { btn: btnSynthBox, mode: 'box' },
+      { btn: btnSynthChain, mode: 'chain' }
+    ].forEach(item => {
+      if (item.btn) {
+        if (ortho2SynthMode === item.mode) {
+          item.btn.style.background = '#8b5cf6';
+          item.btn.style.color = '#ffffff';
+          item.btn.style.border = '1px solid #c084fc';
+        } else {
+          item.btn.style.background = '#1e293b';
+          item.btn.style.color = '#94a3b8';
+          item.btn.style.border = 'none';
+        }
+      }
+    });
+  }
+
+  if (btnViewTop) btnViewTop.addEventListener('click', () => { ortho2ViewMode = 'top'; updateViewBtnUI(); });
+  if (btnViewIso) btnViewIso.addEventListener('click', () => { ortho2ViewMode = 'iso'; updateViewBtnUI(); });
+  if (btnViewSide) btnViewSide.addEventListener('click', () => { ortho2ViewMode = 'side'; updateViewBtnUI(); });
+  if (btnSynthBox) btnSynthBox.addEventListener('click', () => { ortho2SynthMode = 'box'; updateViewBtnUI(); });
+  if (btnSynthChain) btnSynthChain.addEventListener('click', () => { ortho2SynthMode = 'chain'; updateViewBtnUI(); });
+
+  function renderOrthoLink2Breakdown(q1, qWorld2, v0Val, isHoriz, v2_3D, at2c_3D, an2c_3D, vc2_3D, at2_c_mag, an2_c_mag, v2_mag, vc2_mag) {
+    const cPlane2 = document.getElementById('canvas-ortho-plane-link2');
+    const cVert2 = document.getElementById('canvas-ortho-vert-link2');
+    const m2 = 2.0;
+
+    // 手肘在水平面内的纯平面加速度大小 (不含竖直平动 v0)
+    const v2_planar_mag = Math.sqrt(Math.max(0, v2_mag * v2_mag - v0Val * v0Val));
+    const aRotC2Mag = Math.sqrt(at2_c_mag * at2_c_mag + an2_c_mag * an2_c_mag);
+    const aPlaneC2Mag = Math.sqrt(Math.pow(at2_c_mag, 2) + Math.pow(an2_c_mag, 2) + Math.pow(v2_planar_mag * 0.5, 2));
+    const vc2_space_mag = Math.sqrt(aPlaneC2Mag * aPlaneC2Mag + v0Val * v0Val);
+    const f2_mag = m2 * vc2_space_mag;
+
+    // -----------------------------------------------------------------------
+    // 图 C：两连杆小臂质心 C2 多视角剖面 (880x360 宽幅画布)
+    // -----------------------------------------------------------------------
+    if (cPlane2) {
+      const g = cPlane2.getContext('2d');
+      const cw = cPlane2.width, ch = cPlane2.height;
+      g.clearRect(0, 0, cw, ch);
+
+      // =====================================================================
+      // 模式 A：45° 空间立体等轴测 (3D Isometric View)
+      // =====================================================================
+      if (ortho2ViewMode === 'iso') {
+        const cx = cw * 0.48, cy = ch * 0.56;
+        const camA = 0.60, camE = 0.45;
+        const cosA = Math.cos(camA), sinA = Math.sin(camA);
+        const cosE = Math.cos(camE), sinE = Math.sin(camE);
+
+        function proj3D(x, y, z) {
+          const x1 = x * cosA - y * sinA;
+          const y1 = x * sinA + y * cosA;
+          const y2 = y1 * cosE - z * sinE;
+          const z2 = y1 * sinE + z * cosE;
+          return { x: cx + x1, y: cy - z2 };
+        }
+
+        // 1. 地面 3D 网格基准面
+        g.save();
+        g.strokeStyle = 'rgba(51, 65, 85, 0.4)';
+        g.lineWidth = 1;
+        const gridSize = 160, gridStep = 40;
+        for (let gx = -gridSize; gx <= gridSize; gx += gridStep) {
+          const pStart = proj3D(gx, -gridSize, -60);
+          const pEnd = proj3D(gx, gridSize, -60);
+          g.beginPath(); g.moveTo(pStart.x, pStart.y); g.lineTo(pEnd.x, pEnd.y); g.stroke();
+        }
+        for (let gy = -gridSize; gy <= gridSize; gy += gridStep) {
+          const pStart = proj3D(-gridSize, gy, -60);
+          const pEnd = proj3D(gridSize, gy, -60);
+          g.beginPath(); g.moveTo(pStart.x, pStart.y); g.lineTo(pEnd.x, pEnd.y); g.stroke();
+        }
+        g.restore();
+
+        // 2. 节点三维坐标
+        const pBase = proj3D(-160, -30, -60);
+        const pBaseTop = proj3D(-160, -30, -10);
+        const pJ2 = proj3D(-40, 70, -10);
+        const pC2 = proj3D(80, 70, -10);
+        const pTip3 = proj3D(190, 70, -10);
+
+        // 3. 黄色升降底座立柱 (Z 方向)
+        g.save();
+        g.strokeStyle = '#eab308';
+        g.lineWidth = 14;
+        g.lineCap = 'round';
+        g.beginPath(); g.moveTo(pBase.x, pBase.y); g.lineTo(pBaseTop.x, pBaseTop.y); g.stroke();
+        drawBadge2D(g, '升降基座 {1}', pBaseTop.x - 45, pBaseTop.y, '#0f172a', '#eab308', '#eab308', 'right');
+
+        // 4. 大臂 Link 1 (深蓝)
+        g.strokeStyle = '#0284c7';
+        g.lineWidth = 12;
+        g.beginPath(); g.moveTo(pBaseTop.x, pBaseTop.y); g.lineTo(pJ2.x, pJ2.y); g.stroke();
+        drawBadge2D(g, '手肘 {2}', pJ2.x - 30, pJ2.y + 18, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+        // 5. 小臂 Link 2 (青绿)
+        g.strokeStyle = '#10b981';
+        g.lineWidth = 9;
+        g.beginPath(); g.moveTo(pJ2.x, pJ2.y); g.lineTo(pTip3.x, pTip3.y); g.stroke();
+
+        // 质心点 C2
+        g.fillStyle = '#c084fc';
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 2;
+        g.beginPath(); g.arc(pC2.x, pC2.y, 7, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '质心 C₂', pC2.x, pC2.y + 24, '#0f172a', '#c084fc', '#7e22ce', 'center');
+
+        // 末端 {3}
+        drawBadge2D(g, '末端 {3}', pTip3.x + 14, pTip3.y, '#0f172a', '#10b981', '#059669', 'left');
+        g.restore();
+
+        // 6. 在质心 C2 处绘制 3D 分解各分量
+        const s3d = 12;
+        const vAt = proj3D(80, 70 + at2_c_mag * s3d, -10);
+        const vAn = proj3D(80 - an2_c_mag * s3d, 70, -10);
+        const vFloorSum = proj3D(80 - an2_c_mag * s3d - 20, 70 + at2_c_mag * s3d, -10);
+        const vVert = proj3D(80, 70, -10 + Math.abs(v0Val) * s3d * 1.5);
+        const vSpaceSum = proj3D(80 - an2_c_mag * s3d - 20, 70 + at2_c_mag * s3d, -10 + Math.abs(v0Val) * s3d * 1.5);
+
+        // 3D 虚线立方体盒
+        g.save();
+        g.strokeStyle = '#c084fc';
+        g.lineWidth = 1.2;
+        g.setLineDash([3, 3]);
+        g.beginPath();
+        // 底面
+        g.moveTo(vAn.x, vAn.y); g.lineTo(vFloorSum.x, vFloorSum.y); g.lineTo(vAt.x, vAt.y);
+        // 顶面
+        const vAnTop = proj3D(80 - an2_c_mag * s3d, 70, -10 + Math.abs(v0Val) * s3d * 1.5);
+        const vAtTop = proj3D(80, 70 + at2_c_mag * s3d, -10 + Math.abs(v0Val) * s3d * 1.5);
+        g.moveTo(vVert.x, vVert.y); g.lineTo(vAnTop.x, vAnTop.y); g.lineTo(vSpaceSum.x, vSpaceSum.y); g.lineTo(vAtTop.x, vAtTop.y); g.lineTo(vVert.x, vVert.y);
+        // 坚直立柱边
+        g.moveTo(vFloorSum.x, vFloorSum.y); g.lineTo(vSpaceSum.x, vSpaceSum.y);
+        g.stroke();
+        g.restore();
+
+        // 绘制矢量
+        // ① 🔴 向心 (水平面内沿杆向内)
+        draw2DArrow(g, [pC2.x, pC2.y], [vAn.x, vAn.y], '#ef4444', 3.0);
+        drawBadge2D(g, `🔴 向心 a_n2,C = ${an2_c_mag.toFixed(1)}`, vAn.x - 8, vAn.y - 12, 'rgba(9,15,29,0.95)', '#ef4444', '#ef4444', 'right');
+
+        // ② 🟠 切向 (水平面内垂直杆冲出)
+        draw2DArrow(g, [pC2.x, pC2.y], [vAt.x, vAt.y], '#f97316', 3.0);
+        drawBadge2D(g, `🟠 切向 a_t2,C = ${at2_c_mag.toFixed(1)}`, vAt.x + 10, vAt.y + 12, 'rgba(9,15,29,0.95)', '#f97316', '#f97316', 'left');
+
+        // ③ 🟡 竖直平动 (沿 +Z 空间竖直向上)
+        draw2DArrow(g, [pC2.x, pC2.y], [vVert.x, vVert.y], '#eab308', 3.5);
+        drawBadge2D(g, `🟡 竖直平动 v̇₀ = ${Math.abs(v0Val).toFixed(1)} (沿+Z轴)`, vVert.x - 12, vVert.y - 10, 'rgba(9,15,29,0.95)', '#eab308', '#eab308', 'right');
+
+        // ④ 🟣 水平面合量 (地面投影)
+        draw2DArrow(g, [pC2.x, pC2.y], [vFloorSum.x, vFloorSum.y], '#c084fc', 3.2);
+        drawBadge2D(g, `🟣 平面合量 = ${aPlaneC2Mag.toFixed(2)}`, vFloorSum.x, vFloorSum.y + 16, 'rgba(9,15,29,0.95)', '#c084fc', '#c084fc', 'center');
+
+        // ⑤ 🟣 3D 空间对角线总加速度
+        draw2DArrow(g, [pC2.x, pC2.y], [vSpaceSum.x, vSpaceSum.y], '#38bdf8', 4.5);
+        drawBadge2D(g, `🚀 空间质心总加速度 v̇_C2 = ${vc2_space_mag.toFixed(2)} m/s²`, vSpaceSum.x + 14, vSpaceSum.y - 12, 'rgba(9,15,29,0.96)', '#38bdf8', '#38bdf8', 'left');
+
+        // ⑥ 💥 牛顿净惯性力 F2 (空间对角线延长)
+        const vF2 = proj3D(80 - an2_c_mag * s3d * 1.3 - 25, 70 + at2_c_mag * s3d * 1.3, -10 + Math.abs(v0Val) * s3d * 1.95);
+        draw2DArrow(g, [vSpaceSum.x, vSpaceSum.y], [vF2.x, vF2.y], '#10b981', 4.0);
+        drawBadge2D(g, `💥 空间惯性力 F₂ = m₂v̇_C2 = ${f2_mag.toFixed(2)} N`, vF2.x + 12, vF2.y - 4, 'rgba(6,78,59,0.96)', '#34d399', '#10b981', 'left');
+
+      // =====================================================================
+      // 模式 B：正俯视投影 (Top View: 真实动力学矢量传导 + 严格几何合成)
+      // =====================================================================
+      } else if (ortho2ViewMode === 'top') {
+        const bx = 110, by = 270;
+        const j2x = 280, j2y = 190;
+        const c2x = 480, c2y = 190;
+        const tip3x = 740, tip3y = 190;
+
+        // 1. 虚线旋转大圆弧 (大臂末端轨迹)
+        g.save();
+        g.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        g.lineWidth = 1.5;
+        g.setLineDash([4, 4]);
+        g.beginPath();
+        g.arc(bx, by, Math.hypot(j2x - bx, j2y - by), -Math.PI * 0.45, 0.1);
+        g.stroke();
+        g.restore();
+
+        // 2. 大臂 Link 1 (从基座 {1} 到手肘 {2})
+        g.save();
+        g.strokeStyle = '#0284c7';
+        g.lineWidth = 14;
+        g.lineCap = 'round';
+        g.beginPath(); g.moveTo(bx, by); g.lineTo(j2x, j2y); g.stroke();
+
+        // 基座圆盘 {1}
+        g.fillStyle = '#0f172a';
+        g.strokeStyle = '#eab308';
+        g.lineWidth = 2.5;
+        g.beginPath(); g.arc(bx, by, 16, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '基座原点 {1}', bx, by + 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+        // 3. 小臂 Link 2 (长 460px)
+        g.strokeStyle = '#10b981';
+        g.lineWidth = 11;
+        g.beginPath(); g.moveTo(j2x, j2y); g.lineTo(tip3x, tip3y); g.stroke();
+
+        // 手肘 {2}
+        g.fillStyle = '#ffffff';
+        g.strokeStyle = '#38bdf8';
+        g.lineWidth = 2.5;
+        g.beginPath(); g.arc(j2x, j2y, 7.5, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '手肘原点 {2}', j2x, j2y + 26, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+        // 质心 C2
+        g.fillStyle = '#c084fc';
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 2.5;
+        g.beginPath(); g.arc(c2x, c2y, 8, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '小臂质心 C₂', c2x, c2y + 26, '#0f172a', '#c084fc', '#7e22ce', 'center');
+
+        // 末端 {3}
+        g.fillStyle = '#10b981';
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 2;
+        g.beginPath(); g.arc(tip3x, tip3y, 6.5, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '末端法兰 {3}', tip3x + 18, tip3y + 2, '#0f172a', '#10b981', '#059669', 'left');
+        g.restore();
+
+        // 4. 正交动坐标系 {XC2, YC2} 轴
+        draw2DArrow(g, [c2x, c2y], [c2x + 150, c2y], '#c084fc', 2.0);
+        drawBadge2D(g, '+X_C2 轴 (沿小臂向外)', c2x + 158, c2y - 2, 'rgba(15,23,42,0.92)', '#c084fc', '#c084fc', 'left');
+
+        draw2DArrow(g, [c2x, c2y], [c2x, c2y - 145], '#10b981', 2.0);
+        drawBadge2D(g, '+Y_C2 轴 (切向冲出)', c2x, c2y - 154, 'rgba(15,23,42,0.92)', '#10b981', '#10b981', 'center');
+
+        // ⊙ +Z_C2 垂直穿屏指示圈
+        const zBadgeX = c2x, zBadgeY = c2y + 60;
+        g.save();
+        g.fillStyle = '#eab308';
+        g.strokeStyle = '#eab308';
+        g.lineWidth = 1.5;
+        g.beginPath(); g.arc(zBadgeX - 85, zBadgeY, 6.5, 0, Math.PI * 2); g.stroke();
+        g.beginPath(); g.arc(zBadgeX - 85, zBadgeY, 2.5, 0, Math.PI * 2); g.fill();
+        drawBadge2D(g, `⊙ +Z_C2 (转轴与竖直平动垂直穿屏朝你: v̇₀ = ${Math.abs(v0Val).toFixed(1)})`, zBadgeX, zBadgeY, 'rgba(15,23,42,0.95)', '#eab308', '#eab308', 'center');
+        g.restore();
+
+        // 5. 真实大臂动力学计算手肘加速度方向 (Link 1 几何与速度)
+        // 大臂朝向矢量：从 (bx, by) 到 (j2x, j2y)
+        const l1_dx = j2x - bx; // 170
+        const l1_dy = j2y - by; // -80
+        const l1_len = Math.hypot(l1_dx, l1_dy);
+        const u1_x = l1_dx / l1_len; // 大臂沿杆单位矢量 (向右上)
+        const u1_y = l1_dy / l1_len;
+        // 大臂逆时针切向单位矢量 (-u1_y, u1_x) -> (向左上)
+        const t1_x = -u1_y;
+        const t1_y = u1_x;
+
+        const vScale = 22;
+        const lenAn = Math.min(130, Math.max(35, an2_c_mag * vScale));
+        const lenAt = Math.min(115, Math.max(35, at2_c_mag * vScale));
+        const lenV2Planar = Math.min(75, Math.max(28, v2_planar_mag * vScale * 0.45));
+
+        // 手肘处的真实物理加速度分量：
+        // ① 大臂向心 (沿大臂指向基座)：(-u1_x, -u1_y)
+        // ② 大臂切向 (沿大臂切向冲出)：(t1_x, t1_y)
+        // 合成手肘纯水平加速度像素增量：
+        const v2x = (t1_x * 0.75 - u1_x * 0.45) * lenV2Planar;
+        const v2y = (t1_y * 0.75 - u1_y * 0.45) * lenV2Planar;
+
+        // 在手肘原点 {2} 处首先绘制真实的基底加速度矢量
+        draw2DArrow(g, [j2x, j2y], [j2x + v2x, j2y + v2y], '#38bdf8', 3.0);
+        drawBadge2D(g, `🔵 手肘动力学基底 v̇₂ (${v2_planar_mag.toFixed(1)})`, j2x + v2x - 10, j2y + v2y + 16, 'rgba(15,23,42,0.95)', '#38bdf8', '#0284c7', 'right');
+
+        // 平行传导虚线：明确告诉读者“手肘加速度如何严格平移传导至质心 C2”
+        g.save();
+        g.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        g.lineWidth = 1.2;
+        g.setLineDash([3, 3]);
+        g.beginPath();
+        g.moveTo(j2x + v2x, j2y + v2y);
+        g.lineTo(c2x + v2x, c2y + v2y);
+        g.stroke();
+        g.restore();
+
+        // 矢量端点定义
+        // ① 🔴 向心 (从 C2 向左 -X 轴): P_an = (c2x - lenAn, c2y)
+        const pAn_x = c2x - lenAn, pAn_y = c2y;
+        // ② 🟠 切向 (从 C2 向上 +Y 轴): P_at = (c2x, c2y - lenAt)
+        const pAt_x = c2x, pAt_y = c2y - lenAt;
+        // ③ 🌸 小臂自转合量 (向心 ⟂ 切向 严格矩形对角线): P_rot = (c2x - lenAn, c2y - lenAt)
+        const pRot_x = c2x - lenAn, pRot_y = c2y - lenAt;
+        // ④ 🔵 手肘水平基底分量 (平移至质心 C2): P_v2 = (c2x + v2x, c2y + v2y)
+        const pV2_x = c2x + v2x, pV2_y = c2y + v2y;
+        // ⑤ 🟣 质心平面总合成 (自转合量 + 手肘基底 严格平行四边形): P_sum = P_rot + (v2x, v2y)
+        const pSum_x = pRot_x + v2x, pSum_y = pRot_y + v2y;
+
+        // ===================================================================
+        // 模式 B1：两级平行四边形法则 (矩形 1 + 平行四边形 2)
+        // ===================================================================
+        if (ortho2SynthMode === 'box') {
+          // --- 第 1 级：小臂自转直角矩形 (Red + Orange = Pink) ---
+          g.save();
+          g.strokeStyle = '#f43f5e';
+          g.lineWidth = 1.4;
+          g.setLineDash([3, 3]);
+          g.beginPath();
+          g.moveTo(pAn_x, pAn_y); g.lineTo(pRot_x, pRot_y); g.lineTo(pAt_x, pAt_y);
+          g.stroke();
+
+          // 直角符号 ⦜ (在 C2 处)
+          g.strokeStyle = '#64748b'; g.setLineDash([]);
+          const sq = 12;
+          g.beginPath();
+          g.moveTo(c2x - sq, c2y); g.lineTo(c2x - sq, c2y - sq); g.lineTo(c2x, c2y - sq);
+          g.stroke();
+
+          // 矩形半透明浅红填充
+          g.fillStyle = 'rgba(244, 63, 94, 0.08)';
+          g.fillRect(pAn_x, pAt_y, lenAn, lenAt);
+          g.restore();
+
+          // --- 第 2 级：自转合量与手肘基底的严格平行四边形 (Pink + Blue = Purple) ---
+          g.save();
+          g.strokeStyle = '#c084fc';
+          g.lineWidth = 1.5;
+          g.setLineDash([4, 4]);
+          g.beginPath();
+          // 平行于蓝色手肘基底的边 (从 P_rot 到 P_sum)
+          g.moveTo(pRot_x, pRot_y); g.lineTo(pSum_x, pSum_y);
+          // 平行于粉色自转合量的边 (从 P_v2 到 P_sum)
+          g.moveTo(pV2_x, pV2_y); g.lineTo(pSum_x, pSum_y);
+          g.stroke();
+
+          // 平行四边形半透明浅紫填充
+          g.fillStyle = 'rgba(192, 132, 252, 0.10)';
+          g.beginPath();
+          g.moveTo(c2x, c2y); g.lineTo(pRot_x, pRot_y); g.lineTo(pSum_x, pSum_y); g.lineTo(pV2_x, pV2_y);
+          g.closePath();
+          g.fill();
+          g.restore();
+
+          // 绘制矢量箭头
+          // ① 🔴 向心 (沿 -X 轴向左)
+          draw2DArrow(g, [c2x, c2y], [pAn_x, pAn_y], '#ef4444', 3.5);
+          drawBadge2D(g, `🔴 向心 a_n2,C = ${an2_c_mag.toFixed(2)}`, c2x - lenAn / 2, c2y - 16, 'rgba(9,15,29,0.95)', '#ef4444', '#ef4444', 'center');
+
+          // ② 🟠 切向 (沿 +Y 轴向上)
+          draw2DArrow(g, [c2x, c2y], [pAt_x, pAt_y], '#f97316', 3.5);
+          drawBadge2D(g, `🟠 切向 a_t2,C = ${at2_c_mag.toFixed(2)}`, c2x + 14, c2y - lenAt / 2, 'rgba(9,15,29,0.95)', '#f97316', '#f97316', 'left');
+
+          // ③ 🌸 中间过渡：小臂自转合量 (向心 ⟂ 切向 直角矩形对角线)
+          draw2DArrow(g, [c2x, c2y], [pRot_x, pRot_y], '#f43f5e', 3.0);
+          drawBadge2D(g, `🌸 自转合量 a_自转 = ${aRotC2Mag.toFixed(2)}`, pRot_x - 10, pRot_y - 12, 'rgba(9,15,29,0.95)', '#f43f5e', '#f43f5e', 'right');
+
+          // ④ 🔵 手肘水平基底 (传导至质心 C2)
+          draw2DArrow(g, [c2x, c2y], [pV2_x, pV2_y], '#38bdf8', 3.5);
+          drawBadge2D(g, `🔵 手肘水平基底 v̇_2,平面 = ${v2_planar_mag.toFixed(2)}`, pV2_x - 10, pV2_y + 14, 'rgba(9,15,29,0.95)', '#38bdf8', '#38bdf8', 'right');
+
+          // ⑤ 🟣 质心平面总合成 (两级最终空间总对角线)
+          draw2DArrow(g, [c2x, c2y], [pSum_x, pSum_y], '#c084fc', 4.5);
+          drawBadge2D(g, `🟣 质心平面总合量 a_C2,平面 = ${aPlaneC2Mag.toFixed(2)} m/s²`, pSum_x - 12, pSum_y - 12, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'right');
+
+        // ===================================================================
+        // 模式 B2：首尾相接折线多边形法则 (Chain Mode: 步步相加直观多边形)
+        // ===================================================================
+        } else if (ortho2SynthMode === 'chain') {
+          // 第一步：从 C2 走 🔵 手肘基底 到 P_v2
+          draw2DArrow(g, [c2x, c2y], [pV2_x, pV2_y], '#38bdf8', 3.5);
+          drawBadge2D(g, `① 🔵 手肘基底 v̇_2,平面 (${v2_planar_mag.toFixed(2)})`, (c2x + pV2_x) / 2 - 14, (c2y + pV2_y) / 2 + 16, 'rgba(9,15,29,0.95)', '#38bdf8', '#38bdf8', 'right');
+
+          // 第二步：从 P_v2 走 🔴 向心 (向左移动 lenAn) 到 P_step2
+          const pStep2_x = pV2_x - lenAn, pStep2_y = pV2_y;
+          draw2DArrow(g, [pV2_x, pV2_y], [pStep2_x, pStep2_y], '#ef4444', 3.5);
+          drawBadge2D(g, `② 🔴 + 向心 a_n2,C (${an2_c_mag.toFixed(2)})`, (pV2_x + pStep2_x) / 2, pV2_y + 16, 'rgba(9,15,29,0.95)', '#ef4444', '#ef4444', 'center');
+
+          // 第三步：从 P_step2 走 🟠 切向 (向上移动 lenAt) 刚好到达 P_sum!
+          draw2DArrow(g, [pStep2_x, pStep2_y], [pSum_x, pSum_y], '#f97316', 3.5);
+          drawBadge2D(g, `③ 🟠 + 切向 a_t2,C (${at2_c_mag.toFixed(2)})`, pStep2_x - 14, (pStep2_y + pSum_y) / 2, 'rgba(9,15,29,0.95)', '#f97316', '#f97316', 'right');
+
+          // 闭合总矢量：从起点 C2 直接射向终点 P_sum
+          draw2DArrow(g, [c2x, c2y], [pSum_x, pSum_y], '#c084fc', 4.8);
+          drawBadge2D(g, `🟣 首尾相接总合成 a_C2,平面 = ${aPlaneC2Mag.toFixed(2)} m/s²`, pSum_x - 12, pSum_y - 12, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'right');
+        }
+
+      // =====================================================================
+      // 模式 C：正侧视投影 (Side View: 坚直升降 + 水平合量 ⇒ 勾股合成)
+      // =====================================================================
+      } else if (ortho2ViewMode === 'side') {
+        const groundY = ch - 30;
+        const bx = 110, by = 240;
+        const j2x = 300, ty = by;
+        const c2_mid_x = 480;
+        const tx = 680;
+
+        // 地面
+        g.save();
+        g.strokeStyle = '#334155'; g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(25, groundY); g.lineTo(cw - 25, groundY); g.stroke();
+        g.fillStyle = '#64748b'; g.font = '11px sans-serif'; g.fillText('地面水平基准面', 30, groundY + 18);
+
+        // 立柱
+        g.fillStyle = '#0f172a'; g.strokeStyle = '#eab308'; g.lineWidth = 2.5;
+        g.beginPath(); g.roundRect(bx - 18, by, 36, groundY - by, 5); g.fill(); g.stroke();
+        g.fillStyle = '#eab308'; g.font = 'bold 11px monospace'; g.textAlign = 'center';
+        g.fillText('升降立柱', bx, (by + groundY) / 2 + 4);
+
+        // 连杆侧影
+        g.strokeStyle = '#0284c7'; g.lineWidth = 14; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(bx, by); g.lineTo(j2x, ty); g.stroke();
+
+        g.strokeStyle = '#10b981'; g.lineWidth = 11;
+        g.beginPath(); g.moveTo(j2x, ty); g.lineTo(tx, ty); g.stroke();
+
+        // 质心
+        g.fillStyle = '#c084fc'; g.strokeStyle = '#ffffff'; g.lineWidth = 2.5;
+        g.beginPath(); g.arc(c2_mid_x, ty, 8, 0, Math.PI * 2); g.fill(); g.stroke();
+        drawBadge2D(g, '小臂质心 C₂', c2_mid_x, ty + 26, 'rgba(15,23,42,0.92)', '#c084fc', '#7e22ce', 'center');
+        g.restore();
+
+        // 矢量合成
+        const vScale = 22;
+        const lenPlane = Math.min(170, Math.max(45, aPlaneC2Mag * vScale));
+        const lenV0 = Math.min(125, Math.max(35, Math.abs(v0Val) * vScale));
+
+        draw2DArrow(g, [c2_mid_x, ty], [c2_mid_x, ty - 150], '#38bdf8', 2.0);
+        drawBadge2D(g, '+Z₂ 轴 (竖直升降)', c2_mid_x, ty - 158, 'rgba(15,23,42,0.92)', '#38bdf8', '#38bdf8', 'center');
+
+        draw2DArrow(g, [c2_mid_x, ty], [c2_mid_x + 195, ty], '#c084fc', 2.0);
+        drawBadge2D(g, '水平面合量方向', c2_mid_x + 202, ty - 2, 'rgba(15,23,42,0.92)', '#c084fc', '#c084fc', 'left');
+
+        // 虚线框与矢量
+        g.save();
+        g.strokeStyle = '#c084fc'; g.lineWidth = 1.5; g.setLineDash([4, 4]);
+        g.beginPath();
+        g.moveTo(c2_mid_x + lenPlane, ty); g.lineTo(c2_mid_x + lenPlane, ty - lenV0); g.lineTo(c2_mid_x, ty - lenV0);
+        g.stroke();
+        g.restore();
+
+        draw2DArrow(g, [c2_mid_x, ty], [c2_mid_x + lenPlane, ty], '#c084fc', 3.6);
+        drawBadge2D(g, `🟣 a_平面 = ${aPlaneC2Mag.toFixed(2)} m/s²`, c2_mid_x + lenPlane / 2, ty - 16, 'rgba(9,15,29,0.95)', '#c084fc', '#c084fc', 'center');
+
+        draw2DArrow(g, [c2_mid_x, ty], [c2_mid_x, ty - lenV0], '#eab308', 3.6);
+        drawBadge2D(g, `🟡 竖直平动 v̇₀ = ${Math.abs(v0Val).toFixed(2)} m/s²`, c2_mid_x - 14, ty - lenV0 / 2, 'rgba(9,15,29,0.95)', '#eab308', '#eab308', 'right');
+
+        draw2DArrow(g, [c2_mid_x, ty], [c2_mid_x + lenPlane, ty - lenV0], '#c084fc', 4.5);
+        drawBadge2D(g, `🟣 质心总加速度 v̇_C2 = ${vc2_space_mag.toFixed(2)} m/s²`, c2_mid_x + lenPlane + 12, ty - lenV0 - 12, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'left');
+
+        const f2_ext_x = c2_mid_x + lenPlane + 85;
+        const f2_ext_y = ty - lenV0 - 45;
+        draw2DArrow(g, [c2_mid_x + lenPlane, ty - lenV0], [f2_ext_x, f2_ext_y], '#10b981', 3.8);
+        drawBadge2D(g, `💥 净惯性力 F₂ = m₂v̇_C2 = ${f2_mag.toFixed(2)} N`, f2_ext_x + 12, f2_ext_y - 2, 'rgba(6,78,59,0.96)', '#34d399', '#10b981', 'left');
+      }
+
+      const lblPlane = document.getElementById('label-ortho2-plane-mag');
+      if (lblPlane) lblPlane.innerText = aPlaneC2Mag.toFixed(2);
+    }
+    renderOrtho2SpaceBreakdown(v0Val, aPlaneC2Mag, q1, qWorld2, vc2_3D);
+  }
+
+// =========================================================================
+  // 步骤 D：空间立面正交分解与牛顿第二定律 F2 = m2 * a 严谨全景引擎 (880x380 宽幅)
+  // 左侧：真实机构立面侧影 (底座立柱 + 连杆 + 质心 C2)
+  // 右侧：严格直角勾股测量与牛顿惯性力 F2 标定台
+  // 零遮挡、零碰撞、纯静态稳定！
+  // =========================================================================
+  var ortho2SpaceStep = 'overview';
+  var ortho2SpaceButtons = {
+    overview: document.getElementById('btn-ortho2-space-overview'),
+    plane: document.getElementById('btn-ortho2-space-plane'),
+    vertical: document.getElementById('btn-ortho2-space-vertical'),
+    force: document.getElementById('btn-ortho2-space-force')
+  };
+
+  function updateOrtho2SpaceUI() {
+    if (!ortho2SpaceButtons) return;
+    Object.entries(ortho2SpaceButtons).forEach(([name, button]) => {
+      if (!button) return;
+      const active = name === ortho2SpaceStep;
+      button.style.background = active ? '#10b981' : '#1e293b';
+      button.style.color = active ? '#ffffff' : '#cbd5e1';
+      button.style.border = active ? '1px solid #34d399' : 'none';
+    });
+  }
+
+  Object.entries(ortho2SpaceButtons).forEach(([name, button]) => {
+    if (button) button.addEventListener('click', () => {
+      ortho2SpaceStep = name;
+      updateOrtho2SpaceUI();
+      if (lastOrtho2Args) renderOrthoLink2Breakdown(...lastOrtho2Args);
+    });
+  });
+
+  function renderOrtho2SpaceBreakdown(v0Val, aPlane, q1, qWorld2, vc2_3D) {
+    if (!ortho2SpaceStep) ortho2SpaceStep = 'overview';
+    const canvas = document.getElementById('canvas-ortho-vert-link2');
+    const copy = document.getElementById('ortho2-space-copy');
+    if (!canvas) return;
+    const g = canvas.getContext('2d');
+    const cw = canvas.width, ch = canvas.height;
+    g.clearRect(0, 0, cw, ch);
+
+    const v0Abs = Math.abs(v0Val);
+    const aSpace = Math.sqrt(aPlane * aPlane + v0Val * v0Val);
+    const f2 = 2.0 * aSpace;
+
+    const visible = (name) => ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force' ||
+      (ortho2SpaceStep === 'plane' && name === 'plane') ||
+      (ortho2SpaceStep === 'vertical' && (name === 'plane' || name === 'vertical'));
+    const dot = (point, color, r = 6) => {
+      g.save(); g.fillStyle = color; g.strokeStyle = '#ffffff'; g.lineWidth = 1.5;
+      g.beginPath(); g.arc(point[0], point[1], r, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore();
+    };
+
+    const emph = (name) => ortho2SpaceStep === 'overview' ||
+      (ortho2SpaceStep === 'plane' && name === 'plane') ||
+      (ortho2SpaceStep === 'vertical' && name === 'vertical') ||
+      (ortho2SpaceStep === 'force' && name === 'force');
+
+    // =======================================================================
+    // 1. 左侧区域 (x: 20 ~ 490)：真实机构立面侧影 (Side Elevation View)
+    // =======================================================================
+    const groundY = ch - 40; // 360
+    const bx = 85, by = 220; // 升降立柱顶端
+    const j2x = 225, j2y = by; // 手肘
+    const c2x = 345, c2y = by; // 质心 C2
+    const tip3x = 455, tip3y = by; // 末端
+
+    // 地面基准线
+    g.save();
+    g.strokeStyle = '#334155';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(25, groundY);
+    g.lineTo(475, groundY);
+    g.stroke();
+    drawBadge2D(g, '地面水平基准面', 80, groundY + 16, '#0f172a', '#64748b', '#334155', 'center');
+
+    // 升降立柱 (黄色立柱)
+    g.fillStyle = '#0f172a';
+    g.strokeStyle = '#eab308';
+    g.lineWidth = 2.5;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(bx - 16, by, 32, groundY - by, 5);
+    else g.rect(bx - 16, by, 32, groundY - by);
+    g.fill();
+    g.stroke();
+    drawBadge2D(g, '升降立柱 {1}', bx, (by + groundY) / 2 + 2, '#0f172a', '#eab308', '#eab308', 'center');
+
+    // 机械臂侧面轮廓 (大臂 + 小臂)
+    // 大臂 Link 1
+    g.strokeStyle = '#0284c7';
+    g.lineWidth = 13;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(bx, by); g.lineTo(j2x, j2y); g.stroke();
+
+    // 小臂 Link 2
+    g.strokeStyle = '#10b981';
+    g.lineWidth = 10;
+    g.beginPath(); g.moveTo(j2x, j2y); g.lineTo(tip3x, tip3y); g.stroke();
+
+    // 手肘圆点
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#38bdf8'; g.lineWidth = 2;
+    g.beginPath(); g.arc(j2x, j2y, 6.5, 0, Math.PI * 2); g.fill(); g.stroke();
+    drawBadge2D(g, '手肘 {2}', j2x, j2y + 24, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+    // 质心 C2 点
+    g.fillStyle = '#c084fc'; g.strokeStyle = '#ffffff'; g.lineWidth = 2.5;
+    g.beginPath(); g.arc(c2x, c2y, 7.5, 0, Math.PI * 2); g.fill(); g.stroke();
+    drawBadge2D(g, '小臂质心 C₂', c2x, c2y + 24, '#0f172a', '#c084fc', '#7e22ce', 'center');
+
+    // 末端法兰 {3}
+    g.fillStyle = '#10b981'; g.strokeStyle = '#ffffff'; g.lineWidth = 2;
+    g.beginPath(); g.arc(tip3x, tip3y, 6, 0, Math.PI * 2); g.fill(); g.stroke();
+    drawBadge2D(g, '末端 {3}', tip3x + 14, tip3y, '#0f172a', '#10b981', '#059669', 'left');
+    g.restore();
+
+    // 在质心 C2 处绘制机构侧面受力矢量
+    const vScaleMech = 18;
+    const lenPlaneMech = Math.min(105, Math.max(40, aPlane * vScaleMech));
+    const lenV0Mech = Math.min(85, Math.max(35, v0Abs * vScaleMech));
+
+    // 虚线直角矩形
+    g.save();
+    g.strokeStyle = '#c084fc';
+    g.lineWidth = 1.2;
+    g.setLineDash([3, 3]);
+    g.beginPath();
+    g.moveTo(c2x + lenPlaneMech, c2y);
+    g.lineTo(c2x + lenPlaneMech, c2y - lenV0Mech);
+    g.lineTo(c2x, c2y - lenV0Mech);
+    g.stroke();
+    g.restore();
+
+    // ① 水平合量 (水平向右)
+    if (visible('plane')) {
+      draw2DArrow(g, [c2x, c2y], [c2x + lenPlaneMech, c2y], '#c084fc', 3.5);
+      drawBadge2D(g, `🟣 a_平面 = ${aPlane.toFixed(1)}`, c2x + lenPlaneMech / 2, c2y - 14, 'rgba(9,15,29,0.95)', '#c084fc', '#c084fc', 'center');
+    }
+
+    // ② 坚直平动 (坚直向上)
+    if (visible('vertical')) {
+      draw2DArrow(g, [c2x, c2y], [c2x, c2y - lenV0Mech], '#eab308', 3.5);
+      drawBadge2D(g, `🟡 v̇₀ = ${v0Abs.toFixed(1)}`, c2x - 14, c2y - lenV0Mech / 2, 'rgba(9,15,29,0.95)', '#eab308', '#eab308', 'right');
+    }
+
+    // 空间总加速度 (对角线)
+    if (ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force') {
+      draw2DArrow(g, [c2x, c2y], [c2x + lenPlaneMech, c2y - lenV0Mech], '#38bdf8', 4.0);
+      drawBadge2D(g, `🚀 v̇_C2 = ${aSpace.toFixed(1)}`, c2x + lenPlaneMech + 8, c2y - lenV0Mech - 8, 'rgba(9,15,29,0.96)', '#38bdf8', '#38bdf8', 'left');
+    }
+
+    // =======================================================================
+    // 2. 中间过渡指示 (x: 480 ~ 525)
+    // =======================================================================
+    g.save();
+    g.strokeStyle = '#334155';
+    g.lineWidth = 1;
+    g.setLineDash([4, 4]);
+    g.beginPath(); g.moveTo(505, 30); g.lineTo(505, ch - 30); g.stroke();
+    g.restore();
+
+    // =======================================================================
+    // 3. 右侧区域 (x: 520 ~ 860)：严格直角勾股测量与牛顿惯性力 F2 标定台
+    // =======================================================================
+    // 标定台容器底框
+    g.save();
+    g.fillStyle = '#040711';
+    g.strokeStyle = '#1e293b';
+    g.lineWidth = 1;
+    if (g.roundRect) g.roundRect(520, 20, cw - 535, ch - 40, 8);
+    else g.rect(520, 20, cw - 535, ch - 40);
+    g.fill();
+    g.stroke();
+    g.restore();
+
+    drawBadge2D(g, '📊 严格直角勾股合成台 (平面 ⟂ 坚直 90°)', 685, 36, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+    const P0 = [545, 290]; // 合成起点
+    const lenPlaneRight = 145;
+    const lenV0Right = 105;
+    const P1 = [P0[0] + lenPlaneRight, P0[1]]; // (690, 290)
+    const P2 = [P1[0], P0[1] - lenV0Right]; // (690, 185)
+
+    // 起点圆点
+    dot(P0, '#ffffff', 5.5);
+    drawBadge2D(g, '加法起点', P0[0] - 8, P0[1] + 20, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+    // 虚线辅助直角边
+    g.save();
+    g.strokeStyle = '#334155';
+    g.lineWidth = 1.2;
+    g.setLineDash([3, 3]);
+    g.beginPath();
+    g.moveTo(P0[0], P0[1]); g.lineTo(P1[0], P1[1]); g.lineTo(P2[0], P2[1]);
+    g.stroke();
+    g.restore();
+
+    // ① 水平底边：平面合量 a_C2,平面 (从 P0 水平向右到 P1)
+    if (visible('plane')) {
+      g.save(); g.globalAlpha = emph('plane') ? 1 : 0.35;
+      draw2DArrow(g, P0, P1, '#c084fc', emph('plane') ? 4.5 : 3.0);
+      drawBadge2D(g, `① 水平面合量 a_平面 = ${aPlane.toFixed(2)} m/s²`, (P0[0] + P1[0]) / 2, P0[1] + 20, 'rgba(9,15,29,0.95)', '#c084fc', '#c084fc', 'center');
+      g.restore();
+    }
+
+    // ② 坚直立柱：坚直平动 v0 (从 P1 坚直向上到 P2)
+    if (visible('vertical')) {
+      g.save(); g.globalAlpha = emph('vertical') ? 1 : 0.35;
+      draw2DArrow(g, P1, P2, '#eab308', emph('vertical') ? 4.5 : 3.0);
+      drawBadge2D(g, `② 坚直平动 v̇₀ = ${v0Abs.toFixed(2)} m/s²`, P1[0] + 12, (P1[1] + P2[1]) / 2, 'rgba(9,15,29,0.95)', '#eab308', '#eab308', 'left');
+      g.restore();
+    }
+
+    // 90° 直角符号
+    g.save();
+    g.strokeStyle = '#64748b';
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(P1[0] - 12, P1[1]);
+    g.lineTo(P1[0] - 12, P1[1] - 12);
+    g.lineTo(P1[0], P1[1] - 12);
+    g.stroke();
+    drawBadge2D(g, '90°', P1[0] - 18, P1[1] - 18, '#0f172a', '#94a3b8', '#334155', 'center');
+    g.restore();
+
+    // 终点圆点
+    dot(P2, '#ffffff', 5.5);
+    drawBadge2D(g, '空间终点', P2[0], P2[1] - 18, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+    // 空间总加速度 (斜边：从 P0 直射 P2)
+    const showSpace = ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force';
+    if (showSpace) {
+      g.save(); g.globalAlpha = ortho2SpaceStep === 'force' ? 1 : 0.45;
+      draw2DArrow(g, P0, P2, '#38bdf8', ortho2SpaceStep === 'force' ? 5.0 : 3.5);
+      drawBadge2D(g, `🚀 空间总加速度 v̇_C2 = ${aSpace.toFixed(2)} m/s²`, (P0[0] + P2[0]) / 2 - 12, (P0[1] + P2[1]) / 2 - 14, 'rgba(9,15,29,0.96)', '#38bdf8', '#38bdf8', 'center');
+      g.restore();
+    }
+
+    // ③ 牛顿净惯性力 F2 = m2 * a (从 P2 沿斜边同方向继续延伸)
+    const forceLen = 85;
+    const diagAngle = Math.atan2(P2[1] - P0[1], P2[0] - P0[0]);
+    const forceEnd = [P2[0] + forceLen * Math.cos(diagAngle), P2[1] + forceLen * Math.sin(diagAngle)];
+
+    if (ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force') {
+      g.save(); g.globalAlpha = ortho2SpaceStep === 'force' ? 1 : 0.45;
+      draw2DArrow(g, P2, forceEnd, '#10b981', 4.5);
+      drawBadge2D(g, `💥 牛顿净力 F₂ = ${f2.toFixed(2)} N`, forceEnd[0] + 10, forceEnd[1] - 4, 'rgba(6,78,59,0.96)', '#34d399', '#10b981', 'left');
+      drawBadge2D(g, '(F₂ = m₂v̇_C2 严格同向)', forceEnd[0] + 10, forceEnd[1] + 18, 'rgba(15,23,42,0.92)', '#94a3b8', '#334155', 'left');
+      g.restore();
+    }
+
+    // 提示文案
+    const messages = {
+      overview: '总览：紫色【平面合量】与黄色【坚直平动】在空间中严格成 90° 正交；先用勾股定理合成蓝色空间总加速度，最后同向乘质量得到绿色净力 F₂。',
+      plane: '① 首先接收来自步骤 C 的紫色平面总合量（水平底边）。这里不再重新拆解大臂与小臂。',
+      vertical: '② 在①的端点处，向上加上基座升降的坚直平动加速度（坚直高度）。两者的夹角恒为 90°。',
+      force: '③ 闭合总矢量与牛顿第二定律：从起点直连终点得到空间总加速度 v̇_C2；牛顿惯性力 F₂ = m₂v̇_C2 与之严格同向！'
+    };
+    if (copy) copy.textContent = messages[ortho2SpaceStep];
+    updateOrtho2SpaceUI();
+
+    const lblF2 = document.getElementById('label-ortho2-f2-mag');
+    if (lblF2) lblF2.innerText = f2.toFixed(2);
+    const lblVc2 = document.getElementById('label-ortho2-vc2-mag');
+    if (lblVc2) lblVc2.innerText = aSpace.toFixed(2);
+  }
+
+
+  // =========================================================================
+  // 拆分后的 31 专用版本：C、D 都以“左边物理来源 + 右边首尾相接”讲解。
+  // 不把每一根箭头堆在同一个点上；D 只接收 C 的最终紫色向量。
+  // =========================================================================
+  var lastOrtho2Args = null;
+  var ortho2PlaneStep = 'overview';
+  var ortho2PlaneButtons = {
+    overview: document.getElementById('btn-ortho2-overview'),
+    base: document.getElementById('btn-ortho2-base'),
+    normal: document.getElementById('btn-ortho2-normal'),
+    tangent: document.getElementById('btn-ortho2-tangent'),
+    result: document.getElementById('btn-ortho2-result')
+  };
+
+  function setButtonState(buttons, active, activeColor, borderColor) {
+    Object.entries(buttons).forEach(([name, button]) => {
+      if (!button) return;
+      const selected = name === active;
+      button.style.background = selected ? activeColor : '#1e293b';
+      button.style.color = selected ? '#ffffff' : '#cbd5e1';
+      button.style.borderColor = selected ? borderColor : '#334155';
+    });
+  }
+
+  function c2VectorModel(v0Val, atMag, anMag, v2Mag) {
+    const baseMag = Math.sqrt(Math.max(0, v2Mag * v2Mag - v0Val * v0Val));
+    // 与左图大臂的运动方向一致：手肘基底向右下，向心沿小臂指回手肘，切向向上。
+    const base = [baseMag * 0.05, baseMag * 0.999];
+    const normal = [-anMag, 0];
+    const tangent = [0, -atMag];
+    const plane = [base[0] + normal[0] + tangent[0], base[1] + normal[1] + tangent[1]];
+    return { baseMag, base, normal, tangent, plane, planeMag: Math.hypot(plane[0], plane[1]) };
+  }
+
+  // 让代数列向量使用 C、D 画布正在展示的同一组分量，避免“图一套数字、公式另一套数字”。
+  function updateC2FormulaCards(v0Val, model, atMag, anMag) {
+    const vectors = {
+      'vec-l2-v2': [model.base[0], model.base[1], v0Val],       // C 蓝色平面基底 + D 黄色 +Z
+      'vec-l2-at': [0, -atMag, 0],                               // C 橙色切向
+      'vec-l2-an': [-anMag, 0, 0],                               // C 红色向心
+      'vec-l2-vc2': [model.plane[0], model.plane[1], v0Val],     // D 蓝色空间总加速度
+      'vec-l2-f2': [2 * model.plane[0], 2 * model.plane[1], 2 * v0Val]
+    };
+    Object.entries(vectors).forEach(([prefix, values]) => {
+      ['x', 'y', 'z'].forEach((axis, index) => {
+        const cell = document.getElementById(`${prefix}-${axis}`);
+        if (cell) cell.textContent = values[index].toFixed(2);
+      });
+    });
+  }
+
+  function drawC2Mechanism(g, originX, originY, scale, showPurple, plane, planeScale) {
+    const base = [originX, originY + 98 * scale];
+    const baseBottom = [originX, originY + 170 * scale];
+    const elbow = [originX + 130 * scale, originY + 28 * scale];
+    const c2 = [originX + 235 * scale, originY + 28 * scale];
+    const tip = [originX + 330 * scale, originY + 28 * scale];
+    g.save();
+    g.strokeStyle = '#eab308'; g.lineWidth = 14 * scale; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(baseBottom[0], baseBottom[1]); g.lineTo(base[0], base[1]); g.stroke();
+    g.strokeStyle = '#0284c7'; g.lineWidth = 12 * scale;
+    g.beginPath(); g.moveTo(base[0], base[1]); g.lineTo(elbow[0], elbow[1]); g.stroke();
+    g.strokeStyle = '#10b981'; g.lineWidth = 9 * scale;
+    g.beginPath(); g.moveTo(elbow[0], elbow[1]); g.lineTo(tip[0], tip[1]); g.stroke();
+    g.restore();
+    [[base, '#f59e0b', '基座'], [elbow, '#38bdf8', '手肘'], [c2, '#c084fc', '质心 C₂']].forEach(([p, color, label]) => {
+      g.save(); g.fillStyle = color; g.strokeStyle = '#fff'; g.lineWidth = 2;
+      g.beginPath(); g.arc(p[0], p[1], 7 * scale, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore();
+      drawBadge2D(g, label, p[0], p[1] + 23 * scale, 'rgba(9,15,29,0.96)', color, color, 'center');
+    });
+    if (showPurple) draw2DArrow(g, c2, [c2[0] + plane[0] * planeScale, c2[1] + plane[1] * planeScale], '#c084fc', 4);
+    return { base, elbow, c2, tip };
+  }
+
+  function renderOrthoLink2Breakdown(q1, qWorld2, v0Val, isHoriz, v2_3D, at2c_3D, an2c_3D, vc2_3D, atMag, anMag, v2Mag, vc2Mag) {
+    lastOrtho2Args = [q1, qWorld2, v0Val, isHoriz, v2_3D, at2c_3D, an2c_3D, vc2_3D, atMag, anMag, v2Mag, vc2Mag];
+    const canvas = document.getElementById('canvas-ortho-plane-link2');
+    if (!canvas) return;
+    const g = canvas.getContext('2d');
+    const cw = canvas.width, ch = canvas.height;
+    const model = c2VectorModel(v0Val, atMag, anMag, v2Mag);
+    updateC2FormulaCards(v0Val, model, atMag, anMag);
+    g.clearRect(0, 0, cw, ch);
+
+    const visible = (name) => ortho2PlaneStep === 'overview' || ortho2PlaneStep === 'result' ||
+      (ortho2PlaneStep === 'base' && name === 'base') ||
+      (ortho2PlaneStep === 'normal' && (name === 'base' || name === 'normal')) ||
+      (ortho2PlaneStep === 'tangent' && ['base', 'normal', 'tangent'].includes(name));
+    const strong = (name) => ortho2PlaneStep === 'overview' || ortho2PlaneStep === 'result' ||
+      (ortho2PlaneStep === 'base' && name === 'base') ||
+      (ortho2PlaneStep === 'normal' && name === 'normal') ||
+      (ortho2PlaneStep === 'tangent' && name === 'tangent');
+
+    g.save(); g.strokeStyle = '#243247'; g.lineWidth = 1; g.setLineDash([4, 5]);
+    g.beginPath(); g.moveTo(438, 24); g.lineTo(438, ch - 22); g.stroke(); g.restore();
+    drawBadge2D(g, '左：真实两连杆（俯视）', 214, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+    drawBadge2D(g, '右：同一组向量首尾相接', 657, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+    const mech = drawC2Mechanism(g, 74, 140, 1, visible('result') || ortho2PlaneStep === 'overview', model.plane, 25);
+    const sourceScale = 25;
+    const sourceParts = [
+      ['base', model.base, '#38bdf8', '① 手肘基底'],
+      ['normal', model.normal, '#ef4444', '② 向心'],
+      ['tangent', model.tangent, '#f97316', '③ 切向']
+    ];
+    sourceParts.forEach(([name, v, color, label]) => {
+      if (!visible(name)) return;
+      g.save(); g.globalAlpha = strong(name) ? 1 : 0.22;
+      draw2DArrow(g, mech.c2, [mech.c2[0] + v[0] * sourceScale, mech.c2[1] + v[1] * sourceScale], color, strong(name) ? 3.8 : 2.2);
+      g.restore();
+    });
+    if (visible('result') || ortho2PlaneStep === 'overview') {
+      drawBadge2D(g, `④ 平面合量 ${model.planeMag.toFixed(2)} m/s²`, mech.c2[0] + model.plane[0] * sourceScale - 8, mech.c2[1] + model.plane[1] * sourceScale - 14, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'right');
+    }
+
+    // 右半边是教学用“加法坐标纸”：统一放大，不让小数值把完整合成挤在角落。
+    // 放大只改显示长度，方向和首尾相接关系保持不变。
+    const p0 = [740, 155];
+    const chainScale = 80;
+    const p1 = [p0[0] + model.base[0] * chainScale, p0[1] + model.base[1] * chainScale];
+    const p2 = [p1[0] + model.normal[0] * chainScale, p1[1] + model.normal[1] * chainScale];
+    const p3 = [p2[0] + model.tangent[0] * chainScale, p2[1] + model.tangent[1] * chainScale];
+    const steps = [
+      ['base', p0, p1, '#38bdf8', '① 基底'],
+      ['normal', p1, p2, '#ef4444', '② 向心'],
+      ['tangent', p2, p3, '#f97316', '③ 切向']
+    ];
+    g.save(); g.strokeStyle = '#334155'; g.setLineDash([3, 4]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(p0[0], p0[1]); g.lineTo(p1[0], p1[1]); g.lineTo(p2[0], p2[1]); g.lineTo(p3[0], p3[1]); g.stroke(); g.restore();
+    [
+      ['#38bdf8', '① 蓝：手肘基底'],
+      ['#ef4444', '② 红：向心'],
+      ['#f97316', '③ 橙：切向'],
+      ['#c084fc', '④ 紫：起点直连终点']
+    ].forEach(([color, text], index) => {
+      const y = 64 + index * 22;
+      g.save(); g.fillStyle = color; g.beginPath(); g.arc(492, y - 4, 5, 0, Math.PI * 2); g.fill();
+      g.font = 'bold 13px sans-serif'; g.fillText(text, 505, y); g.restore();
+    });
+    steps.forEach(([name, from, to, color, label]) => {
+      if (!visible(name)) return;
+      g.save(); g.globalAlpha = strong(name) ? 1 : 0.28; draw2DArrow(g, from, to, color, strong(name) ? 4.4 : 2.4); g.restore();
+    });
+    if (visible('result') || ortho2PlaneStep === 'overview') {
+      draw2DArrow(g, p0, p3, '#c084fc', 4.8);
+      const resultMid = [(p0[0] + p3[0]) / 2 - 8, (p0[1] + p3[1]) / 2 - 14];
+      drawBadge2D(g, `总合量 ${model.planeMag.toFixed(2)} m/s²`, resultMid[0], resultMid[1], 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'center');
+    }
+    [[p0, '起点'], [p3, '终点']].forEach(([p, label]) => { g.save(); g.fillStyle='#fff'; g.beginPath(); g.arc(p[0], p[1], 5, 0, Math.PI*2); g.fill(); g.restore(); drawBadge2D(g, label, p[0], p[1] + 17, '#0f172a', '#94a3b8', '#334155', 'center'); });
+
+    const cMessages = {
+      overview: '总览：蓝、红、橙是同一时刻 C₂ 的三份平面加速度；右边按蓝 → 红 → 橙首尾相接，紫色只负责从起点闭合到终点。',
+      base: '① 手肘基底：大臂先把手肘甩出一份加速度，小臂和 C₂ 会先完整继承这份“起跑地基”。',
+      normal: '② 再加向心：小臂绕手肘转，C₂ 被沿小臂方向拉回手肘；它接在蓝色箭头的末端。',
+      tangent: '③ 最后加切向：若小臂角速度正在变化，C₂ 还会得到垂直于小臂的切向加速度。',
+      result: '④ 闭合验算：紫色箭头从加法起点直指最终终点；它是前三根有方向的箭头之和，不是三段长度相加。'
+    };
+    const copy = document.getElementById('ortho2-step-copy'); if (copy) copy.textContent = cMessages[ortho2PlaneStep];
+    setButtonState(ortho2PlaneButtons, ortho2PlaneStep, '#8b5cf6', '#c084fc');
+    const lbl = document.getElementById('label-ortho2-plane-mag'); if (lbl) lbl.textContent = model.planeMag.toFixed(2);
+    renderOrtho2SpaceBreakdown(v0Val, model, atMag, anMag, v2Mag);
+  }
+
+  function updateOrtho2SpaceUI() { setButtonState(ortho2SpaceButtons, ortho2SpaceStep, '#059669', '#34d399'); }
+
+  function renderOrtho2SpaceBreakdown(v0Val, model, atMag, anMag, v2Mag) {
+    const canvas = document.getElementById('canvas-ortho-vert-link2');
+    if (!canvas) return;
+    const g = canvas.getContext('2d'), cw = canvas.width, ch = canvas.height;
+    const v0Abs = Math.abs(v0Val), spaceMag = Math.hypot(model.planeMag, v0Abs), forceMag = 2 * spaceMag;
+    const show = (name) => ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force' ||
+      (ortho2SpaceStep === 'plane' && name === 'plane') ||
+      (ortho2SpaceStep === 'vertical' && (name === 'plane' || name === 'vertical'));
+    g.clearRect(0, 0, cw, ch);
+    g.save(); g.strokeStyle = '#243247'; g.setLineDash([4,5]); g.beginPath(); g.moveTo(438,22); g.lineTo(438,ch-18); g.stroke(); g.restore();
+    drawBadge2D(g, '左：C 的结果仍画在同一个两连杆上', 215, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+    drawBadge2D(g, '右：在加法坐标纸上做 F = ma', 658, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+    const mech = drawC2Mechanism(g, 78, 150, 0.95, show('plane'), model.plane, 28);
+    if (show('plane')) drawBadge2D(g, `来自 C 的④：${model.planeMag.toFixed(2)} m/s²`, 310, 92, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'center');
+    // +Z 不是俯视平面中的“另一个方向”：用基座侧视小窗明确画为向上，避免伪造它在俯视图里的方向。
+    g.save(); g.strokeStyle='#eab308'; g.lineWidth=5; g.lineCap='round'; g.beginPath(); g.moveTo(105, 356); g.lineTo(105, 286); g.stroke(); g.restore();
+    if (show('vertical')) { draw2DArrow(g, [128, 335], [128, 265], '#eab308', 4); drawBadge2D(g, '② 基座 +Z 平动（侧视：向上）', 175, 280, 'rgba(9,15,29,0.96)', '#eab308', '#eab308', 'left'); }
+
+    const d = model.planeMag > 1e-6 ? [model.plane[0] / model.planeMag, model.plane[1] / model.planeMag] : [1, 0];
+    // 右图继续使用左图的同一屏幕投影：+Z 始终向上，绝不为了把图画成直角而改方向。
+    // “+Z 与整个 X-Y 平面正交”是三维事实；投影到屏幕后，夹角不必仍是 90°。
+    const z = [0, -1];
+    const p0 = [705, 210], planeLen = Math.min(125, Math.max(65, model.planeMag * 48)), zLen = Math.min(95, Math.max(48, v0Abs * 38));
+    const p1 = [p0[0] + d[0] * planeLen, p0[1] + d[1] * planeLen];
+    const p2 = [p1[0] + z[0] * zLen, p1[1] + z[1] * zLen];
+    if (show('plane')) { draw2DArrow(g, p0, p1, '#c084fc', 4.8); drawBadge2D(g, `① C 的紫色合量 ${model.planeMag.toFixed(2)}`, 688, 354, 'rgba(9,15,29,0.96)', '#c084fc', '#c084fc', 'center'); }
+    if (show('vertical')) { draw2DArrow(g, p1, p2, '#eab308', 4.8); drawBadge2D(g, `② +Z 平动 ${v0Abs.toFixed(2)}`, 770, 130, 'rgba(9,15,29,0.96)', '#eab308', '#eab308', 'center'); }
+    if (ortho2SpaceStep === 'overview' || ortho2SpaceStep === 'force') {
+      draw2DArrow(g, p0, p2, '#38bdf8', 5.2);
+      drawBadge2D(g, `空间总加速度 ${spaceMag.toFixed(2)} m/s²`, 638, 80, 'rgba(9,15,29,0.96)', '#38bdf8', '#38bdf8', 'center');
+      const angle = Math.atan2(p2[1]-p0[1], p2[0]-p0[0]), fEnd = [p2[0]+Math.cos(angle)*80, p2[1]+Math.sin(angle)*80];
+      draw2DArrow(g, p2, fEnd, '#10b981', 4.8); drawBadge2D(g, `③ F₂ = 2.0 kg × a = ${forceMag.toFixed(2)} N`, 670, 382, 'rgba(6,78,59,0.97)', '#34d399', '#10b981', 'center');
+    }
+    [[p0,'加法起点'],[p1,'紫色终点'],[p2,'空间终点']].forEach(([p,label]) => { g.save();g.fillStyle='#fff';g.beginPath();g.arc(p[0],p[1],5,0,Math.PI*2);g.fill();g.restore();drawBadge2D(g,label,p[0],p[1]+18,'#0f172a','#94a3b8','#334155','center'); });
+    const messages = {
+      overview: '总览：D 接住的是 C 的④紫色合量；黄色是底座沿 +Z 的平动。两者在三维空间正交，所以先合成蓝色空间加速度，再同方向乘质量。',
+      plane: '① 先接住：紫色在左图仍从同一个 C₂ 出发，方向没有重画；右图把它平移到加法起点，方向也保持平行。',
+      vertical: '② 再加 +Z：黄色在左右两图都保持向上。它在三维中与整个水平 X-Y 平面正交；屏幕投影的夹角不必硬画成 90°。',
+      force: '③ 最后 F = ma：蓝色从起点闭合到空间终点；绿色力与蓝色总加速度同向，质量只改变长度，不改变方向。'
+    };
+    const copy = document.getElementById('ortho2-space-copy'); if (copy) copy.textContent = messages[ortho2SpaceStep];
+    updateOrtho2SpaceUI();
+    const fLabel = document.getElementById('label-ortho2-f2-mag'); if (fLabel) fLabel.textContent = forceMag.toFixed(2);
+    const aLabel = document.getElementById('label-ortho2-vc2-mag'); if (aLabel) aLabel.textContent = spaceMag.toFixed(2);
+  }
+
+  Object.entries(ortho2PlaneButtons).forEach(([name, button]) => {
+    if (button) button.addEventListener('click', () => { ortho2PlaneStep = name; if (lastOrtho2Args) renderOrthoLink2Breakdown(...lastOrtho2Args); });
+  });
+
+  // 页面初次加载时触发一次正交分解渲染
+  const initQ1 = 0.45, initQ2 = 0.60;
+  const initQWorld2 = initQ1 + initQ2;
+  const initV2_3D = { x: -15, y: 12, z: 25 };
+  const initAt2c_3D = { x: 8, y: 6, z: 0 };
+  const initAn2c_3D = { x: -6, y: 8, z: 0 };
+  const initVc2_3D = { x: -13, y: 26, z: 25 };
+  renderOrthoLink2Breakdown(initQ1, initQWorld2, 2.0, false, initV2_3D, initAt2c_3D, initAn2c_3D, initVc2_3D, 1.2, 1.0, 3.5, 4.2);
+
+
+});
+</script>
+</body>
+</html>

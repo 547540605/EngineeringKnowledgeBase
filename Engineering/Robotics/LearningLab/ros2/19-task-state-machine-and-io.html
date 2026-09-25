@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 2 工程实战 19：任务状态机、I/O 与异常恢复</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1100px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}.crumb a,a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.danger{border-left:5px solid var(--r)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.state{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.state div{padding:10px;border:1px solid var(--l);border-radius:8px;background:var(--p2);font-size:.88rem}.state b{display:block;color:var(--v);margin-bottom:3px}.table{border-collapse:collapse;width:100%}.table th,.table td{padding:10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:top}.table th{color:var(--b);white-space:nowrap}.code{white-space:pre;overflow:auto;background:#050914;border:1px solid var(--l);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.6 ui-monospace,Consolas,monospace}.check{display:grid;gap:8px}.check div{padding:10px 12px;border-radius:8px;background:#0b1425;border-left:3px solid var(--g)}@media(max-width:760px){main{padding:22px 14px}.grid{grid-template-columns:1fr}.state{grid-template-columns:1fr 1fr}.table{font-size:.9rem}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="13-ros2-control-and-fake-hardware.html">ROS2-13：控制器执行</a> · <a href="04-13-engineering-roadmap.md">进阶路线</a></p>
+<h1>ROS 2 工程实战 19：任务状态机、I/O 与异常恢复</h1><p class="muted">机械臂规划器只会回答“这一段路径能不能走”。一个工位还必须回答：工件有没有到位？夹具是否锁紧？动作超时怎么办？保护停机后能否安全恢复？这些属于任务层状态机，而不是 MoveIt 或关节控制器的职责。</p>
+
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">控制层和任务层必须分层</h2><div class="state"><div><b>任务状态机</b>决定下一步该做什么</div><div><b>规划器</b>算这一段怎样走</div><div><b>轨迹控制器</b>跟踪关节轨迹</div><div><b>硬件接口</b>读状态、写命令</div><div><b>安全系统</b>独立限制危险行为</div></div><p>状态机应发起“规划/执行/等待 I/O/超时回退”的业务动作，不应以高频循环直接给电机写位置；轨迹控制器应实时跟踪，不应猜测工件是否夹住。边界清楚，故障才有可审查的归属。</p></section>
+
+<section class="card danger"><strong>安全边界：</strong>软件状态机不是安全 PLC，也不能替代急停、门锁、保护区、使能回路或控制柜安全功能。它能做到的是：在已知的 ROS/设备状态下拒绝开始、请求停止、记录原因和等待人工/外部安全系统确认；它不能保证物理风险已被消除。</section>
+
+<h2>1. 先画一个可恢复的最小任务，而不是一条“成功即结束”的脚本</h2>
+<div class="state"><div><b>INIT</b>检查通信、控制器、坐标版本</div><div><b>WAIT_PART</b>等待工件/夹具就绪</div><div><b>PLAN</b>读取当前状态，规划预接近</div><div><b>EXECUTE</b>发 Action 并等待结果</div><div><b>VERIFY</b>检查 I/O、视觉或位置条件</div><div><b>WORK</b>执行有限工艺步骤</div><div><b>RETREAT</b>安全撤离到已知姿态</div><div><b>COMPLETE</b>上报批次结果</div><div><b>FAULT</b>停止新动作，保存上下文</div><div><b>RECOVERY</b>人工/规则确认后回到安全入口</div></div>
+<p class="small">图中不是要求每个项目都有十个固定 state，而是要求每个状态都有<strong>进入条件、发出的命令、完成条件、超时、失败去向</strong>。没有失败去向的状态机，本质上只是顺序脚本。</p>
+
+<h2>2. I/O 不是 bool 列表：每个信号要有物理含义和时间语义</h2>
+<table class="table"><thead><tr><th>信号示例</th><th>方向</th><th>必须写清的内容</th><th>错误用法</th></tr></thead><tbody><tr><td>part_present</td><td>设备 → 任务</td><td>来自哪只传感器、去抖时间、有效电平、超时</td><td>一帧读到 true 就开始抓取</td></tr><tr><td>fixture_locked</td><td>设备 → 任务</td><td>锁紧完成的真实反馈，非“已下发锁紧命令”</td><td>把 command echo 当作到位反馈</td></tr><tr><td>gripper_open/close</td><td>任务 → 设备</td><td>命令、执行结果、实际开合/夹持反馈、超时</td><td>发 close 后固定 sleep 1 秒就认为夹住</td></tr><tr><td>cycle_start/reset</td><td>外部 → 任务</td><td>边沿/保持语义、允许在哪些 state 接受</td><td>FAULT 中任意 start 直接继续执行</td></tr><tr><td>robot_ready/fault</td><td>控制器/驱动 → 任务</td><td>控制器 active、设备使能、故障码与时间戳</td><td>只看 RViz 里模型在不在动</td></tr></tbody></table>
+
+<h2>3. 一个状态应该写成什么样：以“预接近并夹取”为例</h2>
+<pre class="code">State: PLAN_PREAPPROACH
+  entry guard:
+    controller_active AND latest_joint_state AND fixture_locked
+    AND target_pose_is_fresh AND no_unacknowledged_fault
+  action:
+    request MoveIt plan from current state to preapproach_pose
+  success transition:
+    plan.success AND trajectory_is_fresh  -> EXECUTE_PREAPPROACH
+  failure transition:
+    IK/collision/timeout                  -> FAULT(PLAN_PREAPPROACH_FAILED)
+
+State: EXECUTE_PREAPPROACH
+  action:
+    submit FollowJointTrajectory goal
+  success transition:
+    action.result == SUCCEEDED            -> VERIFY_PREAPPROACH
+  failure transition:
+    aborted/cancelled/tolerance/timeout    -> FAULT(EXECUTION_FAILED)
+
+State: VERIFY_PREAPPROACH
+  guard:
+    actual_joint_state is fresh AND pose error < configured threshold
+  success -> CLOSE_GRIPPER
+  failure -> FAULT(PREAPPROACH_NOT_REACHED)</pre>
+<p>这里故意没有用“sleep(2)”作为完成条件。时间可以是超时上限，但不能代替设备、控制器或测量反馈。</p>
+
+<h2>4. 故障处理不是一个 catch：至少先分四类</h2>
+<div class="grid"><section class="card"><h3>规划失败</h3><p>没有发出轨迹。保存 start state、目标 Pose、planning scene 和错误码；可允许有限次数的规则化重试，例如刷新目标或重新感知，但不能无限循环。</p></section><section class="card"><h3>执行失败</h3><p>轨迹已交控制器但被中止、取消、超容差或超时。停止后先读实际状态；禁止假设机器人仍在计划的终点。</p></section><section class="card"><h3>设备/I/O 异常</h3><p>传感器矛盾、夹具未到位、驱动故障或通信失联。立即禁止后续工艺步骤，并记录哪个信号何时异常。</p></section><section class="card"><h3>安全相关停止</h3><p>以控制柜/安全系统状态为准。任务软件进入等待确认态；恢复需要重新建立当前状态、控制器/驱动状态和可行撤离策略。</p></section></div>
+
+<h2>5. 取消与恢复：先保证“知道在哪”，再谈继续</h2>
+<div class="card warn"><strong>取消轨迹不意味着回到起点。</strong>Action 被取消或保护停止后，物理机械臂可能停在路径中间。恢复流程至少要重新读取 joint state、确认控制器和安全状态、重建 Planning Scene，必要时从当前姿态规划一条撤离轨迹；不得重放旧 trajectory 的后半段。</div>
+<pre class="code">on_fault(event):
+  reject_new_motion_goals()
+  cancel_active_action_if_permitted()
+  snapshot(joint_state, controller_state, io, tf, scene, event, timestamps)
+  transition(FAULT)
+
+on_recovery_ack():
+  require(external_safety_ready AND controller_active AND states_fresh)
+  refresh_current_state_and_scene()
+  plan_safe_retreat_from_current_state()  # 不是沿用故障前的缓存轨迹
+  transition(RECOVERY)</pre>
+
+<h2>6. 无真机也能完成的任务层验证</h2><div class="check"><div><strong>A. 用 fake I/O：</strong>将 part_present、fixture_locked、gripper result 做成可控的模拟输入；每个状态转换打印带时间戳的原因。</div><div><strong>B. 用 fake hardware：</strong>让状态机调用 ROS2-13 的轨迹 Action，而不是直接改 RViz joint state。</div><div><strong>C. 注入失败：</strong>分别让规划返回失败、Action 被取消、夹具反馈超时、视觉目标过期；检查是否全部进入预期 FAULT 分支。</div><div><strong>D. 验证恢复：</strong>在执行中取消，确认系统不会跳到 COMPLETE；必须刷新状态、走恢复入口，才可继续下一周期。</div><div><strong>E. 记录工艺上下文：</strong>为一次 cycle 保存目标 ID、坐标版本、规划结果、Action 结果、I/O 变化和错误码；后续 ROS2-20 用它复现。</div></div>
+
+<section class="card ok"><strong>本篇完成判据：</strong>你能为一个“等待工件→预接近→动作→验证→撤离”的任务写出每个 state 的 guard、action、success、timeout 和 failure transition；并能解释为什么 FAULT 后不能从旧轨迹中点继续播放。</section>
+</main></body></html>

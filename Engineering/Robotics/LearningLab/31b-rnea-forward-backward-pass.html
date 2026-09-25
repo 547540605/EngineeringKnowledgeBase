@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>笔记 31b：RNEA 外推、内推与关节力矩</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1100px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}.crumb a,a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.formula{display:block;text-align:center;background:#080e1b;border:1px solid var(--l);border-radius:10px;padding:14px;margin:14px 0;overflow:auto;font:16px/1.7 ui-monospace,Consolas,monospace}.table{border-collapse:collapse;width:100%}.table th,.table td{padding:10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:top}.table th{color:var(--b);white-space:nowrap}.diagram{background:#060b15;border:1px solid var(--l);border-radius:10px;overflow:hidden}.diagram svg{display:block;width:100%;height:auto}.steps{display:grid;gap:10px}.steps div{padding:10px 12px;border-left:3px solid var(--v);background:#0b1425;border-radius:7px}.steps b{color:#d8cbff}.code{white-space:pre;overflow:auto;background:#050914;border:1px solid var(--l);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.6 ui-monospace,Consolas,monospace}details{background:#0b1425;border:1px solid var(--l);border-radius:8px;padding:10px 13px;margin:10px 0}summary{cursor:pointer;font-weight:700;color:#dceaff}@media(max-width:760px){main{padding:22px 14px}.grid{grid-template-columns:1fr}.table{font-size:.9rem}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">动力学进度</a> · <a href="31a-newton-euler-force-balance.html">31a：单连杆 F、N</a> · 31b：RNEA 双向递推</p>
+<h1>笔记 31b：从末端回收负担，递归得到每个关节力矩</h1>
+<p class="muted">31a 已经算出“每根连杆自己为了加速而需要的惯性力 <code>Fᵢ</code> 与惯性矩 <code>Nᵢ</code>”。但关节 1 还要承担后面所有连杆和工具的负担。RNEA 的核心价值，就是用两遍线性递推把这件事算出来，而不是为每一种连杆数手推一套巨型方程。</p>
+
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">本篇地图：外推知道“每根杆怎样动”，内推知道“上游要扛多少”</h2><div class="steps"><div><b>外推 0→n：</b>把基座运动、关节速度/加速度逐节传到末端，得到每节 <code>ωᵢ, ω̇ᵢ, aᵢ, a_Cᵢ</code>。</div><div><b>局部动力学：</b>31a 用 <code>a_Cᵢ, ωᵢ, ω̇ᵢ</code> 算 <code>Fᵢ,Nᵢ</code>。</div><div><b>内推 n→1：</b>末端负载和下游连杆的力/力矩逐节旋转、平移回父连杆，叠加本节 <code>Fᵢ,Nᵢ</code>。</div><div><b>轴投影：</b>每节总力矩沿该关节转轴的分量，才是标量电机力矩 <code>τᵢ</code>。</div></div></section>
+
+<h2>1. 两遍方向不能混：它们在传的不是同一种东西</h2>
+<div class="diagram"><svg viewBox="0 0 940 390" role="img" aria-label="RNEA 外推和内推方向示意"><rect width="940" height="390" fill="#060b15"/><text x="44" y="48" fill="#dceaff" font-size="23" font-weight="700">同一条机械臂链，先向外传运动，后向内传负担</text><path d="M130 270 L300 195 L480 235 L665 144 L820 186" fill="none" stroke="#334155" stroke-width="23" stroke-linecap="round"/><circle cx="130" cy="270" r="14" fill="#fbbf24"/><circle cx="300" cy="195" r="14" fill="#a78bfa"/><circle cx="480" cy="235" r="14" fill="#a78bfa"/><circle cx="665" cy="144" r="14" fill="#a78bfa"/><circle cx="820" cy="186" r="14" fill="#34d399"/><text x="87" y="312" fill="#fbbf24" font-size="17">基座 {0}</text><text x="804" y="223" fill="#7de7bd" font-size="17">末端</text><line x1="156" y1="98" x2="784" y2="98" stroke="#38bdf8" stroke-width="8"/><polygon points="784,98 761,85 761,111" fill="#38bdf8"/><text x="321" y="82" fill="#72d8ff" font-size="20">外推：ω, ω̇, a, a_C  （0 → n）</text><line x1="784" y1="338" x2="156" y2="338" stroke="#fb7185" stroke-width="8"/><polygon points="156,338 179,325 179,351" fill="#fb7185"/><text x="315" y="374" fill="#ff9aac" font-size="20">内推：f, n  （n → 1）</text><text x="202" y="154" fill="#9aaac0" font-size="16">关节 i 只需投影自己的 nᵢ 到轴 ẑᵢ</text></svg></div>
+<table class="table"><thead><tr><th>方向</th><th>递推的量</th><th>直觉</th><th>若漏掉会怎样</th></tr></thead><tbody><tr><td>外推</td><td><code>ω, ω̇, a, a_C</code></td><td>上游一动，下游必须跟着继承基底运动</td><td>会把下游当成凭空静止，质心力从源头就错</td></tr><tr><td>内推</td><td><code>f, n</code></td><td>下游越重/越快，上游关节越需要承担它</td><td>每个关节只算到自己的负担，基座力矩严重偏小</td></tr><tr><td>轴投影</td><td><code>τ</code></td><td>转动关节只由绕自身轴的力矩分量驱动</td><td>把三维力矩长度误当电机扭矩，方向信息丢失</td></tr></tbody></table>
+
+<h2>2. 外推：先让所有量在同一个连杆坐标系里说话</h2>
+<p>不同教材对旋转矩阵上标/下标有不同书写。本页采用一个统一读法：凡是在连杆 <code>{i}</code> 内相加的向量，先把来自 <code>{i-1}</code> 的量旋转到 <code>{i}</code>。实现时必须与 URDF 的关节轴、零位和坐标变换保持同一约定。</p>
+<div class="formula">ωᵢ = Rᵢ←ᵢ₋₁ · ωᵢ₋₁ + q̇ᵢ ẑᵢ</div>
+<div class="formula">ω̇ᵢ = Rᵢ←ᵢ₋₁ · ω̇ᵢ₋₁ + (Rᵢ←ᵢ₋₁ωᵢ₋₁) × (q̇ᵢ ẑᵢ) + q̈ᵢ ẑᵢ</div>
+<div class="formula">a_Cᵢ = aᵢ + ω̇ᵢ × P_Cᵢ + ωᵢ × (ωᵢ × P_Cᵢ)</div>
+<div class="grid"><section class="card"><h3>三个项分别是什么</h3><ul><li><code>aᵢ</code>：关节/连杆原点从上游继承来的线加速度；</li><li><code>ω̇ᵢ×P_Cᵢ</code>：角加速度带来的切向加速度；</li><li><code>ωᵢ×(ωᵢ×P_Cᵢ)</code>：旋转指向中心的向心加速度。</li></ul></section><section class="card"><h3>不要遗漏的平动基底</h3><p>若底座本身升降或移动，<code>a₀</code> 会一路传到 <code>aᵢ</code> 和 <code>a_Cᵢ</code>。这就是 29/30 中“平面旋转分量 + 垂直平动分量”必须先合成的原因。</p></section></div>
+<section class="card warn"><strong>符号边界：</strong>上面只展示递推骨架。完整 Craig 形式还会包含父到子原点位移 <code>Pᵢ</code> 的传递项；不要从这三行示意式直接删掉原书中的位移/旋转项。写代码时应以经过验证的坐标约定和完整公式为准。</section>
+
+<h2>3. 内推：每根杆把“自己 + 下游”一起交给上游</h2>
+<p>从末端设置边界条件开始。无工具外载荷的理想教学例子可取 <code>fₙ₊₁=0,nₙ₊₁=0</code>；若存在工具、抓取物或外力，就必须以明确 frame 和符号约定给出末端 wrench，不能默认归零。</p>
+<div class="formula">fᵢ = Rᵢ←ᵢ₊₁ · fᵢ₊₁ + Fᵢ</div>
+<div class="formula">nᵢ = Nᵢ + Rᵢ←ᵢ₊₁ · nᵢ₊₁ + P_Cᵢ × Fᵢ + Pᵢ₊₁ × (Rᵢ←ᵢ₊₁ · fᵢ₊₁)</div>
+<table class="table"><thead><tr><th>项</th><th>来自哪里</th><th>物理读法</th></tr></thead><tbody><tr><td><code>Nᵢ</code></td><td>31a 的欧拉方程</td><td>本连杆自身转动所需惯性矩</td></tr><tr><td><code>R·nᵢ₊₁</code></td><td>下游传回的力矩</td><td>末端或后续连杆的旋转负担，先转到当前 frame</td></tr><tr><td><code>P_Cᵢ×Fᵢ</code></td><td>本连杆质心力</td><td>质心力相对关节原点的力臂矩</td></tr><tr><td><code>Pᵢ₊₁×(R·fᵢ₊₁)</code></td><td>下游传回的力</td><td>下游力作用在距离当前原点一段距离处，因此额外形成力臂矩</td></tr></tbody></table>
+<div class="card ok"><strong>一句话：</strong><code>fᵢ</code> 是“下游合力 + 本节惯性力”；<code>nᵢ</code> 是“下游合力矩 + 本节自转惯性矩 + 两类力臂矩”。这四份来源正是后续 31d 要分别拆开的对象。</div>
+
+<h2>4. 最后一步：三维合力矩如何变成一个关节电机扭矩？</h2>
+<p>转动关节无法直接“执行一个三维力矩向量”；它只能沿自己的转轴施加标量扭矩。因此取内推总力矩在轴上的投影：</p>
+<div class="formula">τᵢ = nᵢᵀ · ẑᵢ</div>
+<div class="grid"><section class="card"><h3>投影不是取长度</h3><p><code>|nᵢ|</code> 会丢失方向，并会把垂直于关节轴、实际不能由该电机直接产生的分量也算进去。点乘保留绕轴正负方向与大小。</p></section><section class="card"><h3>轴来自模型</h3><p><code>ẑᵢ</code> 必须来自当前 DH/Craig 坐标约定或 URDF joint axis。不能把屏幕上“看起来朝上”的方向当作轴向量。</p></section></div>
+
+<h2>5. 两连杆的可执行思考顺序</h2>
+<pre class="code"># 输入：q, q_dot, q_ddot；每节 m, P_C, I_C；基座运动；末端 wrench
+# 输出：tau[1..n]
+
+forward_pass():
+  for i = 1..n:
+    rotate parent motion quantities into frame {i}
+    add joint q_dot[i], q_ddot[i] contributions
+    compute origin acceleration and center-of-mass acceleration
+    F[i] = m[i] * a_C[i]
+    N[i] = I_C[i] * alpha[i] + omega[i] × (I_C[i] * omega[i])
+
+backward_pass():
+  set terminal f[n+1], n[n+1] from tool/external wrench
+  for i = n..1:
+    rotate child f,n into frame {i}
+    f[i] = child_force + F[i]
+    n[i] = N[i] + child_moment + P_C[i]×F[i] + P_next[i]×child_force
+    tau[i] = dot(n[i], joint_axis[i])</pre>
+<div class="card warn"><strong>计算顺序不是实现细节：</strong>如果还没得到小臂的 <code>f₂,n₂</code> 就先算肩关节 <code>τ₁</code>，肩部必然漏掉小臂与负载。RNEA 之所以是递归，是因为内推的依赖方向无法颠倒。</div>
+
+<h2>带走的四个判断</h2>
+<details><summary>为什么外推和内推都要做旋转矩阵变换？</summary><p>向量分量依赖表达坐标系。父/子连杆的轴一般不平行，只有先旋转到同一 frame，力、加速度和力矩才可以相加或叉乘。</p></details>
+<details><summary>无末端外力时，是不是下游项都为零？</summary><p>不是。最末端边界 wrench 可以为零，但末端前一节仍有自身惯性力/惯性矩；它继续内推后，上游关节依旧要承担所有连杆的运动负担。</p></details>
+<details><summary>为什么关节力矩用点乘而不是叉乘？</summary><p>内推已经得到关于关节原点的总力矩向量。关节要的是该向量沿可转轴的标量分量，所以做点乘投影；叉乘是从力和力臂构造力矩时才使用。</p></details>
+<details><summary>RNEA 给出了力矩，是不是就能直接给真机下 torque？</summary><p>不能直接跳到真机。还要知道厂商是否允许 torque mode、参数是否辨识、关节/速度/力矩边界、传感器与安全策略。RNEA 首先是模型计算与前馈依据。</p></details>
+
+<p class="small">来源锚点：Craig《机器人学导论》第 4 版 §6.5。后续模块：31c 两连杆数值仿真、31d 四类力矩逐项推导（均在拆分实施中）。</p>
+</main></body></html>

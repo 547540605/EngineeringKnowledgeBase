@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>速度递推：一节怎样把运动传给下一节</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1420px;margin:auto;padding:28px 22px 72px}h1,h2{line-height:1.28}h2{margin-top:2.4rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.lead,.small{color:var(--muted)}.lab{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}.canvas-wrap{background:#20242b;border:1px solid var(--line);border-radius:10px;overflow:hidden}.canvas-wrap canvas{display:block;width:100%;aspect-ratio:1.68;touch-action:none}.card,.derive{border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin:14px 0}.derive{background:var(--soft)}.control{display:grid;grid-template-columns:1fr 66px;gap:7px;align-items:center;margin:12px 0}.control span{grid-column:1/-1;font-weight:700}.control input[type=number]{width:100%;font:inherit;padding:4px 6px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer}.actions button.active{background:#dbeef5;color:#0b1f2c;border-color:#5ca0bc;font-weight:700}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:9px 0;color:var(--muted);font-size:.9rem}.legend span{display:flex;align-items:center;gap:6px}.dot{width:11px;height:11px;border-radius:50%;display:inline-block}.math{display:block;text-align:center;margin:.85rem 0;overflow:auto}.steps{padding-left:1.45rem}.steps li{margin:.55rem 0}.tip{border-left:4px solid var(--pink);padding-left:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:980px){.lab,.two{grid-template-columns:1fr}main{padding:22px 14px}.canvas-wrap canvas{aspect-ratio:1.18}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body><main>
+  <p class="small"><a href="00-progress.html">学习进度</a> · <a href="21-spatial-rigid-body-velocity.html">上一节：空间刚体上两点的速度</a></p>
+  <h1>23. 速度递推：一节怎样把运动传给下一节</h1>
+  <p class="lead">上一节只研究同一根刚体杆的两点 A、B。这一页把 A 变成第一根连杆的末端、把 B 变成第二根连杆的末端：第 1 个关节转动，为什么后面两根杆都被带动；第 2 个关节转动，为什么只给末端加一份新速度。</p>
+
+  <section class="derive"><p><strong>先给结论，但先按按钮看图：</strong>第 1 关节的角速度会带动 A 和 B；第 2 关节的角速度不会移动 A，却会让 B 相对 A 走切线。所谓“速度递推”，就是把前一节已经拥有的速度，传给后一节，再加上后一节自身关节造成的新速度。</p></section>
+
+  <section class="lab" aria-label="二维两连杆速度递推交互图">
+    <div>
+      <div class="canvas-wrap"><canvas id="scene" aria-label="两连杆与末端速度贡献示意图"></canvas></div>
+      <div class="legend"><span><i class="dot" style="background:#f59e0b"></i>第一根连杆 O→A</span><span><i class="dot" style="background:#38bdf8"></i>第二根连杆 A→B</span><span><i class="dot" style="background:transparent;border:2px dashed #c084fc"></i>回转半径 O→B（虚线）</span><span><i class="dot" style="background:#a855f7"></i>第 1 关节对 B 的速度贡献</span><span><i class="dot" style="background:#34d399"></i>第 2 关节对 B 的速度贡献</span><span><i class="dot" style="background:#ec4899"></i>B 的总速度</span></div>
+    </div>
+    <div class="card">
+      <strong>先选一个观察方式</strong>
+      <div class="actions"><button data-mode="one" type="button">只让关节 1 转</button><button data-mode="two" type="button">只让关节 2 转</button><button data-mode="both" type="button" class="active">两个都转</button></div>
+      <p id="mode-copy" class="derive"></p>
+      <label class="control"><span>关节 1 角 <span data-tex="q_1"></span>（°）</span><input id="q1" type="range" min="-170" max="170" step="1" value="35"><input id="q1n" type="number" value="35"></label>
+      <label class="control"><span>关节 2 相对角 <span data-tex="q_2"></span>（°）</span><input id="q2" type="range" min="-170" max="170" step="1" value="55"><input id="q2n" type="number" value="55"></label>
+      <label class="control"><span>关节 1 角速度 <span data-tex="\dot q_1"></span>（°/s）</span><input id="dq1" type="range" min="-90" max="90" step="1" value="30"><input id="dq1n" type="number" value="30"></label>
+      <label class="control"><span>关节 2 角速度 <span data-tex="\dot q_2"></span>（°/s）</span><input id="dq2" type="range" min="-90" max="90" step="1" value="-35"><input id="dq2n" type="number" value="-35"></label>
+      <div class="actions"><button id="reset" type="button">恢复示例</button></div>
+      <p id="state" class="small"></p>
+    </div>
+  </section>
+
+  <h2>第 1 步：先只让关节 1 转</h2>
+  <p>把 <span data-tex="\dot q_2=0"></span>。关节 1 在 O 处转动时，第一根杆 O→A 在转，连在 A 后面的第二根杆也被整块带走。因此 A 有速度，B 也有速度；而 B 的这一份速度来自<strong>关节 1 同时转动两根杆</strong>。</p>
+  
+  <div class="two">
+    <div class="card">
+      <p><strong>肘点 A（只在第 1 根杆末端）：</strong></p>
+      <span class="math" data-tex="v_A=\begin{bmatrix}-L_1\sin q_1\\L_1\cos q_1\end{bmatrix}\dot q_1"></span>
+      <p class="small"><strong>来龙去脉回顾（<a href="04-planar-two-link-forward-kinematics.html">05 节</a> 与 <a href="19-time-varying-position-velocity.html">20 节</a>）：</strong></p>
+      <ol class="steps small">
+        <li>A 的位置向量为 <span data-tex="p_A=\begin{bmatrix}L_1\cos q_1\\L_1\sin q_1\end{bmatrix}"></span>。</li>
+        <li>因为 <span data-tex="q_1=q_1(t)"></span> 随时间变化，由微积分链式法则求导：<span data-tex="\frac{d}{dt}\cos q_1=-\sin q_1\cdot\dot q_1"></span>，<span data-tex="\frac{d}{dt}\sin q_1=\cos q_1\cdot\dot q_1"></span>，立即得到上式。</li>
+        <li>几何上它严格垂直于半径 <span data-tex="O\to A"></span>（点积为 0），即圆周切线速度 <span data-tex="v=\omega r=L_1\dot q_1"></span>。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <p><strong>末端 B（整根等效向量在转）：</strong></p>
+      <span class="math" data-tex="v_B^{(1)}=\begin{bmatrix}-L_1\sin q_1-L_2\sin(q_1+q_2)\\L_1\cos q_1+L_2\cos(q_1+q_2)\end{bmatrix}\dot q_1"></span>
+      <p class="small"><strong>来龙去脉回顾（<a href="14-planar-two-link-jacobian.html">15 节雅可比第 1 列</a>）：</strong></p>
+      <ol class="steps small">
+        <li>B 的总位置是 <span data-tex="p_B=\begin{bmatrix}L_1\cos q_1+L_2\cos(q_1+q_2)\\L_1\sin q_1+L_2\sin(q_1+q_2)\end{bmatrix}"></span>。</li>
+        <li>此时只让关节 1 转（<span data-tex="\dot q_2=0"></span>），对 <span data-tex="q_1"></span> 求导即得该式。</li>
+        <li>紫色箭头就是这份速度：它严格垂直于图中等效回转半径 <span data-tex="r(O\to B)"></span>。</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>第 2 步：再只让关节 2 转</h2>
+  <p>把 <span data-tex="\dot q_1=0"></span>。此时第一根杆不转，所以 A 不动；第二根杆绕 A 转，只有 B 得到一份相对 A 的切线速度：</p>
+  <span class="math" data-tex="v_B^{(2)}=\begin{bmatrix}-L_2\sin(q_1+q_2)\\L_2\cos(q_1+q_2)\end{bmatrix}\dot q_2"></span>
+  <div class="derive">
+    <strong>回顾 <a href="21-spatial-rigid-body-velocity.html">22 节刚体两点速度公式</a> 与 <a href="14-planar-two-link-jacobian.html">15 节雅可比第 2 列</a>：</strong><br>
+    取参考点为 A，刚体速度公式为 <span data-tex="v_B=v_A+\omega_2\times r_{B/A}"></span>。<br>
+    因为此时第一根杆不动（<span data-tex="v_A=0"></span>），而 <span data-tex="r_{B/A}"></span> 就是第二根杆 <span data-tex="A\to B"></span>，所以 <span data-tex="v_B=\omega_2\times r_{B/A}"></span>。绿色箭头正是这一项（严格垂直于连杆 <span data-tex="A\to B"></span>，大小为 <span data-tex="L_2\dot q_2"></span>）。
+  </div>
+
+  <h2>第 3 步：两个关节同时转，速度相加</h2>
+  <p>现在把紫色和绿色两份贡献相加。不要把它理解成“同一个 B 有两个位置”；位置仍只有一个，叠加的是两个关节各自造成的<strong>瞬时速度贡献</strong>：</p>
+  <span class="math" data-tex="\boxed{v_B=v_B^{(1)}+v_B^{(2)}}"></span>
+  <p>代入两项并按 <span data-tex="\dot q_1,\dot q_2"></span> 分组，就是已经学过的二维雅可比速度式：</p>
+  <span class="math" data-tex="\dot p_B=\underbrace{\begin{bmatrix}-L_1\sin q_1-L_2\sin(q_1+q_2)\\L_1\cos q_1+L_2\cos(q_1+q_2)\end{bmatrix}}_{\text{第 1 列}}\dot q_1+\underbrace{\begin{bmatrix}-L_2\sin(q_1+q_2)\\L_2\cos(q_1+q_2)\end{bmatrix}}_{\text{第 2 列}}\dot q_2=J(q)\dot q"></span>
+  <p class="tip"><strong>现在重新读雅可比的列：</strong>第 1 列不是凭空偏导出来的，它表示“只让关节 1 以单位速度转，B 的速度（垂直于 <span data-tex="r_{O\to B}"></span>）”；第 2 列表示“只让关节 2 以单位速度转，B 的速度（垂直于连杆 2）”。这就是速度递推在二维两连杆上的样子。</p>
+
+  <h2>下一页会把它变回三维递推</h2>
+  <div class="card"><p>对真实六/七自由度机械臂，不再一口气对总末端公式求导，而是从基座沿连杆逐节传递两样东西：</p><ol class="steps"><li><strong>角速度：</strong>上一节已有的角速度，加上本关节新转出来的角速度。</li><li><strong>线速度：</strong>上一节原点的线速度，加上“上一节转动带着下一节原点走”的切线速度。</li></ol><p>这就是书中“连杆运动 / 速度递推”的入口，也是后面 Newton-Euler 动力学递推的直接前置。</p></div>
+</main>
+<script>
+const D=Math.PI/180;
+const $=id=>document.getElementById(id);
+const val=id=>Number($(id).value);
+const vec=(x,y)=>[x,y];
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1]];
+const scale=(a,k)=>[a[0]*k,a[1]*k];
+const mag=a=>Math.hypot(a[0],a[1]);
+const fmt=n=>Math.abs(n)<.005?'0.00':n.toFixed(2);
+const L1=2.5,L2=2.0;
+function calc(){const q1=val('q1')*D,q2=val('q2')*D,dq1=val('dq1')*D,dq2=val('dq2')*D,q12=q1+q2;const a=vec(L1*Math.cos(q1),L1*Math.sin(q1));const b=add(a,vec(L2*Math.cos(q12),L2*Math.sin(q12)));const c1=scale(vec(-L1*Math.sin(q1)-L2*Math.sin(q12),L1*Math.cos(q1)+L2*Math.cos(q12)),dq1);const c2=scale(vec(-L2*Math.sin(q12),L2*Math.cos(q12)),dq2);return{q1,q2,q12,dq1,dq2,a,b,c1,c2,total:add(c1,c2)}}
+function arrow(c,a,b,color,width=3,dash=[]){const dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy);if(n<.5)return;c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=width;c.lineCap='round';c.setLineDash(dash);c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();c.setLineDash([]);const h=Math.min(12,Math.max(7,n*.16)),ang=Math.atan2(dy,dx);c.beginPath();c.moveTo(...b);c.lineTo(b[0]-h*Math.cos(ang-.48),b[1]-h*Math.sin(ang-.48));c.lineTo(b[0]-h*Math.cos(ang+.48),b[1]-h*Math.sin(ang+.48));c.fill();c.restore()}
+// 速度贡献是“向量”，而不是一截彩色线：使用明显的三角箭头，并给箭头描深色边。
+function velocityArrow(c,a,b,color){const dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy);if(n<.5)return;c.save();c.strokeStyle=color;c.lineWidth=7;c.lineCap='round';c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();const head=Math.min(22,Math.max(15,n*.28)),ang=Math.atan2(dy,dx);c.fillStyle=color;c.strokeStyle='#20242b';c.lineWidth=2.5;c.lineJoin='round';c.beginPath();c.moveTo(...b);c.lineTo(b[0]-head*Math.cos(ang-.52),b[1]-head*Math.sin(ang-.52));c.lineTo(b[0]-head*Math.cos(ang+.52),b[1]-head*Math.sin(ang+.52));c.closePath();c.fill();c.stroke();c.restore()}
+function text(c,s,p,color,size=15){c.fillStyle=color;c.font=`${size>=16?'700 ':''}${size}px system-ui`;c.fillText(s,p[0],p[1])}
+function textOutline(c,s,p,color,strokeCol,size=15){c.font=`${size>=16?'700 ':''}${size}px system-ui`;c.strokeStyle=strokeCol;c.lineWidth=4;c.lineJoin='round';c.strokeText(s,p[0],p[1]);c.fillStyle=color;c.fillText(s,p[0],p[1])}
+
+function draw(){
+  const cv=$('scene'),dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const s=calc();
+  c.fillStyle='#20242b';c.fillRect(0,0,w,h);c.strokeStyle='#394351';c.lineWidth=1;
+  for(let i=0;i<8;i++){const x=i*w/7,y=i*h/7;c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
+
+  const origin=[w*.22,h*.76],unit=Math.min(w*.102,h*.125),toS=p=>[origin[0]+p[0]*unit,origin[1]-p[1]*unit];
+  const O=origin,A=toS(s.a),B=toS(s.b);
+  arrow(c,O,[Math.min(w*.68,O[0]+300),O[1]],'#aebbd0',2);arrow(c,O,[O[0],74],'#aebbd0',2);
+  text(c,'x₀',[Math.min(w*.68,O[0]+280),O[1]-9],'#cbd5e1');text(c,'y₀',[O[0]+8,86],'#cbd5e1');
+
+  // 关节 1 到末端 B 的等效回转半径虚线向量 r(O→B)（紫色虚线，直观解释紫色速度贡献 v_B^{(1)} 垂直于此线）
+  arrow(c,O,B,'rgba(192, 132, 252, 0.7)',2.5,[7,5]);
+  {
+    const dx=B[0]-O[0],dy=B[1]-O[1],n=Math.hypot(dx,dy)||1;
+    // 放在离 O 点约 38% 处，并向外侧法向偏移，避免与肘点 A 或连杆重叠
+    const px=O[0]+dx*0.38+dy/n*18;
+    const py=O[1]+dy*0.38-dx/n*18;
+    c.textAlign='center';
+    textOutline(c,'r(O→B)',[px,py+5],'#d8b4fe','#20242b',14);
+    c.textAlign='left';
+  }
+
+  // 连杆 1 和连杆 2 实体杆
+  arrow(c,O,A,'#f59e0b',9);arrow(c,A,B,'#38bdf8',9);
+  c.textAlign='center';
+  for(const [p,q,label,color] of [[O,A,'L₁','#fbbf24'],[A,B,'L₂','#7dd3fc']]){const dx=q[0]-p[0],dy=q[1]-p[1],n=Math.hypot(dx,dy)||1;textOutline(c,label,[(p[0]+q[0])/2-dy/n*25,(p[1]+q[1])/2+dx/n*25+7],color,'#20242b',16)}
+  c.textAlign='left';
+
+  // 同一个 B 点：三根实箭头用于比较“各自朝哪”；绿色虚线只是把同一向量平移过去，演示相加。
+  const vmax=Math.max(mag(s.c1),mag(s.c2),mag(s.total),.001),vs=Math.min(w*.12,h*.18)/vmax;
+  const toVel=v=>[v[0]*vs,-v[1]*vs],end=(p,v)=>[p[0]+v[0],p[1]+v[1]];
+  const v1=toVel(s.c1),v2=toVel(s.c2),vt=toVel(s.total),e1=end(B,v1),e2=end(B,v2),et=end(B,vt),copyEnd=end(e1,v2);
+  // 粉色先画在底层，紫绿留在上层，三根方向都能看见。
+  if(mag(s.total)>.0001)velocityArrow(c,B,et,'#ec4899');
+  if(mag(s.c1)>.0001)velocityArrow(c,B,e1,'#a855f7');
+  if(mag(s.c2)>.0001)velocityArrow(c,B,e2,'#34d399');
+  if(mag(s.c2)>.0001){c.save();c.setLineDash([7,5]);c.strokeStyle='#34d399';c.lineWidth=4;c.beginPath();c.moveTo(...e1);c.lineTo(...copyEnd);c.stroke();c.setLineDash([]);const dx=copyEnd[0]-e1[0],dy=copyEnd[1]-e1[1],n=Math.hypot(dx,dy)||1,head=16,ang=Math.atan2(dy,dx);c.fillStyle='#34d399';c.beginPath();c.moveTo(...copyEnd);c.lineTo(copyEnd[0]-head*Math.cos(ang-.52),copyEnd[1]-head*Math.sin(ang-.52));c.lineTo(copyEnd[0]-head*Math.cos(ang+.52),copyEnd[1]-head*Math.sin(ang+.52));c.closePath();c.fill();c.restore()}
+  c.setLineDash([5,5]);c.strokeStyle='#f9a8d4';c.lineWidth=1.4;c.beginPath();c.moveTo(...et);c.lineTo(...copyEnd);c.stroke();c.setLineDash([]);
+  // 关节和末端的标记最后画，确保速度箭头不会吞掉 B 点。
+  [['#f8fafc',O,8],['#f8fafc',A,8],['#f8fafc',B,9]].forEach(([co,p,r])=>{c.fillStyle=co;c.beginPath();c.arc(...p,r,0,Math.PI*2);c.fill()});
+  text(c,'O（关节 1）',[O[0]-52,O[1]+30],'#f8fafc',15);text(c,'A（关节 2）',[A[0]-43,A[1]-16],'#f8fafc',15);text(c,'B（末端）',[B[0]+12,B[1]-16],'#f8fafc',15);
+  $('state').textContent=`当前：q̇₁=${val('dq1')}°/s，q̇₂=${val('dq2')}°/s。紫色贡献 [${fmt(s.c1[0])}, ${fmt(s.c1[1])}]，绿色贡献 [${fmt(s.c2[0])}, ${fmt(s.c2[1])}]，粉色总速度 [${fmt(s.total[0])}, ${fmt(s.total[1])}]。`;
+}
+function mode(name){const set=(id,n)=>{$(id).value=$(id+'n').value=n};if(name==='one'){set('dq1',35);set('dq2',0);$('mode-copy').innerHTML='<strong>只让关节 1 转：</strong>紫色箭头存在、绿色为 0。因为关节 1 在最前面，转动会带着 A 和整个第二根连杆一起绕 O 点大回转，B 的速度严格垂直于虚线半径 r(O→B)。'}else if(name==='two'){set('dq1',0);set('dq2',-35);$('mode-copy').innerHTML='<strong>只让关节 2 转：</strong>A 不动，紫色为 0；绿色箭头存在。第二根杆只是在 A 处转，B 的速度严格垂直于连杆 2（A→B）。'}else{set('dq1',30);set('dq2',-35);$('mode-copy').innerHTML='<strong>两个都转：</strong>紫色、绿色和粉色都从 B 出发，先比较它们在同一坐标系中的方向；再看绿色虚线，它从紫色末端出发并刚好落到粉色末端，这就是首尾相接的速度叠加。'}document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===name));draw()}
+['q1','q2','dq1','dq2'].forEach(id=>{$(id).addEventListener('input',()=>{$(id+'n').value=$(id).value;draw()});$(id+'n').addEventListener('input',()=>{$(id).value=$(id+'n').value;draw()})});document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>mode(b.dataset.mode)));$('reset').addEventListener('click',()=>{const d={q1:35,q2:55,dq1:30,dq2:-35};Object.entries(d).forEach(([id,n])=>{$(id).value=$(id+'n').value=n});mode('both')});addEventListener('resize',draw);addEventListener('load',()=>{let n=0;const boot=()=>{if(!window.katex){if(n++<40)setTimeout(boot,80);return}document.querySelectorAll('[data-tex]').forEach(e=>katex.render(e.dataset.tex,e,{displayMode:e.classList.contains('math'),throwOnError:false}));mode('both')};boot()});
+</script>
+</body>
+</html>

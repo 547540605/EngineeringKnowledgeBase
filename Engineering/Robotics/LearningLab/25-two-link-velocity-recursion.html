@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>26. 两连杆速度递推：把每一步真的算到末端</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.72 system-ui, "Microsoft YaHei", sans-serif;
+    }
+    main {
+      max-width: 1480px;
+      margin: auto;
+      padding: 28px 22px 72px;
+    }
+    h1, h2 { line-height: 1.28; }
+    h2 {
+      margin-top: 2.3rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.35rem;
+    }
+    .lead { max-width: 1040px; color: var(--muted); }
+    .lesson {
+      display: grid;
+      grid-template-columns: minmax(520px, 1.08fr) minmax(0, 0.92fr);
+      gap: 28px;
+      align-items: start;
+    }
+    .lab { position: sticky; top: 16px; }
+    .canvas-wrap {
+      background: #20242b;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1.18;
+      touch-action: none;
+      cursor: grab;
+    }
+    .canvas-wrap canvas:active { cursor: grabbing; }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 9px 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .card, .derive {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .derive { background: var(--soft); }
+    .warn { background: var(--warn); }
+    .math {
+      display: block;
+      text-align: center;
+      margin: 0.9rem 0;
+      overflow: auto;
+    }
+    .small { font-size: 0.9rem; color: var(--muted); }
+    .tip {
+      border-left: 4px solid #d946ef;
+      padding-left: 12px;
+    }
+    .steps { margin: 0.4rem 0; padding-left: 1.45rem; }
+    .steps li { margin: 0.55rem 0; }
+    .controls { display: grid; gap: 9px; }
+    .control {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr) 58px;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.88rem;
+    }
+    .actions, .toggles {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 9px;
+    }
+    .actions button {
+      font: inherit;
+      font-size: 0.85rem;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .actions button.active {
+      background: #dbeef5;
+      color: #0b1f2c;
+      border-color: #5ca0bc;
+      font-weight: 700;
+    }
+    .toggles label {
+      font-size: 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .live {
+      background: var(--soft);
+      border-radius: 7px;
+      padding: 9px 11px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 920px) {
+      main { padding: 22px 14px; }
+      .lesson { grid-template-columns: 1fr; }
+      .lab { position: static; }
+      .canvas-wrap canvas { aspect-ratio: 1.02; }
+    }
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body>
+<main>
+  <p class="small">
+    <a href="00-progress.html">学习进度</a> ·
+    <a href="23-angular-velocity-propagation.html">笔记 04：三维角速度递推</a> ·
+    <a href="24-linear-velocity-propagation.html">笔记 04：三维线速度递推</a> ·
+    <a href="ref-rigid-body-rotation-foundations.html#notation-dict">📖 基础专栏：四角记号法字典</a>
+  </p>
+  <h1>26. 两连杆速度递推：把每一步真的算到末端</h1>
+  <p class="lead">
+    笔记 24、25 给出了“从上一节传到下一节”的通用公式。本篇不引进任何新规则：只用一台平面两连杆机械臂，按原书例 5.3 的顺序把 <strong>基座 → 关节 1 → 肘部 → 末端</strong> 的角速度和线速度逐步推算出来。
+  </p>
+
+  <div class="lesson">
+    <!-- 左侧交互实验台（全面升级为 3D 自由旋转空间） -->
+    <aside class="lab">
+      <div class="canvas-wrap">
+        <canvas id="scene" aria-label="两连杆机械臂三维速度递推动态交互图"></canvas>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:#ef4444"></i>基坐标系 {0} (地面固定)</span>
+        <span><i class="dot" style="background:#f59e0b"></i>坐标系 {1} (固连在连杆1)</span>
+        <span><i class="dot" style="background:#38bdf8"></i>坐标系 {2} (固连在连杆2)</span>
+        <span><i class="dot" style="background:#38bdf8"></i>连杆 2 (L₂)</span>
+        <span><i class="dot" style="background:#eab308"></i>角速度 ω (沿 Z 轴立起)</span>
+        <span><i class="dot" style="background:#a855f7"></i>关节 1 线速度贡献 (J₁·q̇₁)</span>
+        <span><i class="dot" style="background:#34d399"></i>关节 2 线速度贡献 (J₂·q̇₂)</span>
+        <span><i class="dot" style="background:#ec4899"></i>末端总线速度 vᴮ</span>
+      </div>
+      <div class="card" style="margin-top:8px">
+        <p class="small" style="margin-top:0">
+          <strong>🖱️ 3D 空间交互：按住鼠标拖动自由 360° 旋转观察</strong>，滚轮缩放。视角可切换至【俯视平面】或【3D 透视】。
+        </p>
+        <div class="actions">
+          <button id="view-3d" class="active" type="button">🎥 3D 透视视角</button>
+          <button id="view-top" type="button">📐 俯视平面视角</button>
+          <button id="view-front" type="button">👀 前视侧面视角</button>
+        </div>
+        <div class="toggles" style="margin-top:9px">
+          <label><input data-layer="arm" type="checkbox" checked> 机械臂本体</label>
+          <label><input data-layer="f0" type="checkbox" checked> 基坐标系 {0}</label>
+          <label><input data-layer="f1" type="checkbox" checked> 连杆1坐标系 {1}</label>
+          <label><input data-layer="f2" type="checkbox" checked> 连杆2坐标系 {2}</label>
+          <label><input data-layer="f3" type="checkbox" checked> 末端坐标系 {3}</label>
+          <label><input data-layer="omega" type="checkbox" checked> 空间角速度 ω</label>
+          <label><input data-layer="vectors" type="checkbox" checked> 末端速度 vᴮ</label>
+          <label><input data-layer="chord" type="checkbox"> 弦长连线 (O₀ ┄ B)</label>
+          <label><input data-layer="orbit" type="checkbox"> 运动轨迹</label>
+        </div>
+        <div class="controls" style="margin-top:11px">
+          <label class="control"><span>初始 q₁</span><input id="q1" type="range" min="-180" max="180" step="1" value="35"><span id="q1v">35°</span></label>
+          <label class="control"><span>初始 q₂</span><input id="q2" type="range" min="-180" max="180" step="1" value="55"><span id="q2v">55°</span></label>
+          <label class="control"><span>关节转速 q̇₁</span><input id="qd1" type="range" min="-90" max="90" step="5" value="30"><span id="qd1v">30°/s</span></label>
+          <label class="control"><span>关节转速 q̇₂</span><input id="qd2" type="range" min="-90" max="90" step="5" value="-40"><span id="qd2v">−40°/s</span></label>
+        </div>
+        <div class="actions">
+          <button id="play" type="button" style="background:#38bdf8;color:#0b1f2c;border:0;font-weight:700">⏸ 暂停运动</button>
+          <button id="reset" type="button">重置视角与时间</button>
+        </div>
+        <div class="live">
+          <div id="frame" class="small" style="margin:3px 0"></div>
+          <div class="math" id="live-math" style="margin:5px 0"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧推导正文 -->
+    <section>
+      <h2>一、先钉住对象：四个坐标系分别在谁身上？</h2>
+      <div class="card">
+        <p>按照标准 Craig / 机器人学 DH 约定，两连杆机械臂上一共有 4 个标准坐标系：</p>
+        <ul style="margin:6px 0;padding-left:1.4rem">
+          <li><strong>基座世界系 <span data-tex="\{0\}"></span>（世界静止系）</strong>：原点钉在地面基座 <span data-tex="O_0"></span>。<span data-tex="X_0"></span> 轴固定水平向右，<span data-tex="Y_0"></span> 轴固定水平向上，<span data-tex="Z_0"></span> 轴竖直向上。它<strong>永远固定在地面上不随机械臂转动</strong>。</li>
+          <li><strong>连杆 1 坐标系 <span data-tex="\{1\}"></span>（随杆 1 转动）</strong>：原点记作 <span data-tex="O_1"></span>（位于基座关节 1 轴），<strong>死死绑在第一根杆上</strong>：<span data-tex="X_1"></span> 轴<strong>永远沿着连杆 1 杆身</strong>（指向肘部原点 <span data-tex="O_2"></span>），<span data-tex="Y_1"></span> 轴垂直于杆 1（切线方向），<span data-tex="Z_1"></span> 为关节 1 竖直转轴。</li>
+          <li><strong>连杆 2 坐标系 <span data-tex="\{2\}"></span>（随杆 2 转动）</strong>：原点记作 <span data-tex="O_2"></span>（位于肘部关节 2 轴），<strong>死死绑在第二根杆上</strong>：<span data-tex="X_2"></span> 轴<strong>永远沿着连杆 2 杆身</strong>（指向末端原点 <span data-tex="O_3"></span>），<span data-tex="Y_2"></span> 轴垂直于杆 2（切线方向），<span data-tex="Z_2"></span> 为关节 2 竖直转轴。</li>
+          <li><strong>末端工具坐标系 <span data-tex="\{3\}"></span>（末端执行器系）</strong>：原点记作 <span data-tex="O_3"></span>（钉在末端手部 <span data-tex="B"></span> 上）。姿态与 <span data-tex="\{2\}"></span> 系完全对齐（<span data-tex="{}^3_2R = \boldsymbol{I}"></span>）：<span data-tex="X_3"></span> 顺着工具朝向，<span data-tex="Y_3"></span> 为法向，<span data-tex="Z_3"></span> 为末端竖直轴。</li>
+        </ul>
+      </div>
+      <div class="tip">
+        <strong>这就是为什么位置向量这么简短：</strong>
+        在坐标系 <span data-tex="\{1\}"></span> 看来，肘部原点 <span data-tex="O_2"></span> 永远躺在自己的 <span data-tex="X_1"></span> 轴正前方距离 <span data-tex="L_1"></span> 处，所以从基座原点 <span data-tex="O_1"></span> 指向肘部原点 <span data-tex="O_2"></span> 的位置向量就是极为干净的 <span data-tex="{}^1p_2=[L_1,0,0]^T"></span>！
+      </div>
+      <div class="tip">
+        <strong>这和之前的雅可比不冲突：</strong>雅可比把答案直接写成 <span data-tex="\boldsymbol{v}_B=\boldsymbol{J}(q)\dot{\boldsymbol{q}}"></span>；这里按“连杆一节一节传递”的物理递推过程算。同一个末端速度，物理本质完全相通。
+      </div>
+
+      <h2>二、第 1 节：关节 1 先让第一根杆拥有角速度</h2>
+      <p>关节 1 是绕垂直地面的 <span data-tex="z_0"></span> 轴转动。基座没有初始角速度；于是把电机转速 <span data-tex="\dot q_1"></span> 填入 <span data-tex="z"></span> 轴分量：</p>
+      <span class="math" data-tex="{}^1\boldsymbol{\omega}_1=\begin{bmatrix}0 \\ 0 \\ \dot q_1\end{bmatrix},\qquad{}^1\boldsymbol{v}_1=\begin{bmatrix}0\\0\\0\end{bmatrix}"></span>
+
+      <div class="card" style="margin:10px 0;background:var(--soft);font-size:0.9rem">
+        <strong>💡 为什么是 3 行列向量？每一行代表什么？</strong>
+        <ul style="margin:4px 0 0;padding-left:1.4rem">
+          <li><strong>三行分别代表 <span data-tex="x, y, z"></span> 三个空间轴向</strong>：三维空间中任何矢量在坐标系下分解，第 1 行是 <span data-tex="x"></span> 轴分量，第 2 行是 <span data-tex="y"></span> 轴分量，第 3 行是 <span data-tex="z"></span> 轴分量。写成列向量是为了与 <span data-tex="3\times 3"></span> 旋转矩阵做乘法（<span data-tex="\boldsymbol{v}' = R\boldsymbol{v}"></span>）。</li>
+          <li><strong>角速度 <span data-tex="{}^1\boldsymbol{\omega}_1=[0,0,\dot q_1]^T"></span> 的含义</strong>：连杆没有绕 <span data-tex="x_1"></span> 轴翻滚（第 1 行为 0），没有绕 <span data-tex="y_1"></span> 轴俯仰（第 2 行为 0）；按 DH 约定，<strong>所有关节转轴都是 <span data-tex="z"></span> 轴</strong>，所以电机转速 <span data-tex="\dot q_1"></span> 落在<strong>第 3 行（<span data-tex="z_1"></span> 轴）</strong>！</li>
+          <li><strong>线速度 <span data-tex="{}^1\boldsymbol{v}_1=[0,0,0]^T"></span> 的含义</strong>：度量的是连杆 1 起点原点 <span data-tex="O_0"></span>（固定在地面基座上）的平移速度。基座不动，所以 <span data-tex="x,y,z"></span> 三向平移速度全为 0。</li>
+        </ul>
+      </div>
+
+      <div class="tip" style="margin:10px 0;background:var(--soft);border-left:4px solid #f59e0b">
+        <strong>🌟 一句话物理本质：</strong>
+        <p style="margin:4px 0 0">
+          <strong>“它是一根垂直于地面、立在关节 1 转轴上的‘地轴矢量’（看左侧 3D 图中的黄色竖直长箭头）：前两维为 0 保证连杆在 XY 平面内平稳运动绝不侧倾，第三维 <span data-tex="\dot q_1"></span> 决定整根连杆在地面上自转甩得多快、朝哪转。”</strong>
+        </p>
+      </div>
+
+      <div class="derive">
+        <strong>核心区别：</strong>角速度（整根杆在转，<span data-tex="\dot q_1 \neq 0"></span>，竖直立起）属于整根连杆；线速度（中心原点固定在地面，<span data-tex="\boldsymbol{v}_1 = \mathbf{0}"></span>）属于具体空间点。
+      </div>
+
+      <h2>三、第 2 节：先算肘部原点 <span data-tex="O_2"></span> 被第一根杆“带着走”的速度</h2>
+      <p>在坐标系 <span data-tex="\{1\}"></span> 中，从基座原点 <span data-tex="O_1"></span> 指向肘部原点 <span data-tex="O_2"></span> 的连杆位置向量为：</p>
+      <span class="math" data-tex="{}^1p_2=\begin{bmatrix}L_1\\0\\0\end{bmatrix}"></span>
+      <p>根据 Craig《机器人学导论》式 (5.46) 的递推通式 <span data-tex="{}^i\boldsymbol{v}_{i+1}={}^i\boldsymbol{v}_i+{}^i\boldsymbol{\omega}_i\times{}^ip_{i+1}"></span>，当 <span data-tex="i=1"></span> 时：<strong>先求原点 2（肘部 <span data-tex="O_2"></span>）在坐标系 <span data-tex="\{1\}"></span> 中的线速度 <span data-tex="{}^1\boldsymbol{v}_2"></span></strong>，再乘以旋转矩阵 <span data-tex="{}^2_1R"></span> 投影到下一节坐标系 <span data-tex="\{2\}"></span> 得到 <span data-tex="{}^2\boldsymbol{v}_2"></span>：</p>
+      <span class="math" data-tex="\begin{aligned}
+      \underbrace{{}^1\boldsymbol{v}_2}_{\text{原点2在 }\{1\}\text{ 系表达}} &= {}^1\boldsymbol{v}_1 + {}^1\boldsymbol{\omega}_1\times{}^1p_2 = \mathbf{0} + \begin{bmatrix}0 \\ 0 \\ \dot q_1\end{bmatrix}\times\begin{bmatrix}L_1\\0\\0\end{bmatrix}=\begin{bmatrix}0\\L_1\dot q_1\\0\end{bmatrix}\[8pt]
+      \underbrace{{}^2\boldsymbol{v}_2}_{\text{原点2在 }\{2\}\text{ 系表达}} &= {}^2_1R\;{}^1\boldsymbol{v}_2 = \begin{bmatrix}\cos q_2 & \sin q_2 & 0\\ -\sin q_2 & \cos q_2 & 0\\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}0\\L_1\dot q_1\\0\end{bmatrix}=\begin{bmatrix}L_1\sin q_2\,\dot q_1\\L_1\cos q_2\,\dot q_1\\0\end{bmatrix}
+      \end{aligned}"></span>
+      <div class="card">
+        <strong>💡 为什么下标是 1 和 2？原点与坐标系编号全景总览：</strong>
+        <ul style="margin:4px 0 0;padding-left:1.4rem">
+          <li><strong>原点 1（<span data-tex="O_1"></span>，基座）</strong>：坐标系 <span data-tex="\{1\}"></span> 的原点，钉在基座关节 1 上。因为基座固定不动，所以它的速度 <span data-tex="{}^1\boldsymbol{v}_1 = \mathbf{0}"></span>（右下标 1 代表原点 1）。</li>
+          <li><strong>原点 2（<span data-tex="O_2"></span>，肘部）</strong>：坐标系 <span data-tex="\{2\}"></span> 的原点，钉在肘部关节 2 上。从原点 1 指向原点 2 的位置是 <span data-tex="{}^1p_2"></span>，原点 2 的速度就是 <span data-tex="{}^1\boldsymbol{v}_2"></span>（右下标 2 代表原点 2）！</li>
+          <li><strong>原点 3（<span data-tex="O_3"></span>，末端）</strong>：坐标系 <span data-tex="\{3\}"></span> 的原点，钉在末端手部 <span data-tex="B"></span> 上。从原点 2 指向原点 3 的位置是 <span data-tex="{}^2p_3"></span>，末端速度就是 <span data-tex="{}^2\boldsymbol{v}_3"></span> 或 <span data-tex="{}^0\boldsymbol{v}_3"></span>（右下标 3 代表原点 3）！</li>
+        </ul>
+      </div>
+
+      <div class="card derive" style="border-left:5px solid #0284c7;margin:12px 0">
+        <strong>🔍 深度专题拓展：为什么原点 2 在系 2 里的速度不是 0？</strong>
+        <p style="margin:4px 0 6px;font-size:0.92rem">
+          如果你对“原点 2 本身就是系 2 的原点，为什么对它求导不是 0”心存疑问，请务必参阅专门为此制作的深度专题图文：
+        </p>
+        <p style="margin:0;font-weight:700">
+          👉 <a href="ref-velocity-derivative-vs-projection.html" style="color:#0284c7;text-decoration:underline">专题精析：求导顺序之谜——“坐标本身的导数”与“机器人学投影速度”的区别与数值实算</a>
+        </p>
+      </div>
+
+      <h2>四、末端：肘部的速度继承下来，再加关节 2 的新贡献</h2>
+      <p>末端原点 <span data-tex="O_3"></span> 相对肘部原点 <span data-tex="O_2"></span> 的位置在 <span data-tex="\{2\}"></span> 中是 <span data-tex="{}^2p_3=[L_2,0,0]^T"></span>。此时整根第二连杆的角速度已经是两个关节的累加：</p>
+      <span class="math" data-tex="{}^2\boldsymbol{\omega}_2=\begin{bmatrix}0 \\ 0 \\ \dot q_1+\dot q_2\end{bmatrix}"></span>
+      <p>代入线速度递推公式（因末端坐标系 <span data-tex="\{3\}"></span> 与 <span data-tex="\{2\}"></span> 方向对齐，<span data-tex="{}^3_2R = \boldsymbol{I}"></span>）：包含上一原点（肘部）带过来的速度，以及第二根杆绕肘部转动新增的切线速度：</p>
+      <span class="math" data-tex="\begin{aligned}
+      \underbrace{{}^3\boldsymbol{v}_3}_{\text{末端对地速度在 }\{3\}\text{ 系投影}}&={}^3_2R\left({}^2\boldsymbol{v}_2+{}^2\boldsymbol{\omega}_2\times{}^2p_3\right) = {}^2\boldsymbol{v}_2+{}^2\boldsymbol{\omega}_2\times{}^2p_3\[6pt]
+      &=\begin{bmatrix}L_1\sin q_2\,\dot q_1\\L_1\cos q_2\,\dot q_1\\0\end{bmatrix}+\begin{bmatrix}0\\L_2(\dot q_1+\dot q_2)\\0\end{bmatrix}\\
+      &=\begin{bmatrix}L_1\sin q_2\,\dot q_1\\L_1\cos q_2\,\dot q_1+L_2(\dot q_1+\dot q_2)\\0\end{bmatrix}
+      \end{aligned}"></span>
+      <div class="derive">
+        <strong>不要把第二项误读为“只有 <span data-tex="\dot q_2"></span>”：</strong>第二根杆的绝对角速度是 <span data-tex="\dot q_1+\dot q_2"></span>。第一关节会带动第二根杆整体公转，第二关节再相对第一根杆追加自转。
+      </div>
+
+      <h2>五、最后换回基座坐标系：就是完整的雅可比结果！</h2>
+      <p>上一步的 <span data-tex="{}^3\boldsymbol{v}_3"></span> 是在末端局部动坐标系 <span data-tex="\{3\}"></span> 中表达的。为了得到末端在世界静止系 <span data-tex="\{0\}"></span> 下的真实速度，需要左乘旋转矩阵 <span data-tex="{}^0_3R"></span> 投影回基座坐标系：</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">第 1 步：写出末端系到基座系的综合旋转矩阵 <span data-tex="{}^0_3R"></span></h4>
+        <p>因为末端坐标系 <span data-tex="\{3\}"></span> 相对世界基座系 <span data-tex="\{0\}"></span> 累计绕 <span data-tex="Z"></span> 轴旋转了角度 <span data-tex="q_1 + q_2"></span>（其中 <span data-tex="{}^3_2R = \boldsymbol{I}"></span>）：</p>
+        <span class="math" data-tex="{}^0_3R = {}^0_1R \; {}^1_2R \; {}^2_3R = \begin{bmatrix} \cos(q_1+q_2) & -\sin(q_1+q_2) & 0 \\ \sin(q_1+q_2) & \cos(q_1+q_2) & 0 \\ 0 & 0 & 1 \end{bmatrix}"></span>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">第 2 步：矩阵与向量直接相乘展开</h4>
+        <span class="math" data-tex="{}^0\boldsymbol{v}_B = {}^0_3R \; {}^3\boldsymbol{v}_3 = \begin{bmatrix} \cos(q_1+q_2) & -\sin(q_1+q_2) & 0 \\ \sin(q_1+q_2) & \cos(q_1+q_2) & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} L_1\sin q_2\,\dot q_1 \\ L_1\cos q_2\,\dot q_1 + L_2(\dot q_1+\dot q_2) \\ 0 \end{bmatrix}"></span>
+      </div>
+
+      <div class="derive">
+        <h4 style="margin-top:0">第 3 步：逐行展开与三角和角公式化简（最关键的数学魔法！）</h4>
+        <p><strong>① X 轴水平分量相乘展开：</strong></p>
+        <span class="math" data-tex="\begin{aligned}
+        {}^0 v_{Bx} &= \cos(q_1+q_2)\big(L_1\sin q_2\,\dot q_1\big) - \sin(q_1+q_2)\Big(L_1\cos q_2\,\dot q_1 + L_2(\dot q_1+\dot q_2)\Big) \[6pt]
+        &= L_1\dot q_1 \underbrace{\Big(\sin q_2\cos(q_1+q_2) - \cos q_2\sin(q_1+q_2)\Big)}_{\text{正弦差角公式: } \sin(q_2 - (q_1+q_2)) = \sin(-q_1) = -\sin q_1} - L_2\sin(q_1+q_2)(\dot q_1+\dot q_2) \[6pt]
+        &= -L_1\sin q_1\,\dot q_1 - L_2\sin(q_1+q_2)(\dot q_1+\dot q_2)
+        \end{aligned}"></span>
+
+        <p style="margin-top:12px"><strong>② Y 轴垂直分量相乘展开：</strong></p>
+        <span class="math" data-tex="\begin{aligned}
+        {}^0 v_{By} &= \sin(q_1+q_2)\big(L_1\sin q_2\,\dot q_1\big) + \cos(q_1+q_2)\Big(L_1\cos q_2\,\dot q_1 + L_2(\dot q_1+\dot q_2)\Big) \[6pt]
+        &= L_1\dot q_1 \underbrace{\Big(\cos(q_1+q_2)\cos q_2 + \sin(q_1+q_2)\sin q_2\Big)}_{\text{余弦差角公式: } \cos((q_1+q_2) - q_2) = \cos(q_1)} + L_2\cos(q_1+q_2)(\dot q_1+\dot q_2) \[6pt]
+        &= L_1\cos q_1\,\dot q_1 + L_2\cos(q_1+q_2)(\dot q_1+\dot q_2)
+        \end{aligned}"></span>
+      </div>
+
+      <p>化简合并后，在世界基座坐标系 <span data-tex="\{0\}"></span> 下的末端速度向量为：</p>
+      <span class="math" data-tex="{}^0\boldsymbol{v}_B=\begin{bmatrix}-L_1\sin q_1\,\dot q_1-L_2\sin(q_1+q_2)(\dot q_1+\dot q_2)\\L_1\cos q_1\,\dot q_1+L_2\cos(q_1+q_2)(\dot q_1+\dot q_2)\\0\end{bmatrix}"></span>
+
+      <p>把按 <span data-tex="\dot q_1"></span> 与 <span data-tex="\dot q_2"></span> 的项重新分组，便精确还原出标准的<strong>速度雅可比矩阵</strong>：</p>
+      <span class="math" data-tex="{}^0\boldsymbol{v}_B=\underbrace{\begin{bmatrix}-L_1\sin q_1-L_2\sin(q_1+q_2)\\L_1\cos q_1+L_2\cos(q_1+q_2)\end{bmatrix}\dot q_1}_{\text{紫色：关节 1 转速贡献（第一列）}}+\underbrace{\begin{bmatrix}-L_2\sin(q_1+q_2)\\L_2\cos(q_1+q_2)\end{bmatrix}\dot q_2}_{\text{绿色：关节 2 转速贡献（第二列）}}"></span>
+      <div class="tip">
+        现在在左侧 3D 图中勾选【末端平面线速度】：紫、绿、粉三根箭头都扎在末端 <span data-tex="B"></span> 上，平铺在 XY 水平地面上。粉色总速度恰好是紫色与绿色的空间平行四边形矢量和！
+      </div>
+
+      <div class="card" style="background:var(--soft);border-left:4px solid #38bdf8;margin-top:16px">
+        <h3 style="margin-top:0">💡 知识串联：为什么我们要学两种求雅可比的方法？</h3>
+        <table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:0.9rem">
+          <thead>
+            <tr style="border-bottom:1px solid var(--line);text-align:left">
+              <th style="padding:6px 8px">计算路径</th>
+              <th style="padding:6px 8px">核心逻辑</th>
+              <th style="padding:6px 8px">适用场景与优劣</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--line)">
+              <td style="padding:8px"><strong>路径 1：解析偏导法</strong><br><small><a href="16-planar-jacobian-velocity.html" style="color:#0284c7">（回顾笔记 17）</a></small></td>
+              <td style="padding:8px">直接对正运动学位置公式求偏导：<br><span data-tex="\boldsymbol{J} = \frac{\partial f(\boldsymbol{q})}{\partial \boldsymbol{q}}"></span></td>
+              <td style="padding:8px"><strong>优点</strong>：低自由度（2/3 轴）手算极其直观快捷。<br><strong>缺点</strong>：6 轴复杂空间机械臂时偏导式极其冗长。</td>
+            </tr>
+            <tr>
+              <td style="padding:8px"><strong>路径 2：刚体递推法</strong><br><small><a href="24-linear-velocity-propagation.html" style="color:#0284c7">（笔记 25/26）</a></small></td>
+              <td style="padding:8px">从基座向末端一节一节递推速度：<br><span data-tex="{}^i\boldsymbol{v}_{i+1} = {}^i\boldsymbol{v}_i + {}^i\boldsymbol{\omega}_i \times {}^ip_{i+1}"></span></td>
+              <td style="padding:8px"><strong>优点</strong>：通用性强，计算机只需一个 <code>for</code> 循环即可算出任意 N 轴机械臂（动力学与开源库核心底层！）。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card small">
+        <strong>原书严格对照：</strong>Craig《机器人学导论（原书第 4 版）》第 5 章，书页 102–104 / PDF P113–P115：式 (5.43)、(5.45)、(5.46)、(5.47)，例 5.3 与式 (5.50)–(5.57)。
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const cv = document.getElementById('scene'), c = cv.getContext('2d'), D = Math.PI / 180;
+  const el = id => document.getElementById(id);
+  const ids = ['q1', 'q2', 'qd1', 'qd2'];
+  const layer = { arm: true, f0: true, f1: true, f2: true, f3: true, omega: true, vectors: true, chord: false, orbit: false };
+  let playing = true, t = 0, last = performance.now(), trail = [];
+  let yaw = -0.72, pitch = 0.44, zoom = 1, drag = null;
+  const L1 = 2.2, L2 = 1.6;
+
+  function state() {
+    const b1 = +el('q1').value * D, b2 = +el('q2').value * D;
+    const w1 = +el('qd1').value * D, w2 = +el('qd2').value * D;
+    return { q1: b1 + w1 * t, q2: b2 + w2 * t, w1, w2 };
+  }
+
+  function arrow3D(p1, p2, col, w = 3.5, dash = []) {
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1], n = Math.hypot(dx, dy);
+    if (n < 1) return;
+    c.save();
+    c.strokeStyle = col;
+    c.fillStyle = col;
+    c.lineWidth = w;
+    c.lineCap = 'round';
+    c.setLineDash(dash);
+    c.beginPath();
+    c.moveTo(...p1);
+    c.lineTo(...p2);
+    c.stroke();
+    c.setLineDash([]);
+    const z = Math.min(14, Math.max(7, n * 0.2)), u = Math.atan2(dy, dx);
+    c.beginPath();
+    c.moveTo(...p2);
+    c.lineTo(p2[0] - z * Math.cos(u - 0.42), p2[1] - z * Math.sin(u - 0.42));
+    c.lineTo(p2[0] - z * 0.7 * Math.cos(u), p2[1] - z * 0.7 * Math.sin(u));
+    c.lineTo(p2[0] - z * Math.cos(u + 0.42), p2[1] - z * Math.sin(u + 0.42));
+    c.closePath();
+    c.fill();
+    c.restore();
+  }
+
+  function label(s, x, y, col, align = 'left') {
+    c.save();
+    c.font = '600 13px system-ui, sans-serif';
+    c.textAlign = align;
+    c.textBaseline = 'middle';
+    c.shadowColor = 'rgba(15, 23, 42, 0.9)';
+    c.shadowBlur = 4;
+    c.fillStyle = col;
+    c.fillText(s, x, y);
+    c.restore();
+  }
+
+  function draw() {
+    const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.fillStyle = '#20242b';
+    c.fillRect(0, 0, w, h);
+
+    const s = state();
+    const a = s.q1, b = s.q1 + s.q2;
+    
+    // 3D 空间坐标（XY 为地面平面，Z 为垂直向上的转轴）
+    const O_3D = [0, 0, 0];
+    const A_3D = [L1 * Math.cos(a), L1 * Math.sin(a), 0];
+    const B_3D = [L1 * Math.cos(a) + L2 * Math.cos(b), L1 * Math.sin(a) + L2 * Math.sin(b), 0];
+
+    // 三维投影变换
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const origin = [w * 0.44, h * 0.64];
+    const u = Math.min(w, h) * 0.13 * zoom;
+
+    const project = p => {
+      const side = cy * p[0] - sy * p[1];
+      const depth = sy * p[0] + cy * p[1];
+      const up = cp * p[2] - sp * depth;
+      return [origin[0] + side * u, origin[1] - up * u];
+    };
+
+    const O = project(O_3D), A = project(A_3D), B = project(B_3D);
+
+    // 记录末端轨迹点
+    if (playing) {
+      trail.push([...B]);
+      if (trail.length > 260) trail.shift();
+    }
+
+    // 1. 绘制 XY 地面网格
+    c.strokeStyle = '#2d3748';
+    c.lineWidth = 1;
+    for (let i = -4; i <= 4; i++) {
+      const p1 = project([i, -4, 0]), p2 = project([i, 4, 0]);
+      c.beginPath(); c.moveTo(...p1); c.lineTo(...p2); c.stroke();
+      const p3 = project([-4, i, 0]), p4 = project([4, i, 0]);
+      c.beginPath(); c.moveTo(...p3); c.lineTo(...p4); c.stroke();
+    }
+
+    // 2. 绘制基座世界固定坐标系 {0} (X0 红, Y0 绿, Z0 浅紫)
+    if (layer.f0) {
+      arrow3D(O, project([1.8, 0, 0]), '#ef4444', 2.2);
+      arrow3D(O, project([0, 1.8, 0]), '#22c55e', 2.2);
+      arrow3D(O, project([0, 0, 1.8]), '#c084fc', 2.2);
+      label('X₀', project([1.9, 0, 0])[0], project([1.9, 0, 0])[1], '#ef4444');
+      label('Y₀', project([0, 1.9, 0])[0], project([0, 1.9, 0])[1], '#22c55e');
+      label('Z₀ (基座转轴)', project([0, 0, 1.95])[0], project([0, 0, 1.95])[1], '#c084fc');
+    }
+
+    // 3. 绘制机械臂实体结构杆件
+    if (layer.arm) {
+      // 实体连杆 1 (金黄粗体结构)
+      c.save();
+      c.strokeStyle = '#d97706';
+      c.lineWidth = 9;
+      c.lineCap = 'round';
+      c.beginPath(); c.moveTo(...O); c.lineTo(...A); c.stroke();
+      c.strokeStyle = '#fef3c7';
+      c.lineWidth = 2.5;
+      c.beginPath(); c.moveTo(...O); c.lineTo(...A); c.stroke();
+      c.restore();
+
+      // 实体连杆 2 (天蓝粗体结构)
+      c.save();
+      c.strokeStyle = '#0284c7';
+      c.lineWidth = 8;
+      c.lineCap = 'round';
+      c.beginPath(); c.moveTo(...A); c.lineTo(...B); c.stroke();
+      c.strokeStyle = '#e0f2fe';
+      c.lineWidth = 2;
+      c.beginPath(); c.moveTo(...A); c.lineTo(...B); c.stroke();
+      c.restore();
+
+      // 关节金属铰链球体
+      c.fillStyle = '#f8fafc';
+      for (const pt of [O, A, B]) {
+        c.beginPath(); c.arc(...pt, 7, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#0f172a'; c.lineWidth = 2.5; c.stroke();
+      }
+
+      // 连杆长度标签
+      const dx1 = A[0] - O[0], dy1 = A[1] - O[1], l1_norm = Math.hypot(dx1, dy1) || 1;
+      label('L₁', (O[0] + A[0]) / 2 - (dy1/l1_norm)*14, (O[1] + A[1]) / 2 + (dx1/l1_norm)*14, '#fbbf24', 'center');
+      const dx2 = B[0] - A[0], dy2 = B[1] - A[1], l2_norm = Math.hypot(dx2, dy2) || 1;
+      label('L₂', (A[0] + B[0]) / 2 - (dy2/l2_norm)*14, (A[1] + B[1]) / 2 + (dx2/l2_norm)*14, '#7dd3fc', 'center');
+
+      label('O₀ / O₁ (基座原点)', O[0] - 14, O[1] + 20, '#f8fafc', 'right');
+      label('O₂ (肘部原点)', A[0] + 12, A[1] + 16, '#f8fafc');
+      label('O₃ / B (末端原点)', B[0] + 12, B[1] - 12, '#f8fafc');
+    }
+
+    // 4. 独立图层：连杆 1 动坐标系 {1}（原点在基座 O₁，随杆 1 旋转）
+    if (layer.f1) {
+      const len1 = 1.25;
+      const x1_pt = [len1 * Math.cos(a), len1 * Math.sin(a), 0];
+      const y1_pt = [-len1 * Math.sin(a), len1 * Math.cos(a), 0];
+      const z1_pt = [0, 0, 1.7];
+      arrow3D(O, project(x1_pt), '#f59e0b', 3.5);
+      arrow3D(O, project(y1_pt), '#fbbf24', 2.8);
+      if (!layer.f0) arrow3D(O, project(z1_pt), '#f59e0b', 2.5); // 如果没开f0，则画出独立的z1
+      label('X₁ (沿杆1)', project(x1_pt)[0] + 4, project(x1_pt)[1] - 8, '#f59e0b');
+      label('Y₁ (切向)', project(y1_pt)[0] - 8, project(y1_pt)[1] - 8, '#fbbf24', 'right');
+      label('Z₁', project(z1_pt)[0], project(z1_pt)[1] - 8, '#f59e0b', 'center');
+    }
+
+    // 4.2 独立图层：连杆 2 动坐标系 {2}（原点在肘部 O₂，随杆 2 旋转）
+    if (layer.f2) {
+      const len2 = 1.05;
+      const x2_pt = [A_3D[0] + len2 * Math.cos(b), A_3D[1] + len2 * Math.sin(b), 0];
+      const y2_pt = [A_3D[0] - len2 * Math.sin(b), A_3D[1] + len2 * Math.cos(b), 0];
+      const z2_pt = [A_3D[0], A_3D[1], 1.5]; // 肘部的 Z2 轴！
+      arrow3D(A, project(x2_pt), '#0284c7', 3.5);
+      arrow3D(A, project(y2_pt), '#38bdf8', 2.8);
+      arrow3D(A, project(z2_pt), '#67e8f9', 2.2);
+      label('X₂ (沿杆2)', project(x2_pt)[0] + 4, project(x2_pt)[1] - 8, '#38bdf8');
+      label('Y₂ (切向)', project(y2_pt)[0] - 8, project(y2_pt)[1] - 8, '#7dd3fc', 'right');
+      label('Z₂ (肘部转轴)', project(z2_pt)[0], project(z2_pt)[1] - 8, '#67e8f9', 'center');
+    }
+
+    // 4.3 独立图层：末端工具坐标系 {3}（原点在末端手部 B / O₃）
+    if (layer.f3) {
+      const len3 = 0.85;
+      const x3_pt = [B_3D[0] + len3 * Math.cos(b), B_3D[1] + len3 * Math.sin(b), 0];
+      const y3_pt = [B_3D[0] - len3 * Math.sin(b), B_3D[1] + len3 * Math.cos(b), 0];
+      const z3_pt = [B_3D[0], B_3D[1], 1.3];
+      arrow3D(B, project(x3_pt), '#db2777', 3.2);
+      arrow3D(B, project(y3_pt), '#f472b6', 2.5);
+      arrow3D(B, project(z3_pt), '#e879f9', 2.0);
+      label('X₃ (工具向)', project(x3_pt)[0] + 4, project(x3_pt)[1] - 8, '#db2777');
+      label('Y₃ (法向)', project(y3_pt)[0] - 8, project(y3_pt)[1] - 8, '#f472b6', 'right');
+      label('Z₃', project(z3_pt)[0], project(z3_pt)[1] - 8, '#e879f9', 'center');
+    }
+
+    // 4.5 绘制基座原点 O₀ 到末端 B 的直连虚线 (位置矢量 ^0p_B)
+    if (layer.chord) {
+      c.save();
+      c.strokeStyle = '#94a3b8';
+      c.lineWidth = 1.8;
+      c.setLineDash([5, 4]);
+      c.beginPath();
+      c.moveTo(...O);
+      c.lineTo(...B);
+      c.stroke();
+      c.restore();
+
+      const rDist = Math.hypot(B_3D[0], B_3D[1]).toFixed(2);
+      const dxOB = B[0] - O[0], dyOB = B[1] - O[1], lenOB = Math.hypot(dxOB, dyOB) || 1;
+      const nxOB = -dyOB / lenOB, nyOB = dxOB / lenOB;
+      label(`|O₀B| = ${rDist}m`, (O[0] + B[0]) / 2 + nxOB * 12, (O[1] + B[1]) / 2 + nyOB * 12, '#cbd5e1', 'center');
+    }
+
+    // 5. 绘制空间角速度矢量 ω (在 Z 轴上笔直立起的空间矢量！)
+    if (layer.omega) {
+      const vs = 1.3 / Math.max(Math.abs(s.w1), Math.abs(s.w1 + s.w2), 0.1);
+      
+      // 关节 1 角速度 ¹ω₁ (扎在 O₀ 沿 Z 轴立起)
+      if (Math.abs(s.w1) > 0.001) {
+        const w1_top = [0, 0, s.w1 * vs];
+        const P_w1 = project(w1_top);
+        arrow3D(O, P_w1, '#eab308', 5);
+        label(`¹ω₁ = [0, 0, ${(s.w1/D).toFixed(0)}°/s]ᵀ (立于 Z₀ 轴)`, P_w1[0] - 10, P_w1[1] - 8, '#fde047', 'right');
+      }
+
+      // 关节 2 连杆 2 总角速度 ²ω₂ (扎在 O₁ 沿 Z 轴立起)
+      const w2_val = s.w1 + s.w2;
+      if (Math.abs(w2_val) > 0.001) {
+        const w2_top = [A_3D[0], A_3D[1], w2_val * vs];
+        const P_w2 = project(w2_top);
+        arrow3D(A, P_w2, '#06b6d4', 4.5);
+        label(`²ω₂ = [0, 0, ${(w2_val/D).toFixed(0)}°/s]ᵀ`, P_w2[0] + 8, P_w2[1] - 8, '#67e8f9');
+      }
+    }
+
+    // 6. 绘制末端平面线速度矢量 vᴮ (XY 地面上平铺的平行四边形合成)
+    if (layer.vectors) {
+      const v1_3D = [(-L1 * Math.sin(a) - L2 * Math.sin(b)) * s.w1, (L1 * Math.cos(a) + L2 * Math.cos(b)) * s.w1, 0];
+      const v2_3D = [-L2 * Math.sin(b) * s.w2, L2 * Math.cos(b) * s.w2, 0];
+      const vTotal_3D = [v1_3D[0] + v2_3D[0], v1_3D[1] + v2_3D[1], 0];
+
+      const factor = 0.55;
+      const P1 = project([B_3D[0] + v1_3D[0] * factor, B_3D[1] + v1_3D[1] * factor, 0]);
+      const P2 = project([B_3D[0] + v2_3D[0] * factor, B_3D[1] + v2_3D[1] * factor, 0]);
+      const P_tot = project([B_3D[0] + vTotal_3D[0] * factor, B_3D[1] + vTotal_3D[1] * factor, 0]);
+
+      arrow3D(B, P1, '#a855f7', 4);
+      arrow3D(B, P2, '#34d399', 4);
+      arrow3D(B, P_tot, '#ec4899', 5.5);
+
+      label(`J₁·q̇₁`, P1[0] + 6, P1[1] - 6, '#c084fc');
+      label(`J₂·q̇₂`, P2[0] + 6, P2[1] + 10, '#6ee7b7');
+      label(`总线速度 vᴮ`, P_tot[0] + 8, P_tot[1] - 8, '#f9a8d4');
+
+      // 平行四边形辅助线
+      arrow3D(P1, P_tot, '#34d399', 1.8, [4, 4]);
+      arrow3D(P2, P_tot, '#a855f7', 1.8, [4, 4]);
+    }
+
+    // 监控面板更新
+    const f = x => (Math.abs(x) < 0.005 ? 0 : x).toFixed(2);
+    const v1_3D = [(-L1 * Math.sin(a) - L2 * Math.sin(b)) * s.w1, (L1 * Math.cos(a) + L2 * Math.cos(b)) * s.w1, 0];
+    const v2_3D = [-L2 * Math.sin(b) * s.w2, L2 * Math.cos(b) * s.w2, 0];
+    const tot = [v1_3D[0] + v2_3D[0], v1_3D[1] + v2_3D[1]];
+
+    el('frame').innerHTML = `<strong>实时状态：</strong>q₁ = ${((s.q1 / D) % 360).toFixed(1)}°，q₂ = ${((s.q2 / D) % 360).toFixed(1)}° ； 电机转速：q̇₁ = ${(s.w1 / D).toFixed(0)}°/s，q̇₂ = ${(s.w2 / D).toFixed(0)}°/s`;
+    if (window.katex) {
+      const tex = `{}^1\\boldsymbol{\\omega}_1 = \\begin{bmatrix}0\\\\0\\\\${(s.w1/D).toFixed(0)}^\\circ/\\text{s}\\end{bmatrix},\\quad {}^2\\boldsymbol{\\omega}_2 = \\begin{bmatrix}0\\\\0\\\\${((s.w1+s.w2)/D).toFixed(0)}^\\circ/\\text{s}\\end{bmatrix},\\quad {}^0\\boldsymbol{v}_B = \\begin{bmatrix}${f(tot[0])}\\\\${f(tot[1])}\\\\0\\end{bmatrix}\\,\\text{m/s}`;
+      katex.render(tex, el('live-math'), { displayMode: true, throwOnError: false });
+    }
+  }
+
+  // 3D 鼠标拖拽交互
+  cv.addEventListener('pointerdown', e => {
+    drag = [e.clientX, e.clientY, yaw, pitch];
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!drag) return;
+    yaw = drag[2] + (e.clientX - drag[0]) * 0.008;
+    pitch = Math.max(-1.4, Math.min(1.4, drag[3] - (e.clientY - drag[1]) * 0.008));
+    draw();
+  });
+  cv.addEventListener('pointerup', () => drag = null);
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoom = Math.max(0.5, Math.min(2.5, zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+    draw();
+  }, { passive: false });
+
+  // 视角预设切换
+  el('view-3d').onclick = () => {
+    yaw = -0.72; pitch = 0.44; zoom = 1;
+    document.querySelectorAll('.actions button').forEach(b => b.classList.remove('active'));
+    el('view-3d').classList.add('active');
+    draw();
+  };
+  el('view-top').onclick = () => {
+    yaw = 0; pitch = 1.56; zoom = 1; // 俯视视角 (直视 XY 地面)
+    document.querySelectorAll('.actions button').forEach(b => b.classList.remove('active'));
+    el('view-top').classList.add('active');
+    draw();
+  };
+  el('view-front').onclick = () => {
+    yaw = 0; pitch = 0.02; zoom = 1; // 前视视角 (直视 Z 轴高度)
+    document.querySelectorAll('.actions button').forEach(b => b.classList.remove('active'));
+    el('view-front').classList.add('active');
+    draw();
+  };
+
+  ids.forEach(id => el(id).addEventListener('input', () => {
+    const n = +el(id).value;
+    el(id + 'v').textContent = (n < 0 ? '−' : '') + Math.abs(n) + (id.startsWith('qd') ? '°/s' : '°');
+    draw();
+  }));
+
+  document.querySelectorAll('[data-layer]').forEach(x => x.addEventListener('change', () => {
+    layer[x.dataset.layer] = x.checked;
+    draw();
+  }));
+
+  el('play').onclick = () => {
+    playing = !playing;
+    el('play').textContent = playing ? '⏸ 暂停运动' : '▶ 播放运动';
+  };
+
+  el('reset').onclick = () => {
+    t = 0; yaw = -0.72; pitch = 0.44; zoom = 1; trail = []; draw();
+  };
+
+  function loop(now) {
+    if (playing) {
+      t += (now - last) / 1000;
+      draw();
+    }
+    last = now;
+    requestAnimationFrame(loop);
+  }
+
+  // 启动 KaTeX 全局双模自适应渲染
+  let n = 0;
+  const bootMath = () => {
+    if (!window.katex) { if (n++ < 50) setTimeout(bootMath, 60); return; }
+    document.querySelectorAll('[data-tex]').forEach(e => {
+      if (e.dataset.tex && e.dataset.tex.trim() !== '') {
+        try {
+          katex.render(e.dataset.tex, e, { displayMode: e.classList.contains('math'), throwOnError: false });
+        } catch (err) {}
+      }
+    });
+    if (typeof renderMathInElement === 'function') {
+      try {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '\\(', right: '\\)', display: false }
+          ],
+          throwOnError: false
+        });
+      } catch (err) {}
+    }
+    draw();
+  };
+
+  if (document.readyState === 'complete') bootMath();
+  else addEventListener('load', bootMath);
+
+  window.addEventListener('resize', draw);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

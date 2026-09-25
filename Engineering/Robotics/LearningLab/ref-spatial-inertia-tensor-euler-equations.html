@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>附录 4：刚体空间惯性张量与欧拉转动方程深入推导（Craig 原书 §6.3 ~ §6.4）</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #040711;
+      --card-bg: #090f1d;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #c084fc;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      padding: 24px;
+    }
+    main { max-width: 1060px; margin: 0 auto; }
+    h1 { font-size: 1.85rem; color: #fff; margin-bottom: 8px; font-weight: 800; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 12px; }
+    h2 { font-size: 1.35rem; color: var(--accent); margin: 32px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.1rem; color: #cbd5e1; margin: 20px 0 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .step-block { background: #040711; border-radius: 8px; padding: 18px; margin-bottom: 16px; position: relative; }
+    .step-tag { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+    .back-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.9rem; }
+    .back-nav a { color: var(--accent); text-decoration: none; font-weight: bold; }
+    .back-nav a:hover { text-decoration: underline; }
+    .interactive-container { background: #02050c; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 14px 0; }
+    .formula-pill { background: #0b1329; border: 1px solid #1e293b; border-radius: 6px; padding: 12px; margin: 8px 0; font-family: ui-monospace, monospace; }
+    .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+    .table-custom th, .table-custom td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    .table-custom th { background: #0f172a; color: var(--accent); font-weight: bold; }
+    button {
+      appearance: none; border: 1px solid #334155; border-radius: 5px; background: #1e293b;
+      color: #cbd5e1; padding: 7px 11px; font: 600 0.86rem/1.2 inherit; cursor: pointer;
+    }
+    button:hover { border-color: #64748b; color: #fff; }
+  </style>
+  <script>
+    (function initKaTeXBootloader() {
+      let attempts = 0;
+      function renderMath() {
+        if (typeof renderMathInElement === 'function') {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        } else if (attempts < 30) {
+          attempts++;
+          setTimeout(renderMath, 100);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderMath);
+      } else {
+        renderMath();
+      }
+      window.addEventListener('load', renderMath);
+    })();
+  </script>
+</head>
+<body>
+<main>
+  <h1>附录 4：刚体空间惯性张量与欧拉转动方程深入推导（Craig 原书 §6.3 ~ §6.4）</h1>
+  <div class="lead">从微积分第一性原理深入剖析 3×3 空间惯性张量、惯性积引起的偏心摇晃，严谨推导欧拉转动方程中的空间陀螺进动力矩 ω × (Iω)。</div>
+
+  <!-- 0. 30 秒人话总览 -->
+  <div class="card" style="border-left: 4px solid var(--accent);">
+    <h3 style="color:#38bdf8; margin-top:0;">⚡ 30 秒核心洞察：为什么 3D 动力学会冒出 $3\times 3$ 矩阵和叉乘项？</h3>
+    <p style="font-size:0.95rem; line-height:1.75;">
+      在笔记 27 的单关节定轴转动中，我们熟悉的力矩公式是初中物理标量形式：$\tau = I \ddot{\theta}$（力矩 = 转动惯量 $\times$ 角加速度）。<br>
+      但当机械臂进入 <strong>3D 三维空间自由旋转</strong>时，理论力学揭示了两个颠覆常识的真相：
+    </p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:12px; margin-top:12px;">
+      <div style="background:#090f1d; border-left:3px solid #f59e0b; border-radius:4px; padding:12px 14px;">
+        <strong style="color:#f59e0b;">🧩 真相 1：转动惯量变成了 $3\times 3$ 惯性张量 $\boldsymbol{I}$</strong>
+        <div style="font-size:0.86rem; color:#cbd5e1; margin-top:4px;">
+          刚体在空间中绕 $X, Y, Z$ 各个方向转动时的质量分布不同，不仅有对角线上的主转动惯量，非对称刚体还会产生<strong>惯性积（Products of Inertia）</strong>，导致绕一个轴转动会产生另一个轴的甩动力矩！
+        </div>
+      </div>
+      <div style="background:#090f1d; border-left:3px solid #c084fc; border-radius:4px; padding:12px 14px;">
+        <strong style="color:#c084fc;">🌪️ 真相 2：空间自转会产生【陀螺进动力矩】 $\boldsymbol{\omega} \times (\boldsymbol{I}\boldsymbol{\omega})$</strong>
+        <div style="font-size:0.86rem; color:#cbd5e1; margin-top:4px;">
+          刚体的空间角动量为 $\boldsymbol{L} = \boldsymbol{I}\boldsymbol{\omega}$。当刚体在多个轴向同时自转时，角动量在空间中发生偏转，根据旋转坐标系求导法则，必然会凭空甩出一个与自转正交的<strong>陀螺进动力矩</strong>！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 空间惯性张量定义 -->
+  <h2>1. 空间刚体惯性张量 $\boldsymbol{I}$ 的第一性原理（Craig 原书 §6.3）</h2>
+  <div class="card">
+    <p style="font-size:0.95rem; line-height:1.75; margin-bottom:14px;">
+      回顾笔记 04：质点到转轴距离为 $r$ 时，转动惯量定义为 $I = \int r^2 dm$。<br>
+      在三维空间笛卡尔坐标系中，设刚体上某个微元质点 $dm$ 的坐标为 $(x, y, z)$：
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px;">
+      <div style="background:#090f1d; border:1px solid #38bdf8; border-radius:6px; padding:14px;">
+        <strong style="color:#38bdf8; font-size:0.96rem;">1. 对角线：主转动惯量（Moments of Inertia）</strong>
+        <p style="font-size:0.86rem; color:#cbd5e1; margin-top:6px; line-height:1.6;">
+          质点到 $X$ 轴的垂线距离平方为 $r_x^2 = y^2 + z^2$（初中勾股定理）。因此绕各主轴积分得到：
+        </p>
+        <div style="font-family:ui-monospace, monospace; font-size:0.88rem; color:#38bdf8; margin-top:6px; line-height:1.8;">
+          $$I_{xx} = \iiint (y^2 + z^2) dm$$
+          $$I_{yy} = \iiint (x^2 + z^2) dm$$
+          $$I_{zz} = \iiint (x^2 + y^2) dm$$
+        </div>
+      </div>
+
+      <div style="background:#090f1d; border:1px solid #f97316; border-radius:6px; padding:14px;">
+        <strong style="color:#f97316; font-size:0.96rem;">2. 非对角线：惯性积（Products of Inertia）</strong>
+        <p style="font-size:0.86rem; color:#cbd5e1; margin-top:6px; line-height:1.6;">
+          度量刚体质量分布不对称性的物理量。定义为质量与两坐标乘积的积分：
+        </p>
+        <div style="font-family:ui-monospace, monospace; font-size:0.88rem; color:#f97316; margin-top:6px; line-height:1.8;">
+          $$I_{xy} = \iiint xy \, dm$$
+          $$I_{yz} = \iiint yz \, dm$$
+          $$I_{zx} = \iiint zx \, dm$$
+        </div>
+      </div>
+    </div>
+
+    <!-- 惯性张量完整矩阵 -->
+    <div style="background:#040711; border:1px solid #1e293b; border-radius:6px; padding:14px; margin-top:16px;">
+      <h3 style="color:#c084fc; margin-top:0; font-size:1.05rem;">📐 刚体空间惯性张量矩阵完整结构（Craig 式 6.27）</h3>
+      <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.7;">
+        在连杆质心坐标系 $\{C_i\}$ 下，惯性张量写作一个对称的 $3\times 3$ 矩阵（注意：非对角线按经典力学规范冠以负号）：
+      </p>
+      <div style="text-align:center; margin:10px 0; font-size:1.05rem;">
+        $${}^{C_i}\boldsymbol{I}_i = \begin{bmatrix} I_{xx} & -I_{xy} & -I_{xz} \\ -I_{xy} & I_{yy} & -I_{yz} \\ -I_{xz} & -I_{yz} & I_{zz} \end{bmatrix}$$
+      </div>
+      <div style="font-size:0.86rem; color:#94a3b8; line-height:1.7; border-top:1px solid #1e293b; padding-top:8px;">
+        💡 <strong>主惯性轴定理（Principal Axes）</strong>：任何几何形状的刚体，必然存在一组正交坐标系（主轴系），使得所有的惯性积 $I_{xy} = I_{yz} = I_{zx} = 0$，此时矩阵完全对角化为 $\text{diag}(I_{xx}, I_{yy}, I_{zz})$！
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 交互式 3D 惯性张量与偏心摇晃仿真台 -->
+  <h2>2. 🎮 交互式 3D 刚体惯性张量与非对称偏心体验台</h2>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <div>
+        <div style="color:#38bdf8; font-size:1.05rem; font-weight:bold;">🔍 观察：质量对称 vs 偏心不对称时的惯性张量变化</div>
+        <div style="font-size:0.82rem; color:#94a3b8;">拖动滑块增加偏心质量块，观察非对角惯性积 $I_{xy}$ 是如何冒出来的！</div>
+      </div>
+      <button id="btn-inertia-reset" type="button">🔄 恢复对称刚体</button>
+    </div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:12px; background:#040711; padding:10px 14px; border:1px solid #1e293b; border-radius:6px;">
+      <label style="color:#cbd5e1; font-size:0.88rem; display:flex; align-items:center; gap:8px;">
+        <span>偏心块位置 $x$：</span>
+        <input type="range" id="rng-offset-x" min="0" max="100" value="0" style="width:120px;">
+        <span id="val-offset-x" style="color:#38bdf8; font-family:monospace; min-width:40px;">0 mm</span>
+      </label>
+      <label style="color:#cbd5e1; font-size:0.88rem; display:flex; align-items:center; gap:8px;">
+        <span>偏心块位置 $y$：</span>
+        <input type="range" id="rng-offset-y" min="0" max="100" value="0" style="width:120px;">
+        <span id="val-offset-y" style="color:#f97316; font-family:monospace; min-width:40px;">0 mm</span>
+      </label>
+    </div>
+
+    <!-- 画布与实时矩阵卡片 -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:14px;">
+      <canvas id="canvas-inertia-tensor" width="460" height="320" style="width:100%; aspect-ratio:1.44; background:#02050c; border-radius:6px; display:block; border:1px solid #1e293b;"></canvas>
+      
+      <div style="background:#040711; border:1px solid #1e293b; border-radius:6px; padding:16px; display:flex; flex-direction:column; justify-content:center;">
+        <strong style="color:#c084fc; font-size:0.95rem; margin-bottom:10px; display:block;">📊 刚体质心惯性张量实时解算：</strong>
+        <div style="font-family:ui-monospace, monospace; font-size:0.95rem; background:#090f1d; padding:14px; border-radius:6px; border:1px solid #334155;">
+          $$\boldsymbol{I} = \begin{bmatrix}
+          \color{#38bdf8}{\mathbf{I_{xx}}} & \color{#f97316}{\mathbf{-I_{xy}}} & \color{#94a3b8}{0} \\
+          \color{#f97316}{\mathbf{-I_{xy}}} & \color{#38bdf8}{\mathbf{I_{yy}}} & \color{#94a3b8}{0} \\
+          \color{#94a3b8}{0} & \color{#94a3b8}{0} & \color{#38bdf8}{\mathbf{I_{zz}}}
+          \end{bmatrix} = \begin{bmatrix}
+          <span id="mat-ixx" style="color:#38bdf8; font-weight:bold;">1.20</span> & <span id="mat-ixy" style="color:#f97316; font-weight:bold;">-0.00</span> & 0.00 \\
+          <span id="mat-iyx" style="color:#f97316; font-weight:bold;">-0.00</span> & <span id="mat-iyy" style="color:#38bdf8; font-weight:bold;">2.40</span> & 0.00 \\
+          0.00 & 0.00 & <span id="mat-izz" style="color:#38bdf8; font-weight:bold;">3.60</span>
+          \end{bmatrix} \times 10^{-2} \text{ kg}\cdot\text{m}^2$$
+        </div>
+        <div id="inertia-hint-text" style="font-size:0.86rem; color:#cbd5e1; margin-top:12px; line-height:1.7;">
+          ✨ 当偏心为 0 时，质量关于坐标面对称，$I_{xy} = 0$，刚体绕主轴纯净旋转，无任何晃动力矩。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 欧拉方程第一性原理推导 -->
+  <h2>3. 欧拉转动方程的第一性原理严谨推导（Craig 原书 §6.4）</h2>
+  <div class="card">
+    <p style="font-size:0.95rem; line-height:1.75;">
+      现在我们来彻底解决开头的问题：<strong>为什么欧拉转动方程会出现 $\boldsymbol{\omega} \times (\boldsymbol{I}\boldsymbol{\omega})$ 这一项？</strong>
+    </p>
+
+    <!-- 步骤 1: 牛顿基础转动定律 -->
+    <div class="step-block" style="border-left:3px solid #38bdf8;">
+      <span class="step-tag" style="background:#0284c7; color:#fff;">第一步：牛顿旋转第一性原理</span>
+      <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.7; margin-top:6px;">
+        在<strong>世界惯性参考系</strong>中，作用在刚体上的外力矩等于其总角动量 $\boldsymbol{L}$ 对时间的导数：
+      </p>
+      <div style="font-size:1.05rem; text-align:center; margin:8px 0;">
+        $$\boldsymbol{N} = \left.\frac{d\boldsymbol{L}}{dt}\right|_{\text{world}}$$
+      </div>
+    </div>
+
+    <!-- 步骤 2: 为什么必须换到刚体坐标系 -->
+    <div class="step-block" style="border-left:3px solid #f59e0b;">
+      <span class="step-tag" style="background:#b45309; color:#fff;">第二步：为什么要转换到刚体随动坐标系？</span>
+      <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.7; margin-top:6px;">
+        在世界坐标系中，刚体一边转动，其质量分布 $\boldsymbol{I}(t)$ 就在随时间剧烈变化，极难微分。<br>
+        但在<strong>刚体自身固连坐标系（Body Frame）</strong>中，刚体形状固定不变，其惯性张量 $\boldsymbol{I}$ 是一个<strong>完美的常数矩阵</strong>！
+      </p>
+    </div>
+
+    <!-- 步骤 3: 旋转系导数定理 -->
+    <div class="step-block" style="border-left:3px solid #c084fc;">
+      <span class="step-tag" style="background:#7e22ce; color:#fff;">第三步：应用旋转坐标系导数定理</span>
+      <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.7; margin-top:6px;">
+        根据高等力学中随动坐标系矢量的绝对时间导数定理：
+      </p>
+      <div style="font-size:1.05rem; text-align:center; margin:8px 0;">
+        $$\left.\frac{d\boldsymbol{L}}{dt}\right|_{\text{world}} = \left.\frac{d\boldsymbol{L}}{dt}\right|_{\text{body}} + \boldsymbol{\omega} \times \boldsymbol{L}$$
+      </div>
+      <p style="font-size:0.86rem; color:#94a3b8; line-height:1.6;">
+        其中 $\left.\frac{d\boldsymbol{L}}{dt}\right|_{\text{body}} = \frac{d(\boldsymbol{I}\boldsymbol{\omega})}{dt} = \boldsymbol{I}\dot{\boldsymbol{\omega}}$（因为在刚体系内 $\boldsymbol{I}$ 为常数，微分直接作用在角加速度 $\dot{\boldsymbol{\omega}}$ 上）。
+      </p>
+    </div>
+
+    <!-- 步骤 4: 最终得出欧拉方程 -->
+    <div style="background:#090f1d; border:1px solid #10b981; border-radius:8px; padding:18px; margin-top:16px;">
+      <h3 style="color:#10b981; margin-top:0; font-size:1.15rem;">🎯 欧拉转动方程正式诞生（Craig 式 6.50）</h3>
+      <div style="text-align:center; font-size:1.2rem; margin:12px 0;">
+        $${}^i\boldsymbol{N}_i = \underbrace{{}^{C_i}\boldsymbol{I}_i {}^i\dot{\boldsymbol{\omega}}_i}_{\text{① 角加速度惯性力矩}} + \underbrace{{}^i\boldsymbol{\omega}_i \times ({}^{C_i}\boldsymbol{I}_i {}^i\boldsymbol{\omega}_i)}_{\text{② 3D 空间陀螺进动力矩}}$$
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px; font-size:0.86rem; color:#cbd5e1; margin-top:14px;">
+        <div>• <strong style="color:#38bdf8;">① 惯性力矩项</strong>：改变自转快慢所需的力矩（2D 与 3D 都有）。</div>
+        <div>• <strong style="color:#10b981;">② 陀螺进动项</strong>：抵抗角动量空间方向改变的陀螺力矩（3D 特有，2D 自动为 0）。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 交互式 3D 陀螺进动力矩实验台 (双屏高标准) -->
+  <h2>4. 🎮 交互式 3D 陀螺进动力矩与正交分解实验台</h2>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <div>
+        <div style="color:#10b981; font-size:1.05rem; font-weight:bold;">🌪️ 陀螺力矩 $\boldsymbol{N} = \boldsymbol{\omega} \times \boldsymbol{L}$ 的严格空间几何验证</div>
+        <div style="font-size:0.82rem; color:#94a3b8;">左侧为物理陀螺机构；右侧为角动量与陀螺力矩的严格空间正交关系。</div>
+      </div>
+      <div style="color:#10b981; font-family:monospace; font-size:0.88rem; background:#040711; padding:4px 12px; border-radius:4px; border:1px solid #10b981;">
+        $\|\boldsymbol{N}_{\text{gyro}}\| = $ <span id="label-gyro-torque-mag" style="font-weight:bold;">4.80</span> N·m
+      </div>
+    </div>
+
+    <!-- 步进按钮控制器 -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; padding:10px 12px; background:#040711; border:1px solid #1e293b; border-radius:6px;">
+      <strong style="color:#cbd5e1; margin-right:6px;">看陀螺分解：</strong>
+      <button id="btn-gyro-overview" type="button" style="background:#059669; color:#fff; border:1px solid #34d399;">总览：角动量 + 进动 → 陀螺力矩</button>
+      <button id="btn-gyro-spin" type="button">① 高速自转角动量 L</button>
+      <button id="btn-gyro-prec" type="button">② 空间进动角速度 ω</button>
+      <button id="btn-gyro-torque" type="button">③ 叉乘生成陀螺力矩 N</button>
+    </div>
+    <div id="gyro-step-copy" style="font-size:0.9rem; line-height:1.7; color:#cbd5e1; min-height:28px; margin:0 0 10px;"></div>
+
+    <!-- 880x380 双屏画布 -->
+    <canvas id="canvas-euler-gyro" width="880" height="380" style="width:100%; aspect-ratio:2.31; background:#02050c; border-radius:6px; display:block; border:1px solid #1e293b;"></canvas>
+
+    <div style="font-size:0.86rem; color:#cbd5e1; margin-top:12px; line-height:1.75; background:#040711; padding:10px 16px; border-radius:6px; border:1px solid #172033; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:8px;">
+      <div>• <strong style="color:#38bdf8;">🔵 自转角动量 $\boldsymbol{L} = \boldsymbol{I}\boldsymbol{\omega}_s$</strong>：沿自转轴高速旋转，具有巨大的空间定向稳定性。</div>
+      <div>• <strong style="color:#f97316;">🟠 进动角速度 $\boldsymbol{\omega}_p$</strong>：机械臂转弯或底座自转时迫使自转轴偏转。</div>
+      <div>• <strong style="color:#10b981;">💥 空间陀螺力矩 $\boldsymbol{N} = \boldsymbol{\omega}_p \times \boldsymbol{L}$</strong>：严格垂直于自转轴与进动轴构成的平面（右手螺旋）。</div>
+    </div>
+  </div>
+
+  <!-- 5. 总结速查与下篇承接 -->
+  <h2>5. 2D 与 3D 动力学双子星对照表</h2>
+  <div class="card">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>力学概念</th>
+          <th>2D 平面机械臂（初级）</th>
+          <th>3D 空间机械臂（工业全姿态）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>质量 / 惯性</strong></td>
+          <td>标量质量 $m$，标量转动惯量 $I_z$</td>
+          <td>标量质量 $m$，$3\times 3$ 惯性张量矩阵 $\boldsymbol{I}$</td>
+        </tr>
+        <tr>
+          <td><strong>平动牛顿方程</strong></td>
+          <td>$F_x = m a_x, \ F_y = m a_y$</td>
+          <td>$\boldsymbol{F} = m \dot{\boldsymbol{v}}_C$（空间 3 维矢量）</td>
+        </tr>
+        <tr>
+          <td><strong>转动欧拉方程</strong></td>
+          <td>$N_z = I_{zz} \dot{\omega}_z$</td>
+          <td>$\boldsymbol{N} = \boldsymbol{I}\dot{\boldsymbol{\omega}} + \boldsymbol{\omega} \times (\boldsymbol{I}\boldsymbol{\omega})$（含 3D 陀螺项）</td>
+        </tr>
+        <tr>
+          <td><strong>陀螺力矩为什么消失？</strong></td>
+          <td>$\boldsymbol{\omega} \parallel \boldsymbol{L}$，叉乘 $\boldsymbol{\omega} \times \boldsymbol{L} \equiv 0$</td>
+          <td>多轴不同向转动，$\boldsymbol{\omega} \times \boldsymbol{L} \neq 0$（必须补偿）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 下篇承接卡片 -->
+  <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left:4px solid #10b981; padding:20px 24px; margin-top:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div>
+        <h3 style="margin:0 0 6px; color:#10b981; font-size:1.15rem;">🎯 恭喜通关牛顿方程与欧拉方程！下一步：进入 Newton-Euler 逆向力矩内推闭环！</h3>
+        <p style="font-size:0.92rem; color:#cbd5e1; margin:0; line-height:1.65;">
+          我们已经完整推导了牛顿平动方程 $\boldsymbol{F}_i = m_i \dot{\boldsymbol{v}}_{C_i}$ 与欧拉转动方程 $\boldsymbol{N}_i = \boldsymbol{I}_i \dot{\boldsymbol{\omega}}_i + \boldsymbol{\omega}_i \times (\boldsymbol{I}_i \boldsymbol{\omega}_i)$。接下来在<strong>笔记 33</strong>中，我们将实现从机械臂末端向基座的<strong>逆向力矩内推（Inward Pass）</strong>，彻底解算出关节电机的驱动力矩！
+        </p>
+      </div>
+      <a href="27-recursive-newton-euler-dynamics.html" style="background:#10b981; color:#040711; text-decoration:none; font-weight:bold; font-size:0.95rem; padding:10px 22px; border-radius:6px; white-space:nowrap; display:inline-block;">
+        返回主线笔记 04：递归 Newton-Euler 动力学算法 →
+      </a>
+    </div>
+  </div>
+
+  <div class="back-nav" style="margin-top:30px;">
+    <a href="index.html">← 返回课程主目录</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">上一篇：31. 小臂质心正交解耦与牛顿力标定</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">返回主线：32. 递归 Newton-Euler 动力学算法 →</a>
+  </div>
+</main>
+<script>
+  // =========================================================================
+  // 全局高对比度 2D 矢量与胶囊标签绘制工具函数
+  // =========================================================================
+  function drawBadge2D(ctx, text, x, y, bgColor = 'rgba(15,23,42,0.92)', textColor = '#cbd5e1', borderColor = '#334155', align = 'center') {
+    ctx.save();
+    ctx.font = 'bold 11px ui-monospace, monospace, -apple-system, sans-serif';
+    const metrics = ctx.measureText(text);
+    const paddingX = 8;
+    const w = metrics.width + paddingX * 2;
+    const h = 20;
+    let rx = x - w / 2;
+    if (align === 'left') rx = x;
+    else if (align === 'right') rx = x - w;
+    const ry = y - h / 2;
+
+    ctx.fillStyle = bgColor;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rx, ry, w, h, 4);
+    else ctx.rect(rx, ry, w, h);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, rx + w / 2, ry + h / 2);
+    ctx.restore();
+  }
+
+  function draw2DArrow(ctx, from, to, color = '#38bdf8', lineWidth = 2.5) {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    ctx.lineTo(to[0], to[1]);
+    ctx.stroke();
+
+    const headlen = Math.min(10, Math.max(6, lineWidth * 2.5));
+    const angle = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(to[0], to[1]);
+    ctx.lineTo(to[0] - headlen * Math.cos(angle - Math.PI / 6), to[1] - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(to[0] - headlen * Math.cos(angle + Math.PI / 6), to[1] - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+
+// =========================================================================
+// 1. 交互式 3D 惯性张量与偏心质量仿真引擎 (canvas-inertia-tensor)
+// =========================================================================
+(() => {
+  const canvas = document.getElementById('canvas-inertia-tensor');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rngX = document.getElementById('rng-offset-x');
+  const rngY = document.getElementById('rng-offset-y');
+  const valX = document.getElementById('val-offset-x');
+  const valY = document.getElementById('val-offset-y');
+  const btnReset = document.getElementById('btn-inertia-reset');
+  const hintText = document.getElementById('inertia-hint-text');
+
+  const matIxx = document.getElementById('mat-ixx');
+  const matIxy = document.getElementById('mat-ixy');
+  const matIyx = document.getElementById('mat-iyx');
+  const matIyy = document.getElementById('mat-iyy');
+  const matIzz = document.getElementById('mat-izz');
+
+  let animAngle = 0;
+
+  function updateInertia() {
+    const offX = parseFloat(rngX.value) / 1000; // m
+    const offY = parseFloat(rngY.value) / 1000;
+    if (valX) valX.innerText = `${(offX * 1000).toFixed(0)} mm`;
+    if (valY) valY.innerText = `${(offY * 1000).toFixed(0)} mm`;
+
+    // 基础对称圆柱惯性
+    const m_base = 2.0;
+    const r_base = 0.08;
+    const h_base = 0.20;
+    const Ixx_0 = (1 / 12) * m_base * (3 * r_base * r_base + h_base * h_base);
+    const Iyy_0 = Ixx_0;
+    const Izz_0 = 0.5 * m_base * r_base * r_base;
+
+    // 偏心小质块
+    const m_point = 0.8;
+    const Ixx = (Ixx_0 + m_point * offY * offY) * 100;
+    const Iyy = (Iyy_0 + m_point * offX * offX) * 100;
+    const Izz = (Izz_0 + m_point * (offX * offX + offY * offY)) * 100;
+    const Ixy = (m_point * offX * offY) * 100;
+
+    if (matIxx) matIxx.innerText = Ixx.toFixed(2);
+    if (matIyy) matIyy.innerText = Iyy.toFixed(2);
+    if (matIzz) matIzz.innerText = Izz.toFixed(2);
+    if (matIxy) matIxy.innerText = (-Ixy).toFixed(2);
+    if (matIyx) matIyx.innerText = (-Ixy).toFixed(2);
+
+    if (hintText) {
+      if (offX === 0 && offY === 0) {
+        hintText.innerHTML = '✨ 当偏心为 0 时，质量关于坐标面对称，$I_{xy} = 0$，刚体绕主轴纯净旋转，无任何晃动力矩。';
+      } else {
+        hintText.innerHTML = `⚠️ <strong>检测到偏心质量！</strong> 惯性积 $I_{xy} = ${(Ixy).toFixed(2)} \times 10^{-2}$产生离心力偶，强行绕 $X$ 轴旋转会连带激发出 $Y$ 轴的侧向晃动力矩！`;
+      }
+    }
+  }
+
+  function renderInertiaCanvas() {
+    const cw = canvas.width, ch = canvas.height;
+    ctx.clearRect(0, 0, cw, ch);
+
+    const cx = cw * 0.5, cy = ch * 0.52;
+    const offX = parseFloat(rngX.value) * 0.8;
+    const offY = parseFloat(rngY.value) * 0.8;
+
+    // 3D 旋转投影
+    const cosA = Math.cos(animAngle * 0.5 + 0.4), sinA = Math.sin(animAngle * 0.5 + 0.4);
+
+    // 主刚体圆台 (半透明)
+    ctx.save();
+    ctx.fillStyle = 'rgba(2, 132, 199, 0.25)';
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 90, 45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 质心原点
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+    drawBadge2D(ctx, '质心 C', cx, cy + 22, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+    // 坐标轴
+    draw2DArrow(ctx, [cx, cy], [cx + 120 * cosA, cy + 60 * sinA], '#38bdf8', 2.0);
+    drawBadge2D(ctx, '+X 轴', cx + 130 * cosA, cy + 65 * sinA, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+    draw2DArrow(ctx, [cx, cy], [cx - 120 * sinA, cy + 60 * cosA], '#10b981', 2.0);
+    drawBadge2D(ctx, '+Y 轴', cx - 130 * sinA, cy + 65 * cosA, '#0f172a', '#10b981', '#059669', 'center');
+
+    draw2DArrow(ctx, [cx, cy], [cx, cy - 100], '#eab308', 2.0);
+    drawBadge2D(ctx, '+Z 主轴', cx, cy - 110, '#0f172a', '#eab308', '#eab308', 'center');
+
+    // 绘制偏心质块
+    if (offX > 0 || offY > 0) {
+      const px = cx + offX * cosA - offY * sinA;
+      const py = cy + offX * sinA * 0.5 + offY * cosA * 0.5;
+
+      // 虚线连线
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 质块红点
+      ctx.fillStyle = '#ef4444';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      drawBadge2D(ctx, '偏心附加质量 Δm', px + 14, py - 10, '#0f172a', '#f97316', '#ea580c', 'left');
+    }
+
+    ctx.restore();
+  }
+
+  [rngX, rngY].forEach(el => el.addEventListener('input', () => { updateInertia(); renderInertiaCanvas(); }));
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      rngX.value = 0; rngY.value = 0;
+      updateInertia();
+      renderInertiaCanvas();
+    });
+  }
+
+  updateInertia();
+  renderInertiaCanvas();
+})();
+
+// =========================================================================
+// 2. 交互式 3D 陀螺进动力矩与正交分解实验台 (canvas-euler-gyro)
+// =========================================================================
+(() => {
+  const canvas = document.getElementById('canvas-euler-gyro');
+  if (!canvas) return;
+  const g = canvas.getContext('2d');
+
+  var gyroStep = 'overview';
+  const btnOverview = document.getElementById('btn-gyro-overview');
+  const btnSpin = document.getElementById('btn-gyro-spin');
+  const btnPrec = document.getElementById('btn-gyro-prec');
+  const btnTorque = document.getElementById('btn-gyro-torque');
+  const copyText = document.getElementById('gyro-step-copy');
+  const lblMag = document.getElementById('label-gyro-torque-mag');
+
+  const buttons = {
+    overview: btnOverview,
+    spin: btnSpin,
+    prec: btnPrec,
+    torque: btnTorque
+  };
+
+  function updateButtonsUI() {
+    Object.entries(buttons).forEach(([name, btn]) => {
+      if (!btn) return;
+      const active = name === gyroStep;
+      btn.style.background = active ? '#059669' : '#1e293b';
+      btn.style.color = active ? '#ffffff' : '#cbd5e1';
+      btn.style.border = active ? '1px solid #34d399' : '1px solid #334155';
+    });
+  }
+
+  const messages = {
+    overview: '总览：自转角动量 L（蓝色）沿自转轴高速旋转；进动角速度 ω（橙色）迫使其偏转；二者叉乘产生空间陀螺力矩 N（绿色，严格右手螺旋正交）。',
+    spin: '① 高速自转角动量 L = I·ω_spin：刚体绕自身对称轴高速旋转，具有抵抗方向改变的定向惯性。',
+    prec: '② 空间进动角速度 ω_prec：机械臂基座旋转或关节转向，强制迫使自转轴在空间中以角速度 ω 进动。',
+    torque: '③ 空间陀螺力矩 N = ω × L：由旋转系导数产生的正交抵抗力矩！电机必须输出此力矩才能维持机械臂预定轨迹！'
+  };
+
+  function renderGyro() {
+    const cw = canvas.width, ch = canvas.height;
+    g.clearRect(0, 0, cw, ch);
+
+    if (copyText) copyText.textContent = messages[gyroStep];
+    updateButtonsUI();
+
+    // 分隔虚线
+    g.save(); g.strokeStyle = '#243247'; g.setLineDash([4, 5]); g.beginPath(); g.moveTo(438, 22); g.lineTo(438, ch - 18); g.stroke(); g.restore();
+    drawBadge2D(g, '左：3D 真实自转进动机构', 215, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+    drawBadge2D(g, '右：N = ω × L 严格空间正交标定台', 658, 28, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+    const visible = (name) => gyroStep === 'overview' || gyroStep === 'torque' ||
+      (gyroStep === 'spin' && name === 'spin') ||
+      (gyroStep === 'prec' && (name === 'spin' || name === 'prec'));
+
+    // -------------------------------------------------------------------------
+    // 左侧：3D 陀螺物理机构
+    // -------------------------------------------------------------------------
+    const baseP = [120, 290];
+    const pivotP = [220, 200];
+    const tipP = [340, 160];
+
+    // 底座与支架
+    g.save();
+    g.strokeStyle = '#475569'; g.lineWidth = 8; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(baseP[0], baseP[1]); g.lineTo(pivotP[0], pivotP[1]); g.stroke();
+    drawBadge2D(g, '支撑底座', baseP[0], baseP[1] + 20, '#0f172a', '#64748b', '#334155', 'center');
+
+    // 旋转轴
+    g.strokeStyle = '#0284c7'; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(pivotP[0], pivotP[1]); g.lineTo(tipP[0], tipP[1]); g.stroke();
+
+    // 陀螺飞轮圆盘
+    const midX = (pivotP[0] + tipP[0]) / 2;
+    const midY = (pivotP[1] + tipP[1]) / 2;
+    g.fillStyle = 'rgba(56, 189, 248, 0.3)';
+    g.strokeStyle = '#38bdf8';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.ellipse(midX, midY, 18, 55, Math.PI * 0.18, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    drawBadge2D(g, '高速转子', midX, midY + 45, '#0f172a', '#38bdf8', '#0284c7', 'center');
+
+    // 支点圆点
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(pivotP[0], pivotP[1], 6, 0, Math.PI * 2); g.fill();
+    drawBadge2D(g, '进动支点 O', pivotP[0] - 18, pivotP[1] + 20, '#0f172a', '#cbd5e1', '#334155', 'center');
+    g.restore();
+
+    // 左侧矢量
+    // ① 自转角动量 L (沿自转轴向右上)
+    if (visible('spin')) {
+      draw2DArrow(g, [pivotP[0], pivotP[1]], [tipP[0] + 60, tipP[1] - 20], '#38bdf8', 4.0);
+      drawBadge2D(g, '🔵 自转角动量 L = I·ω_s', tipP[0] + 68, tipP[1] - 24, 'rgba(9,15,29,0.96)', '#38bdf8', '#0284c7', 'left');
+    }
+
+    // ② 进动角速度 ω_prec (竖直向上)
+    if (visible('prec')) {
+      draw2DArrow(g, [pivotP[0], pivotP[1]], [pivotP[0], pivotP[1] - 110], '#f97316', 3.8);
+      drawBadge2D(g, '🟠 进动角速度 ω_p', pivotP[0] - 12, pivotP[1] - 115, 'rgba(9,15,29,0.96)', '#f97316', '#ea580c', 'right');
+    }
+
+    // ③ 陀螺力矩 N (垂直穿屏偏向前方)
+    if (gyroStep === 'overview' || gyroStep === 'torque') {
+      const nEnd = [pivotP[0] - 50, pivotP[1] + 55];
+      draw2DArrow(g, [pivotP[0], pivotP[1]], nEnd, '#10b981', 4.5);
+      drawBadge2D(g, '💥 陀螺力矩 N = ω × L', nEnd[0] - 10, nEnd[1] + 16, 'rgba(6,78,59,0.96)', '#34d399', '#10b981', 'center');
+    }
+
+    // -------------------------------------------------------------------------
+    // 右侧：N = ω × L 严格空间正交标定台
+    // -------------------------------------------------------------------------
+    const originR = [650, 240];
+    const lLen = 135;
+    const precLen = 110;
+    const torqueLen = 95;
+
+    // 起点
+    g.save();
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(originR[0], originR[1], 6, 0, Math.PI * 2); g.fill();
+    drawBadge2D(g, '矢量作用点', originR[0], originR[1] + 20, '#0f172a', '#cbd5e1', '#334155', 'center');
+
+    // ① 自转角动量 L (水平向右 135px)
+    const pL = [originR[0] + lLen, originR[1]];
+    if (visible('spin')) {
+      draw2DArrow(g, originR, pL, '#38bdf8', 4.5);
+      drawBadge2D(g, '① 🔵 自转角动量 L (4.0 kg·m²/s)', originR[0] + lLen / 2, originR[1] + 20, 'rgba(9,15,29,0.96)', '#38bdf8', '#38bdf8', 'center');
+    }
+
+    // ② 进动角速度 ω_prec (竖直向上 110px)
+    const pW = [originR[0], originR[1] - precLen];
+    if (visible('prec')) {
+      draw2DArrow(g, originR, pW, '#f97316', 4.5);
+      drawBadge2D(g, '② 🟠 进动角速度 ω_p (1.2 rad/s)', originR[0] - 14, originR[1] - precLen / 2, 'rgba(9,15,29,0.96)', '#f97316', '#f97316', 'right');
+
+      // 90° 直角符号
+      g.strokeStyle = '#64748b'; g.lineWidth = 1.4;
+      g.beginPath();
+      g.moveTo(originR[0] + 14, originR[1]); g.lineTo(originR[0] + 14, originR[1] - 14); g.lineTo(originR[0], originR[1] - 14);
+      g.stroke();
+      drawBadge2D(g, '90° 正交', originR[0] + 24, originR[1] - 22, '#0f172a', '#94a3b8', '#334155', 'center');
+    }
+
+    // ③ 陀螺力矩 N = ω × L (向左下 45° 穿屏冲出 95px，严格右手螺旋)
+    const pN = [originR[0] - torqueLen * 0.707, originR[1] + torqueLen * 0.707];
+    if (gyroStep === 'overview' || gyroStep === 'torque') {
+      draw2DArrow(g, originR, pN, '#10b981', 5.2);
+      drawBadge2D(g, '③ 💥 陀螺力矩 N = ω × L = 4.80 N·m', pN[0] - 12, pN[1] + 18, 'rgba(6,78,59,0.98)', '#34d399', '#10b981', 'center');
+      drawBadge2D(g, '(右手螺旋：ω 旋向 L，大拇指指向 N)', pN[0] + 120, pN[1] - 12, 'rgba(15,23,42,0.94)', '#cbd5e1', '#334155', 'left');
+    }
+    g.restore();
+
+    if (lblMag) lblMag.innerText = '4.80';
+  }
+
+  Object.entries(buttons).forEach(([name, btn]) => {
+    if (btn) btn.addEventListener('click', () => { gyroStep = name; renderGyro(); });
+  });
+
+  renderGyro();
+})();
+
+
+});
+</script>
+</body>
+</html>

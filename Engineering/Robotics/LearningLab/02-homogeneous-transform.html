@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>笔记 02：一般坐标变换与齐次变换</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let n = 0;
+    const boot = () => {
+      if (!window.katex) { if (n++ < 40) setTimeout(boot, 80); return; }
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '\\(', right: '\\)', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+      document.querySelectorAll('[data-tex]').forEach(el => {
+        katex.render(el.dataset.tex, el, { displayMode: el.classList.contains('math-block'), throwOnError: false });
+      });
+    };
+    boot();
+  });
+</script>
+<style>
+:root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Microsoft YaHei",sans-serif;line-height:1.7}main{max-width:1040px;margin:auto;padding:28px 20px 64px}h2{margin-top:2.2rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.card{border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}.math-block{display:block;text-align:center;margin:1rem 0;overflow:auto}.lab{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}.canvas{width:100%;aspect-ratio:1.5;display:block;border:1px solid var(--line);border-radius:10px;touch-action:none;cursor:grab}.canvas:active{cursor:grabbing}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:94px 1fr 62px;align-items:center;gap:8px}input[type=range]{width:100%}input[type=number]{width:62px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:3px}.reset{width:100%;margin-top:14px;padding:8px 12px;color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:6px;font:inherit;cursor:pointer}.reset:hover{border-color:#1685b2}.reset:focus-visible{outline:2px solid #1685b2;outline-offset:2px}.small{color:color-mix(in srgb,var(--fg) 70%,var(--bg));font-size:.9rem}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem}.dot{display:inline-block;width:.7em;height:.7em;border-radius:50%;margin-right:.3em}.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}@media(max-width:850px){.lab,.two{grid-template-columns:1fr}}
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+    details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+  </style></head><body><main>
+<p class="small" style="color:var(--muted); margin-bottom:12px;">
+  <a href="00-progress.html" style="color:var(--accent); text-decoration:none;">学习看板</a> · 
+  <a href="01-coordinate-frames.html" style="color:var(--accent); text-decoration:none;">笔记 01：坐标系与旋转矩阵</a> · 
+  <a href="03-transform-chains.html" style="color:var(--accent); text-decoration:none;">笔记 02：坐标变换链</a> · 
+  <a href="quiz-center.html" style="color:#38bdf8; font-weight:bold; text-decoration:none;">🏆 智能考核中心 ↗</a>
+</p>
+<h1>笔记 02：一般坐标变换与齐次变换</h1>
+<p class="subtitle" style="color:var(--muted); margin-top:-6px; margin-bottom:16px;">对应《机器人学导论》（Craig）第 2 章 2.3 ~ 2.6：从“仿射相加”升维到“线性连乘”</p>
+
+<!-- 🧭 本篇导读与学习路线图 -->
+<div class="card" style="background: linear-gradient(135deg, rgba(8, 16, 34, 0.95), rgba(15, 23, 42, 0.95)); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 22px 24px; margin: 20px 0 28px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+  <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:14px;">
+    <span style="font-size:1.8rem; line-height:1;">🧭</span>
+    <div>
+      <h2 style="margin:0 0 6px; border-bottom:none; padding-bottom:0; font-size:1.25rem; color:#38bdf8;">
+        开篇导读：我们这一节到底要讲什么？
+      </h2>
+      <p style="color:#cbd5e1; font-size:0.92rem; margin:0; line-height:1.7;">
+        在动手把玩滑块和展开代数公式之前，我们先开门见山讲透：<strong>为什么需要齐次变换？它到底救了机器人工程什么命？</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- 为什么要有这一节 -->
+  <div style="background:#040711; border-left:4px solid #38bdf8; border-radius:0 8px 8px 0; padding:12px 16px; margin:14px 0;">
+    <strong style="color:#38bdf8; font-size:0.95rem;">💡 为什么要学这一篇？解决机械臂的什么致命痛点？</strong>
+    <p style="color:#94a3b8; font-size:0.88rem; margin:6px 0 0; line-height:1.65;">
+      在上一讲（笔记 01）中，我们只处理了两个坐标系原点重合的纯旋转（\({}^A p = {}^A R_B {}^B p\)）。<br>
+      然而，现实中的机械臂关节在旋转的同时，骨架连杆必然存在长度与位移！两个坐标系之间既有<strong>姿态旋转（矩阵乘法）</strong>，又有<strong>原点平移（向量加法）</strong>：
+      \[{}^A p = {}^A p_{BORG} + {}^A R_B {}^B p\]
+      <strong>致命难题来了</strong>：面对一台 6 自由度工业机械臂，从基座到末端工具经过 6 个连杆，如果每一级都做“先乘旋转矩阵再加平移向量”，6 级连环嵌套后会变成一团无法整理、计算极其低效、求导极其痛苦的“代数泥潭”！<br>
+      <strong>破局魔法——齐次升维（Homogeneous Coordinates）</strong>：数学家引入一个无量纲常数 1 将 3 维升至 4 维，奇迹发生了——<strong>原来无法用矩阵乘法表达的平移加法，在 4 维空间中被完全驯服为标准矩阵乘法</strong>！6 级机械臂运动学瞬间简化为优雅纯粹的“一路向右矩阵连乘”！
+    </p>
+  </div>
+
+  <!-- 本节 4 步走路线图 -->
+  <div style="margin-top:16px;">
+    <strong style="color:#f8fafc; font-size:0.95rem; display:block; margin-bottom:10px;">🗺️ 本篇内容四步规划（学习路线图）：</strong>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+      
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+        <div style="color:#c084fc; font-weight:bold; font-size:0.9rem; margin-bottom:4px;">
+          ① 物理相加的几何直觉
+        </div>
+        <p style="color:#94a3b8; font-size:0.84rem; margin:0; line-height:1.55;">
+          掌握“两段路程矢量相加”原则，通过 2D/3D 可调交互实验台，直观洞察“为什么 B 系测出的向量必须先乘旋转矩阵调正，才能与原点位移相加”。
+        </p>
+      </div>
+
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+        <div style="color:#38bdf8; font-weight:bold; font-size:0.9rem; margin-bottom:4px;">
+          ② 齐次变换矩阵四分区剖析
+        </div>
+        <p style="color:#94a3b8; font-size:0.84rem; margin:0; line-height:1.55;">
+          拆解 \(4\times 4\) 齐次矩阵 \({}^A T_B\) 的四大领地：左上 \(3\times 3\) 姿态、右上 \(3\times 1\) 位移、左下 \([0,0,0]\) 透视以及末尾数字 1 区分“点”与“方向向量”的工程妙用。
+        </p>
+      </div>
+
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+        <div style="color:#10b981; font-weight:bold; font-size:0.9rem; margin-bottom:4px;">
+          ③ 齐次求逆与避坑铁律
+        </div>
+        <p style="color:#94a3b8; font-size:0.84rem; margin:0; line-height:1.55;">
+          推导 Craig 原书式 2.40：彻底铲除“求逆时位移项直接加负号”的高危常识错误，深挖左乘旋转矩阵转置 \(-R^T p_{BORG}\) 的绝对物理必要性。
+        </p>
+      </div>
+
+      <div style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+        <div style="color:#fbbf24; font-weight:bold; font-size:0.9rem; margin-bottom:4px;">
+          ④ 变换链连乘与认知闭环
+        </div>
+        <p style="color:#94a3b8; font-size:0.84rem; margin:0; line-height:1.55;">
+          牢记“基左动右，连杆一路向右乘”的运控直觉法则；并在文末通过 <strong>5 大核心目的灵魂自检</strong>，过滤繁复代数，牢牢锁死工程思维。
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+<p>从 A 原点到 P 的路线分两段：先到 B 原点，再走 B 原点到 P。第二段的分量是按 B 的轴量的，所以必须先改写成 A 分量：</p><span class="math-block" data-tex="\boxed{{}^A p = {}^A p_{BORG} + {}^A R_B{}^B p}"></span>
+<div class="card"><strong>可直接相加的条件：</strong>两段向量必须都用 A 坐标写。<span data-tex="{}^A R_B{}^B p"></span> 正是在完成这件事。</div>
+<h2>二维：缩放后看“先旋转，再平移”</h2><p class="small">缩放只改变观察窗口，不改变数值；拖动“缩放”看局部，调参数看蓝色向量先转到 A 中、再与灰色平移相加。</p>
+<div class="lab"><div><canvas id="c2" class="canvas" width="900" height="600" role="img" aria-label="二维一般坐标变换，可缩放查看"></canvas><div class="legend"><span><i class="dot" style="background:#e38600"></i>A 轴</span><span><i class="dot" style="background:#159bc9"></i>旋转后的 B→P</span><span><i class="dot" style="background:#909090"></i>A→B</span><span><i class="dot" style="background:#d34687"></i>A→P</span></div></div><div class="card controls" id="ctl2"></div></div>
+<span id="m2" class="math-block"></span>
+<h2 id="homogeneous-matrix-usage">三维：完整齐次变换</h2><p class="small">拖动画面改变观察方向；上排改变 B 的姿态与位置，下一排改变点 P 在 B 中的坐标。彩色箭头就是公式中的三项。</p>
+<div class="lab"><div><canvas id="canvas3" class="canvas" width="900" height="600" role="img" aria-label="三维齐次变换，可拖动改变观察视角"></canvas><div class="legend"><span><i class="dot" style="background:#e38600"></i>A 坐标轴</span><span><i class="dot" style="background:#159bc9"></i>B 坐标轴与旋转项</span><span><i class="dot" style="background:#909090"></i>平移项</span><span><i class="dot" style="background:#d34687"></i>最终位置</span></div></div><div class="card"><div class="controls" id="ctl3"></div><button id="reset3" class="reset" type="button">动画归零</button></div></div>
+<span id="m3" class="math-block"></span><span class="math-block" data-tex="{}^A T_B=\begin{bmatrix}{}^A R_B&{}^A p_{BORG}\\0\;0\;0&1\end{bmatrix},\qquad\begin{bmatrix}{}^A p\\1\end{bmatrix}={}^A T_B\begin{bmatrix}{}^B p\\1\end{bmatrix}"></span>
+<div class="card"><strong>矩阵没有创造新东西。</strong>左上角是姿态 <span data-tex="{}^A R_B"></span>，右上角是 B 原点的位置 <span data-tex="{}^A p_{BORG}"></span>；它只把“旋转后相加”打包成一次乘法。</div>
+<h2>下一步：变换链</h2><p>引入第三个坐标系 C。目标不是立刻做机械臂，而是弄清楚“先从 C 换到 B，再从 B 换到 A”的连续过程：</p><span class="math-block" data-tex="{}^A T_C={}^A T_B\,{}^B T_C"></span><div class="card"><strong>读法：</strong>右边的 <span data-tex="{}^B T_C"></span> 先作用，把 C 中的描述改为 B 中的描述；随后 <span data-tex="{}^A T_B"></span> 再把它改为 A 中的描述。正运动学就是把这样的局部变换一路连乘。</div>
+<h2>为什么叫“齐次”</h2>
+<div class="card"><p>旋转 <span data-tex="{}^A R_B{}^B p"></span> 是线性变换：它不会把原点搬走。平移后的 <span data-tex="{}^A R_B{}^B p+{}^A p_{BORG}"></span> 则会把原点搬走，所以在普通三维坐标里，它不是一次单纯的矩阵乘法。</p><span class="math-block" data-tex="p' = Rp+t"></span><p>补上最后一维并把点写成 <span data-tex="[p;1]"></span> 后，旋转和“加平移”就能合成一次矩阵乘法：</p><span class="math-block" data-tex="\begin{bmatrix}p'\\1\end{bmatrix}=\begin{bmatrix}R&t\\0^T&1\end{bmatrix}\begin{bmatrix}p\\1\end{bmatrix}"></span></div>
+<div class="card" id="point-and-direction">
+  <h3 style="margin-top:0; color:#38bdf8;">最后补上的那个 1，到底在发挥什么神奇作用？</h3>
+  <p>很多教材这里只提一句“把加法变成了乘法”，让人摸不着头脑。其实只要把<strong>分块矩阵乘法亲手展开一次</strong>，秒懂其中的数学巧思：</p>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin:14px 0;">
+    <!-- 点的变换：补 1 -->
+    <div style="background:#0b1329; border:1px solid #38bdf8; border-radius:8px; padding:14px;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:8px;">📍 作用于「点（空间具体位置）」：末尾填 1</strong>
+      <div style="font-size:0.92rem; margin:8px 0; text-align:center;">
+        \[\begin{bmatrix} R & t \\ \boldsymbol{0} & 1 \end{bmatrix} \begin{bmatrix} p \\ \mathbf{1} \end{bmatrix} = \begin{bmatrix} R p + t \cdot \mathbf{1} \\ \boldsymbol{0}\cdot p + 1 \cdot \mathbf{1} \end{bmatrix} = \begin{bmatrix} \mathbf{Rp + t} \\ \mathbf{1} \end{bmatrix}\]
+      </div>
+      <p style="font-size:0.86rem; color:#cbd5e1; margin:0; line-height:1.6;">
+        👉 <strong>“乘出来”的真面目：</strong>普通矩阵乘法本来只能算乘法，无法表达“加一个常数向量”。但齐次矩阵的第 4 列正好是平移量 \(t\)，它恰好与向量末尾的数字 \(\mathbf{1}\) 相乘，结果就是 \(t \cdot 1 = t\)！原本属于<strong>加法</strong>的平移量，就这样被包装成了<strong>一次纯粹的矩阵乘法</strong>！
+      </p>
+    </div>
+
+    <!-- 向量的变换：补 0 -->
+    <div style="background:#0b1329; border:1px solid #10b981; border-radius:8px; padding:14px;">
+      <strong style="color:#10b981; display:block; margin-bottom:8px;">🧭 作用于「向量（纯方向 / 速度）」：末尾填 0</strong>
+      <div style="font-size:0.92rem; margin:8px 0; text-align:center;">
+        \[\begin{bmatrix} R & t \\ \boldsymbol{0} & 1 \end{bmatrix} \begin{bmatrix} v \\ \mathbf{0} \end{bmatrix} = \begin{bmatrix} R v + t \cdot \mathbf{0} \\ \boldsymbol{0}\cdot v + 1 \cdot \mathbf{0} \end{bmatrix} = \begin{bmatrix} \mathbf{Rv} \\ \mathbf{0} \end{bmatrix}\]
+      </div>
+      <p style="font-size:0.86rem; color:#cbd5e1; margin:0; line-height:1.6;">
+        👉 <strong>“物理自动防呆开关”：</strong>如果你手持指南针向前平移 5 米，指南针所指的“北方”朝向会变吗？当然不会！方向只随旋转改变，绝不受平移影响。因为末尾填了 \(\mathbf{0}\)，\(t \cdot 0 = 0\)，平移量被<strong>自动抹零</strong>，完全符合物理实际！
+      </p>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:10px;">
+    <strong>💡 数学美感的极致：两点相减自动退化为向量！</strong><br>
+    空间中有两个点 \(P_1 = [x_1, y_1, z_1, 1]^T\)，\(P_2 = [x_2, y_2, z_2, 1]^T\)。两点相减表示从 \(P_1\) 指向 \(P_2\) 的有向线段向量：<br>
+    \[P_2 - P_1 = \begin{bmatrix} x_2 - x_1 \\ y_2 - y_1 \\ z_2 - z_1 \\ 1 - 1 \end{bmatrix} = \begin{bmatrix} \Delta x \\ \Delta y \\ \Delta z \\ \mathbf{0} \end{bmatrix}\]<br>
+    末尾的 \(1 - 1 = \mathbf{0}\)！两个点一减，天然自动变成了末尾为 0 的方向向量！齐次坐标从代数底层严密维护了真实几何世界的法则。
+  </div>
+</div>
+<div class="card" style="background:#0b1329; border:1px solid #38bdf8; border-radius:10px; padding:18px 20px; margin:16px 0;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+    <span style="font-size:1.5rem;">📖</span>
+    <h3 style="margin:0; color:#38bdf8; font-size:1.15rem;">线代极简深度补课：为什么有常数项就必须叫“齐次”？</h3>
+  </div>
+  
+  <p style="font-size:0.92rem; color:#cbd5e1; line-height:1.7; margin-top:4px;">
+    很多人在初高中形成了一个认知误区：初中老师说 \(y = ax + b\) 画出来是一条直线，所以是“线性函数”。<br>
+    <strong>但在大学线性代数（Linear Algebra）中，“线性”的定义极其严苛，容不下任何非零常数项！</strong>
+  </p>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin:14px 0;">
+    <div style="background:#070d1e; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+      <strong style="color:#f43f5e; font-size:0.9rem;">❌ 铁律 1：真正的线性变换绝不能把原点搬家！</strong>
+      <p style="font-size:0.85rem; color:#94a3b8; margin:6px 0 0; line-height:1.6;">
+        线代中线性映射 \(T(x)\) 必须满足 \(T(k \cdot x) = k \cdot T(x)\)。取 \(k = 0\)，必须有：<br>
+        <span style="color:#f43f5e; font-weight:bold;">\(T(\boldsymbol{0}) = \boldsymbol{0}\)（零进零出，原点恒定不动）</span>。<br>
+        而一旦加上平移项 \(t\)：\(f(x) = Ax + t\)，代入 \(x = 0\) 结果等于 \(t \neq 0\)。原点被拔起来扔到了别处！因此它<strong>根本不是线性变换</strong>，数学上专门叫它<strong>仿射变换（Affine）</strong>！
+      </p>
+    </div>
+
+    <div style="background:#070d1e; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+      <strong style="color:#38bdf8; font-size:0.9rem;">🚫 铁律 2：普通矩阵乘法天生只能算线性变换！</strong>
+      <p style="font-size:0.85rem; color:#94a3b8; margin:6px 0 0; line-height:1.6;">
+        无论你怎么构造矩阵 \(A\)，矩阵相乘 \(A \cdot \boldsymbol{0}\) 的结果永远只能是 \(\boldsymbol{0}\)。<br>
+        矩阵乘法内部只有“乘法和加和”，<strong>天生没有任何语法能凭空加进一个独立的常数项</strong>。所以加了平移后，普通的三维矩阵乘法彻底瘫痪。
+      </p>
+    </div>
+  </div>
+
+  <div style="background:#040711; border-left:4px solid #10b981; border-radius:0 6px 6px 0; padding:12px 16px; margin:12px 0;">
+    <strong style="color:#10b981; font-size:0.93rem;">✨ 为什么叫“齐次（Homogeneous）”？升维的极客魔法：</strong>
+    <p style="font-size:0.88rem; color:#cbd5e1; margin:6px 0 0; line-height:1.7;">
+      “齐次”的字面含义就是<strong>“次数齐整”</strong>：<br>
+      在 \(x' = r_{11}x + r_{12}y + r_{13}z + \mathbf{t_x}\) 中，前三项都是 1 次项（\(x^1, y^1, z^1\)），唯独常数项 \(t_x\) 是 0 次项（没有变量），<strong>次数不齐！</strong><br>
+      数学家引入第 4 维变量 \(w\)，强行写成 \(t_x \cdot w\)。现在 \(x, y, z, w\) <strong>全是一次项，次数齐刷刷全相等了（齐次！）</strong>。<br>
+      更绝妙的是：站在四维视角下，输入 \([0,0,0,0]^T\) 输出必为 \([0,0,0,0]^T\)，原本在三维里搬走原点的仿射加法，在四维空间中被重新驯化成了<strong>合法严谨的纯线性变换（矩阵相乘）</strong>！我们生活的真实三维世界，就是四维空间中 \(w=1\) 的一个物理切片。
+    </p>
+  </div>
+</div>
+
+<h2>齐次变换矩阵的求逆公式（Craig 原书 §2.6 式 2.40）</h2>
+<div class="card">
+  <p>已知从坐标系 \(\{B\}\) 到 \(\{A\}\) 的齐次变换为 \({}^A_B\boldsymbol{T} = \begin{bmatrix} {}^A_B\boldsymbol{R} & {}^A\boldsymbol{P}_{BORG} \\ \boldsymbol{0} & 1 \end{bmatrix}\)，如何快速求出反向逆变换 \({}^B_A\boldsymbol{T} = ({}^A_B\boldsymbol{T})^{-1}\)？</p>
+  
+  <div class="derive">
+    <p><strong>严谨代数推导（利用正交矩阵性质 \(\boldsymbol{R}^T\boldsymbol{R} = \boldsymbol{I}\)）：</strong></p>
+    <p>1. 由一般坐标变换公式：\({}^A\boldsymbol{P} = {}^A\boldsymbol{P}_{BORG} + {}^A_B\boldsymbol{R} {}^B\boldsymbol{P}\)</p>
+    <p>2. 两边同时左乘转置矩阵 \({}^A_B\boldsymbol{R}^T\)：</p>
+    \[{}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P} = {}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P}_{BORG} + \underbrace{{}^A_B\boldsymbol{R}^T {}^A_B\boldsymbol{R}}_{\boldsymbol{I}} {}^B\boldsymbol{P} \]
+    <p>3. 移项整理，解出 \({}^B\boldsymbol{P}\)：</p>
+    \[{}^B\boldsymbol{P} = {}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P} - {}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P}_{BORG}\]
+    <p>4. 重新打包为 \(4 \times 4\) 齐次矩阵，即为 Craig 原书<strong>求逆公式（式 2.40）</strong>：</p>
+    \[\boxed{{}^A_B\boldsymbol{T}^{-1} = {}^B_A\boldsymbol{T} = \begin{bmatrix} {}^A_B\boldsymbol{R}^T & -{}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P}_{BORG} \\ \boldsymbol{0}_{1 \times 3} & 1 \end{bmatrix}}\]
+  </div>
+
+  <div class="warn">
+    <strong>🚨 核心避坑红牌（工程与考试最高频丢分点！）：</strong><br>
+    求逆矩阵右上角的位置向量<strong>绝对不是简单的加负号 \(-{}^A\boldsymbol{P}_{BORG}\)</strong>！<br>
+    必须<strong>额外左乘旋转矩阵的转置 \(-{}^A_B\boldsymbol{R}^T {}^A\boldsymbol{P}_{BORG}\)</strong>！<br>
+    💡 <strong>物理原因</strong>：\({}^A\boldsymbol{P}_{BORG}\) 是站在 \(\{A\}\) 视角测量的平移，要换到 \(\{B\}\) 的视角下，必须先用 \(\boldsymbol{R}^T\) 把坐标轴方向调正，才能算出正确的反向位移！
+  </div>
+</div>
+
+<h2>变换链与「左乘 vs 右乘」法则（Craig 原书 §2.5）</h2>
+<div class="card">
+  <p>当刚体或坐标系发生多次连续变换时，矩阵乘法的先后顺序遵循严格法则：</p>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin:12px 0;">
+    <div style="background:#0b1329; border:1px solid #38bdf8; border-radius:6px; padding:12px 14px;">
+      <strong style="color:#38bdf8; font-size:0.95rem;">⬅️ 相对【固定基坐标系】变换 ⟹ 从【左边乘】（左乘）</strong>
+      <p style="font-size:0.86rem; color:#cbd5e1; margin:6px 0 0; line-height:1.6;">
+        若每次旋转或平移都是绕着不动的主基坐标系 \(\{A\}\) 进行：<br>
+        \[{}^A\boldsymbol{T}_{\text{新}} = \boldsymbol{T}_{\text{变换}} \cdot {}^A\boldsymbol{T}_{\text{旧}}\]
+      </p>
+    </div>
+
+    <div style="background:#0b1329; border:1px solid #10b981; border-radius:6px; padding:12px 14px;">
+      <strong style="color:#10b981; font-size:0.95rem;">➡️ 相对【自身当前动坐标系】变换 ⟹ 从【右边乘】（右乘）</strong>
+      <p style="font-size:0.86rem; color:#cbd5e1; margin:6px 0 0; line-height:1.6;">
+        若每次旋转或平移都是绕着刚体自身当前的轴进行（机械臂各连杆正运动学）：<br>
+        \[{}^0\boldsymbol{T}_n = {}^0\boldsymbol{T}_1 \cdot {}^1\boldsymbol{T}_2 \cdot {}^2\boldsymbol{T}_3 \cdots {}^{n-1}\boldsymbol{T}_n\]
+      </p>
+    </div>
+  </div>
+  <div class="tip">
+    <strong>💡 8字终极记忆口诀：</strong><br>
+    👉 <strong>“基左动右，连杆一路右乘走！”</strong>（机械臂每增加一个关节，都是相对上一个关节动坐标系运动，因此正运动学就是一路向右连乘！）
+  </div>
+</div>
+
+<!-- 🎯 本节核心目的自检：抓住本质，不被推导淹没 -->
+<div class="card" style="background: linear-gradient(180deg, rgba(8, 16, 34, 0.95), rgba(11, 18, 34, 0.95)); border: 1.5px solid #0284c7; border-radius: 12px; padding: 22px 24px; margin: 28px 0 16px;">
+  <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;">
+    <span style="font-size:1.8rem; line-height:1;">🎯</span>
+    <div>
+      <h3 style="color:#38bdf8; margin:0 0 6px; font-size:1.2rem;">本节核心目的自检：不被推导淹没，抓住 5 大灵魂认知</h3>
+      <p style="color:var(--muted); font-size:0.88rem; margin:0; line-height:1.6;">
+        推导过程繁多，但最终进入机器人工程实战时，你无需死记硬背每个代数中间步骤。重点是以下 5 个直击灵魂的核心目的（点击卡片展开对照答案）：
+      </p>
+    </div>
+  </div>
+
+  <!-- Q1 -->
+  <details style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; margin:10px 0; overflow:hidden;">
+    <summary style="padding:12px 16px; cursor:pointer; font-weight:700; color:#f8fafc; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+      <span>Q1：为什么明明生活在三维空间，机器人学却非要把位置向量写成四维 \([x, y, z, 1]^T\) 的齐次坐标？</span>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:normal; background:rgba(56,189,248,0.12); padding:3px 8px; border-radius:4px; white-space:nowrap; margin-left:8px;">展开答案 ▾</span>
+    </summary>
+    <div style="padding:14px 18px; border-top:1px solid #1e293b; background:#070d1e; font-size:0.9rem; line-height:1.75; color:#cbd5e1;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:6px;">🎯 一句话直击目的：</strong>
+      将“无法用普通 \(3\times 3\) 矩阵乘法统一表达的仿射平移加法”，通过升维转化为“纯粹的线性矩阵乘法”，彻底打通多连杆正运动学的<strong>链式矩阵连乘通道</strong>。<br>
+      <strong style="color:#10b981; display:block; margin-top:10px; margin-bottom:4px;">🔍 工程师实战直觉：</strong>
+      在普通三维空间中，刚体变换是 \(p' = R p + t\)（乘法混杂加法）。对于 6 轴串联机械臂，若不升维，从末端到基座的变换将变成层层括号嵌套的复合函数 \(R_1(R_2(R_3\dots + t_3) + t_2) + t_1\)。这在代码实现、微积分求导（计算雅可比矩阵）及逆运动学求解中是一场灾难。补上第 4 维后，平移直接被收纳进 \(4\times 4\) 矩阵，正运动学直接化简为单行优雅的矩阵相乘：\({}^0 T_6 = {}^0 T_1 \cdot {}^1 T_2 \cdots {}^5 T_6\)。
+    </div>
+  </details>
+
+  <!-- Q2 -->
+  <details style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; margin:10px 0; overflow:hidden;">
+    <summary style="padding:12px 16px; cursor:pointer; font-weight:700; color:#f8fafc; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+      <span>Q2：齐次变换矩阵 \({}^A T_B\) 的四个分区各自具有什么清晰的物理含义？</span>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:normal; background:rgba(56,189,248,0.12); padding:3px 8px; border-radius:4px; white-space:nowrap; margin-left:8px;">展开答案 ▾</span>
+    </summary>
+    <div style="padding:14px 18px; border-top:1px solid #1e293b; background:#070d1e; font-size:0.9rem; line-height:1.75; color:#cbd5e1;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:6px;">🎯 一句话直击目的：</strong>
+      左上 \(3\times 3\) 掌管<strong>姿态旋转朝向</strong>，右上 \(3\times 1\) 掌管<strong>原点平移位置</strong>，左下 \(1\times 3\) 为<strong>透视投影项</strong>（刚体欧氏几何中恒为 \(\boldsymbol{0}\)），右下角 \(1\times 1\) 为<strong>全局尺度因子</strong>（恒为 \(1\)）。<br>
+      <strong style="color:#10b981; display:block; margin-top:10px; margin-bottom:4px;">🔍 工程师实战直觉：</strong>
+      在 ROS/TF2、MoveIt 或现代动力学引擎（Pinocchio, Drake）中，位姿（Pose）底层存储就是这 16 个浮点数。当你调试机器人位姿时，一眼扫去：前 3 列前 3 行就是末端工具坐标系的 XYZ 轴指向；第 4 列前 3 行就是末端在基座中的绝对空间坐标 \((x, y, z)\)。矩阵没有凭空造出任何新物理量，它只是最整齐的工程数据打包器。
+    </div>
+  </details>
+
+  <!-- Q3 -->
+  <details style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; margin:10px 0; overflow:hidden;">
+    <summary style="padding:12px 16px; cursor:pointer; font-weight:700; color:#f8fafc; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+      <span>Q3：点向量末尾补 1（\([p; 1]\)），而方向向量末尾却补 0（\([v; 0]\)），在工程上有何深意？</span>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:normal; background:rgba(56,189,248,0.12); padding:3px 8px; border-radius:4px; white-space:nowrap; margin-left:8px;">展开答案 ▾</span>
+    </summary>
+    <div style="padding:14px 18px; border-top:1px solid #1e293b; background:#070d1e; font-size:0.9rem; line-height:1.75; color:#cbd5e1;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:6px;">🎯 一句话直击目的：</strong>
+      通过末尾的 \(1\) 与 \(0\)，在代数底层实现了<strong>“位置受平移影响，而纯方向/速度不受平移影响”</strong>的自动化物理分流。<br>
+      <strong style="color:#10b981; display:block; margin-top:10px; margin-bottom:4px;">🔍 工程师实战直觉：</strong>
+      设想机械臂末端安装了测速仪，测得线速度向量为 \(v\)。如果机器人底座平移了 5 米，末端在基座中的绝对位置显然变了；但由于速度是一个自由矢量（方向与大小），它绝不会因为底座平移了 5 米而凭空多出 5 米/秒的速度！当对速度补 \(0\) 时：
+      \[\begin{bmatrix} R & t \\ \boldsymbol{0} & 1 \end{bmatrix} \begin{bmatrix} v \\ 0 \end{bmatrix} = \begin{bmatrix} R v \\ 0 \end{bmatrix}\]
+      平移项 \(t\) 与第 4 位的 \(0\) 相乘直接消失，只发生姿态旋转。这一机制为机器人学中的速度、加速度、力和力矩分析提供了天然的防呆屏障。
+    </div>
+  </details>
+
+  <!-- Q4 -->
+  <details style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; margin:10px 0; overflow:hidden;">
+    <summary style="padding:12px 16px; cursor:pointer; font-weight:700; color:#f8fafc; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+      <span>Q4：齐次矩阵求逆 \(({}^A T_B)^{-1}\) 的右上角位移项，为什么绝对不是简单的 \(-{}^A p_{BORG}\)？</span>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:normal; background:rgba(56,189,248,0.12); padding:3px 8px; border-radius:4px; white-space:nowrap; margin-left:8px;">展开答案 ▾</span>
+    </summary>
+    <div style="padding:14px 18px; border-top:1px solid #1e293b; background:#070d1e; font-size:0.9rem; line-height:1.75; color:#cbd5e1;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:6px;">🎯 一句话直击目的：</strong>
+      \({}^A p_{BORG}\) 是站在 \(\{A\}\) 坐标系的刻度尺上度量的位移；要想得到在 \(\{B\}\) 坐标系眼里的反向位移，必须先用旋转转置矩阵 \(R^T\) 将其<strong>重新投影折算到 \(\{B\}\) 坐标系的轴向上</strong>，即 \(-R^T {}^A p_{BORG}\)。<br>
+      <strong style="color:#10b981; display:block; margin-top:10px; margin-bottom:4px;">🔍 工程师实战直觉：</strong>
+      这是初学者在手写相机外参标定（Hand-Eye Calibration）或逆运动学代码时最常踩的大坑！很多人想当然认为逆变换就是“姿态转置、平移加负号”。但只要 \(\{B\}\) 相对于 \(\{A\}\) 发生了哪怕一点点旋转，原先在 \(\{A\}\) 里的“向前 1 米”在 \(\{B\}\) 眼里就可能变成了“向右或向上”。如果不乘以 \(R^T\) 就取负号，机器人的逆向轨迹规划必然彻底跑偏。
+    </div>
+  </details>
+
+  <!-- Q5 -->
+  <details style="background:#0b1329; border:1px solid #1e293b; border-radius:8px; margin:10px 0; overflow:hidden;">
+    <summary style="padding:12px 16px; cursor:pointer; font-weight:700; color:#f8fafc; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+      <span>Q5：在机械臂连杆连续运动中，为什么正运动学永远是“一路向右乘”？</span>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:normal; background:rgba(56,189,248,0.12); padding:3px 8px; border-radius:4px; white-space:nowrap; margin-left:8px;">展开答案 ▾</span>
+    </summary>
+    <div style="padding:14px 18px; border-top:1px solid #1e293b; background:#070d1e; font-size:0.9rem; line-height:1.75; color:#cbd5e1;">
+      <strong style="color:#38bdf8; display:block; margin-bottom:6px;">🎯 一句话直击目的：</strong>
+      因为根据变换链乘法铁律——<strong>“基左动右”</strong>，串联机械臂的每一个后置关节，都是安装在前一个关节的“动坐标系”末端并相对于它运动的，因此必须从右侧连乘。<br>
+      <strong style="color:#10b981; display:block; margin-top:10px; margin-bottom:4px;">🔍 工程师实战直觉：</strong>
+      第 2 号关节固定在第 1 连杆上（相对当前动系），第 3 号关节固定在第 2 连杆上……每个电机转动时，带动的都是它自身的局部动坐标系。所以从基座到末端工具的正运动学变换链永远保持右乘顺序：\({}^0 T_n = {}^0 T_1 \cdot {}^1 T_2 \cdot {}^2 T_3 \cdots {}^{n-1} T_n\)。而如果是在基座外部整体调整整个机器人平台的安装位姿（绕世界固定基准变换），才从最左侧乘上全局基变换矩阵。
+    </div>
+  </details>
+</div>
+
+</main><script>
+(()=>{const $=id=>document.getElementById(id),F=n=>(Math.abs(n)<.005?0:n).toFixed(2),D=Math.PI/180;function arrow(g,a,b,col){let t=Math.atan2(b[1]-a[1],b[0]-a[0]),h=12;g.strokeStyle=col;g.fillStyle=col;g.lineWidth=4;g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();g.beginPath();g.moveTo(...b);g.lineTo(b[0]-h*Math.cos(t-.45),b[1]-h*Math.sin(t-.45));g.lineTo(b[0]-h*Math.cos(t+.45),b[1]-h*Math.sin(t+.45));g.fill()}function dot(g,p,col,r=7){g.fillStyle=col;g.beginPath();g.arc(...p,r,0,7);g.fill()}function setup(host,items,redraw){host.innerHTML=items.map(x=>`<label class="control">${x[1]}<input id="${x[0]}" type="range" min="${x[2]}" max="${x[3]}" step="${x[4]}" value="${x[5]}"><input id="${x[0]}n" type="number" min="${x[2]}" max="${x[3]}" step="${x[4]}" value="${x[5]}"></label>`).join('');items.forEach(x=>{let r=$(x[0]),n=$(x[0]+'n');r.oninput=()=>{n.value=r.value;redraw()};n.oninput=()=>{r.value=n.value;redraw()}})}
+const v=id=>Number($(id).value);setup($('ctl2'),[['z2','缩放',.6,3,.1,1.6],['t2','B 旋转 θ',-180,180,1,35],['x2','B 原点 x',-4,4,.1,1.8],['y2','B 原点 y',-4,4,.1,1.2],['u2','P 在 B 中 x',-4,4,.1,2],['w2','P 在 B 中 y',-4,4,.1,1]],draw2);function draw2(){let c=$('c2'),g=c.getContext('2d'),z=v('z2'),t=v('t2')*D,x=v('x2'),y=v('y2'),u=v('u2'),w=v('w2'),co=Math.cos(t),si=Math.sin(t),rx=co*u-si*w,ry=si*u+co*w,px=x+rx,py=y+ry,S=92*z,O=[c.width*.42,c.height*.62],p=(a,b)=>[O[0]+a*S,O[1]-b*S];g.clearRect(0,0,c.width,c.height);g.strokeStyle='#555';g.lineWidth=1;for(let i=-8;i<=8;i++){arrow;let a=p(i,-6),b=p(i,6);g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();a=p(-8,i);b=p(8,i);g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke()}let A=p(0,0),B=p(x,y),P=p(px,py);arrow(g,A,p(1.5,0),'#e38600');arrow(g,A,p(0,1.5),'#e38600');arrow(g,B,p(x+1.5*co,y+1.5*si),'#159bc9');arrow(g,B,p(x-1.5*si,y+1.5*co),'#159bc9');arrow(g,A,B,'#909090');arrow(g,B,P,'#159bc9');arrow(g,A,P,'#d34687');dot(g,A,'#e38600');dot(g,B,'#159bc9');dot(g,P,'#d34687');g.font='20px system-ui';g.fillStyle='CanvasText';g.fillText('A',A[0]-22,A[1]+30);g.fillText('B',B[0]-20,B[1]+30);g.fillText('P',P[0]+12,P[1]+28);g.fillStyle='#909090';g.fillText('A→B', (A[0]+B[0])/2-20,(A[1]+B[1])/2+22);g.fillStyle='#159bc9';g.fillText('R·p_B',(B[0]+P[0])/2+10,(B[1]+P[1])/2-12);g.fillStyle='#d34687';g.fillText('p_A',(A[0]+P[0])/2-10,(A[1]+P[1])/2-20);if(window.katex)katex.render(`{}^A T_B=\\begin{bmatrix}${F(co)}&${F(-si)}&${F(x)}\\\\${F(si)}&${F(co)}&${F(y)}\\\\0&0&1\\end{bmatrix},\\quad\\begin{bmatrix}${F(px)}\\\\${F(py)}\\\\1\\end{bmatrix}={}^A T_B\\begin{bmatrix}${F(u)}\\\\${F(w)}\\\\1\\end{bmatrix}`,$('m2'),{displayMode:true,throwOnError:false})}
+function mul(R,p){return[R[0][0]*p[0]+R[0][1]*p[1]+R[0][2]*p[2],R[1][0]*p[0]+R[1][1]*p[1]+R[1][2]*p[2],R[2][0]*p[0]+R[2][1]*p[1]+R[2][2]*p[2]]}function rot(a,b,c){a*=D;b*=D;c*=D;let A=Math.cos(a),B=Math.sin(a),C=Math.cos(b),E=Math.sin(b),G=Math.cos(c),H=Math.sin(c);return[[A*C,A*E*H-B*G,A*E*G+B*H],[B*C,B*E*H+A*G,B*E*G-A*H],[-E,C*H,C*G]]}let view=[-35,24],drag;setup($('ctl3'),[['a3','偏航 α',-180,180,1,35],['b3','俯仰 β',-80,80,1,25],['c3','滚转 γ',-180,180,1,-15],['x3','B 原点 x',-3,3,.1,1.4],['y3','B 原点 y',-3,3,.1,.8],['z3','B 原点 z',-3,3,.1,.7],['u3','P 在 B 中 x',-3,3,.1,1.5],['w3','P 在 B 中 y',-3,3,.1,.8],['q3','P 在 B 中 z',-3,3,.1,.6]],draw3);function draw3(){let c=$('canvas3'),g=c.getContext('2d'),R=rot(v('a3'),v('b3'),v('c3')),B=[v('x3'),v('y3'),v('z3')],PB=[v('u3'),v('w3'),v('q3')],RP=mul(R,PB),P=B.map((n,i)=>n+RP[i]),vy=view[0]*D,vp=view[1]*D;let project=p=>{let x=Math.cos(vy)*p[0]-Math.sin(vy)*p[1],y=Math.sin(vp)*(Math.sin(vy)*p[0]+Math.cos(vy)*p[1])+Math.cos(vp)*p[2];return[c.width*.48+x*88,c.height*.60-y*88]};g.clearRect(0,0,c.width,c.height);let A=project([0,0,0]),bp=project(B),pp=project(P);[[[1.5,0,0],'#e38600'],[[0,1.5,0],'#e38600'],[[0,0,1.5],'#e38600']].forEach(([e,col])=>arrow(g,A,project(e),col));for(let j=0;j<3;j++){let e=R.map((row,i)=>row[j]*1.35+B[i]);arrow(g,bp,project(e),'#159bc9')}arrow(g,A,bp,'#909090');arrow(g,bp,pp,'#159bc9');arrow(g,A,pp,'#d34687');dot(g,A,'#e38600');dot(g,bp,'#159bc9');dot(g,pp,'#d34687');g.font='20px system-ui';g.fillStyle='CanvasText';g.fillText('A',A[0]-20,A[1]+28);g.fillText('B',bp[0]-20,bp[1]+28);g.fillText('P',pp[0]+12,pp[1]+28);g.fillStyle='#909090';g.fillText('平移',(A[0]+bp[0])/2-18,(A[1]+bp[1])/2+24);g.fillStyle='#159bc9';g.fillText('R·p_B',(bp[0]+pp[0])/2+8,(bp[1]+pp[1])/2-12);g.fillStyle='#d34687';g.fillText('p_A',(A[0]+pp[0])/2-10,(A[1]+pp[1])/2-18);if(window.katex)katex.render(`{}^A p=\\begin{bmatrix}${F(P[0])}\\\\${F(P[1])}\\\\${F(P[2])}\\end{bmatrix}={}^A p_{BORG}+{}^A R_B\\begin{bmatrix}${F(PB[0])}\\\\${F(PB[1])}\\\\${F(PB[2])}\\end{bmatrix}`,$('m3'),{displayMode:true,throwOnError:false})}$('canvas3').onpointerdown=e=>{drag=[e.clientX,e.clientY,...view];$('canvas3').setPointerCapture(e.pointerId)};$('canvas3').onpointermove=e=>{if(!drag)return;view=[drag[2]+(e.clientX-drag[0])*.5,Math.max(-75,Math.min(75,drag[3]+(e.clientY-drag[1])*.35))];draw3()};$('canvas3').onpointerup=()=>drag=null;window.addEventListener('load',()=>{let n=0;let go=()=>window.katex?(document.querySelectorAll('[data-tex]').forEach(e=>katex.render(e.dataset.tex,e,{throwOnError:false})),draw2(),draw3()):(n++<30&&setTimeout(go,100));go()})})();
+</script><script>window.$=id=>document.getElementById(id);window.addEventListener('load',()=>{const render=window.katex.render;window.katex.render=(tex,element,options)=>{if(element&&element.id==='m3'&&!tex.includes('underbrace'))return;return render(tex,element,options)}});</script><script>
+window.addEventListener('load',()=>{const c=document.getElementById('canvas3'),g=c.getContext('2d'),read=id=>Number(document.getElementById(id).value),deg=Math.PI/180,poseIds=['a3','b3','c3','x3','y3','z3','u3','w3','q3'];let view=[-38,24],down=null,resetFrame=null;const mul=(R,p)=>R.map(r=>r[0]*p[0]+r[1]*p[1]+r[2]*p[2]);function Rz(a,b,d){a*=deg;b*=deg;d*=deg;const A=Math.cos(a),B=Math.sin(a),C=Math.cos(b),D=Math.sin(b),E=Math.cos(d),F=Math.sin(d);return[[A*C,A*D*F-B*E,A*D*E+B*F],[B*C,B*D*F+A*E,B*D*E-A*F],[-D,C*F,C*E]]}function paint(){const R=Rz(read('a3'),read('b3'),read('c3')),B=[read('x3'),read('y3'),read('z3')],pb=[read('u3'),read('w3'),read('q3')],rp=mul(R,pb),P=B.map((x,i)=>x+rp[i]),yaw=view[0]*deg,pitch=view[1]*deg,project=p=>{const x=Math.cos(yaw)*p[0]-Math.sin(yaw)*p[1],y=Math.sin(pitch)*(Math.sin(yaw)*p[0]+Math.cos(yaw)*p[1])+Math.cos(pitch)*p[2];return[c.width*.45+x*105,c.height*.61-y*105]};function line(a,b,color,width=4){const q=project(a),r=project(b),t=Math.atan2(r[1]-q[1],r[0]-q[0]);g.strokeStyle=color;g.fillStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(...q);g.lineTo(...r);g.stroke();g.beginPath();g.moveTo(...r);g.lineTo(r[0]-12*Math.cos(t-.45),r[1]-12*Math.sin(t-.45));g.lineTo(r[0]-12*Math.cos(t+.45),r[1]-12*Math.sin(t+.45));g.fill()}function mark(p,text,color){const q=project(p);g.fillStyle=color;g.beginPath();g.arc(...q,9,0,7);g.fill();g.fillStyle='CanvasText';g.font='20px system-ui';g.fillText(text,q[0]+12,q[1]+27)}g.clearRect(0,0,c.width,c.height);const A=[0,0,0];line(A,[1.5,0,0],'#e38600');line(A,[0,1.5,0],'#e38600');line(A,[0,0,1.5],'#e38600');[['x_B','#25c6f7'],['y_B','#63d56b'],['z_B','#ad7bff']].forEach(([name,color],j)=>{const e=B.map((x,i)=>x+R[i][j]*1.45);line(B,e,color);const q=project(e);g.fillStyle=color;g.font='18px system-ui';g.fillText(name,q[0]+8,q[1]-8)});line(A,B,'#a0a0a0');line(B,P,'#159bc9',5);line(A,P,'#d34687',5);mark(A,'A','#e38600');mark(B,'B','#159bc9');mark(P,'P','#d34687');g.font='18px system-ui';g.fillStyle='#a0a0a0';const mid=project(B.map(x=>x/2));g.fillText('平移',mid[0]-20,mid[1]+24);g.fillStyle='#159bc9';const rb=project(B.map((x,i)=>x+rp[i]/2));g.fillText('R·p_B',rb[0]+10,rb[1]-12);g.fillStyle='#d34687';const ap=project(P.map(x=>x*.58));g.fillText('p_A',ap[0]-8,ap[1]-18);if(window.katex){const fmt=n=>(Math.abs(n)<.005?0:n).toFixed(2);katex.render(`{}^A p=\\begin{bmatrix}${fmt(P[0])}\\\\${fmt(P[1])}\\\\${fmt(P[2])}\\end{bmatrix}={}^A p_{BORG}+{}^A R_B\\begin{bmatrix}${fmt(pb[0])}\\\\${fmt(pb[1])}\\\\${fmt(pb[2])}\\end{bmatrix}`,$('m3'),{displayMode:true,throwOnError:false})}}function write(id,value){const text=Math.abs(value)<.005?'0':value.toFixed(2);document.getElementById(id).value=text;document.getElementById(id+'n').value=text}function cancelReset(){if(resetFrame!==null){cancelAnimationFrame(resetFrame);resetFrame=null}}poseIds.forEach(id=>{document.getElementById(id).oninput=()=>{cancelReset();document.getElementById(id+'n').value=document.getElementById(id).value;paint()};document.getElementById(id+'n').oninput=()=>{cancelReset();document.getElementById(id).value=document.getElementById(id+'n').value;paint()}});document.getElementById('reset3').onclick=()=>{cancelReset();const start=Object.fromEntries(poseIds.map(id=>[id,read(id)])),began=performance.now(),duration=800;const tick=now=>{const t=Math.min(1,(now-began)/duration),e=1-Math.pow(1-t,3);poseIds.forEach(id=>write(id,start[id]*(1-e)));paint();if(t<1)resetFrame=requestAnimationFrame(tick);else resetFrame=null};resetFrame=requestAnimationFrame(tick)};c.onpointerdown=e=>{down=[e.clientX,e.clientY,...view];c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!down)return;view=[down[2]+(e.clientX-down[0])*.5,Math.max(-75,Math.min(75,down[3]+(e.clientY-down[1])*.35))];paint()};c.onpointerup=()=>down=null;paint();});
+</script><script>
+window.addEventListener('load',()=>{const ids=['a3','b3','c3','x3','y3','z3','u3','w3','q3'],read=id=>Number(document.getElementById(id).value),D=Math.PI/180,fmt=n=>(Math.abs(n)<.005?0:n).toFixed(2);function rotation(a,b,c){a*=D;b*=D;c*=D;const A=Math.cos(a),B=Math.sin(a),C=Math.cos(b),E=Math.sin(b),G=Math.cos(c),H=Math.sin(c);return[[A*C,A*E*H-B*G,A*E*G+B*H],[B*C,B*E*H+A*G,B*E*G-A*H],[-E,C*H,C*G]]}function updateFormula(){if(!window.katex)return;const R=rotation(read('a3'),read('b3'),read('c3')),t=['x3','y3','z3'].map(read),p=['u3','w3','q3'].map(read),q=R.map(row=>row[0]*p[0]+row[1]*p[1]+row[2]*p[2]),result=t.map((v,i)=>v+q[i]),column=v=>`\\begin{bmatrix}${v.map(fmt).join('\\\\')}\\end{bmatrix}`,matrix=`\\begin{bmatrix}${R.map(row=>row.map(fmt).join('&')).join('\\\\')}\\end{bmatrix}`,tex=`${column(result)}=\\underbrace{${column(t)}}_{{}^A p_{BORG}}+\\underbrace{${matrix}}_{{}^A R_B}${column(p)}`;katex.render(tex,document.getElementById('m3'),{displayMode:true,throwOnError:false})}ids.forEach(id=>document.getElementById(id).addEventListener('input',updateFormula));document.getElementById('reset3').addEventListener('click',()=>{const end=performance.now()+900;const follow=()=>{updateFormula();if(performance.now()<end)requestAnimationFrame(follow)};requestAnimationFrame(follow)});updateFormula();});
+</script><script>
+window.addEventListener('load',()=>['a3','b3','c3','x3','y3','z3','u3','w3','q3'].forEach(id=>document.getElementById(id+'n').addEventListener('input',()=>document.getElementById(id).dispatchEvent(new Event('input')))));
+</script><script>
+window.addEventListener('load',()=>{const c=document.getElementById('canvas3'),g=c.getContext('2d'),ids=['a3','b3','c3','x3','y3','z3','u3','w3','q3'];let view=[-38,24],drag=null;function drawAxisLabels(){const yaw=view[0]*Math.PI/180,pitch=view[1]*Math.PI/180,project=p=>{const x=Math.cos(yaw)*p[0]-Math.sin(yaw)*p[1],y=Math.sin(pitch)*(Math.sin(yaw)*p[0]+Math.cos(yaw)*p[1])+Math.cos(pitch)*p[2];return[c.width*.45+x*105,c.height*.61-y*105]};g.fillStyle='#e38600';g.font='18px system-ui';[['x_A',[1.5,0,0]],['y_A',[0,1.5,0]],['z_A',[0,0,1.5]]].forEach(([name,axis])=>{const q=project(axis);g.fillText(name,q[0]+8,q[1]-8)})}function redraw(){requestAnimationFrame(drawAxisLabels)}c.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY,...view]});c.addEventListener('pointermove',e=>{if(!drag)return;view=[drag[2]+(e.clientX-drag[0])*.5,Math.max(-75,Math.min(75,drag[3]+(e.clientY-drag[1])*.35))];redraw()});c.addEventListener('pointerup',()=>drag=null);ids.forEach(id=>{document.getElementById(id).addEventListener('input',redraw);document.getElementById(id+'n').addEventListener('input',redraw)});document.getElementById('reset3').addEventListener('click',()=>{const end=performance.now()+900;const follow=()=>{drawAxisLabels();if(performance.now()<end)requestAnimationFrame(follow)};requestAnimationFrame(follow)});drawAxisLabels();});
+</script></body></html>

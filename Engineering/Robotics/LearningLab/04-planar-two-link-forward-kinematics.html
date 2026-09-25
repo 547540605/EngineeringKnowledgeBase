@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>笔记 04：二维两连杆与正运动学</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Microsoft YaHei",sans-serif;line-height:1.7}main{max-width:1500px;margin:auto;padding:28px 24px 64px}h2{margin-top:2.2rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.card{border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}.math-block{display:block;text-align:center;margin:1rem 0;overflow:auto}.small{color:color-mix(in srgb,var(--fg) 70%,var(--bg));font-size:.9rem}.canvas{width:100%;aspect-ratio:1.55;display:block;border:1px solid var(--line);border-radius:8px}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:116px 1fr 58px;align-items:center;gap:8px}input[type=range]{width:100%}input[type=number]{width:58px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:3px}.reset{width:100%;margin-top:14px;padding:8px 12px;color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:6px;font:inherit;cursor:pointer}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem}.dot{display:inline-block;width:.7em;height:.7em;border-radius:50%;margin-right:.3em}.workspace{display:grid;grid-template-columns:minmax(400px,.94fr) minmax(0,1.06fr);gap:26px;align-items:start;margin-top:22px}.arm-panel{position:sticky;top:16px;min-width:0}.arm-panel .canvas{aspect-ratio:1.18}.controls-card{margin-top:14px}.derivation{min-width:0}.derivation h2:first-child{margin-top:0}@media(max-width:900px){.workspace{grid-template-columns:1fr}.arm-panel{position:static}.arm-panel .canvas{aspect-ratio:1.55}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body>
+  <main>
+    <p class="small"><a href="00-progress.html">学习进度</a> · <a href="03-transform-chains.html">笔记 03：变换链</a></p>
+    <h1>笔记 04：二维两连杆与正运动学</h1>
+    <div class="card"><strong>从变换链走到机械臂：</strong>已知关节角 <span data-tex="q_1,q_2"></span> 和连杆长度 <span data-tex="a_1,a_2"></span>，求末端 E 在基座 0 中的位置与朝向。这件事叫<strong>正运动学</strong>。</div>
+
+    <div class="workspace">
+      <aside class="arm-panel" aria-label="二维两连杆交互图">
+        <canvas id="armCanvas" class="canvas" width="960" height="620" role="img" aria-label="二维两连杆机械臂正运动学示意图"></canvas>
+        <div class="legend"><span><i class="dot" style="background:#e38600"></i>基座坐标系 0</span><span><i class="dot" style="background:#159bc9"></i>关节坐标系 1</span><span><i class="dot" style="background:#36a269"></i>末端坐标系 2</span><span><i class="dot" style="background:#d34687"></i>末端 E / 第二段沿 x₀ 的投影</span></div>
+        <div class="card controls-card"><div id="armControls" class="controls"></div><button id="armReset" class="reset" type="button">关节角归零</button></div>
+        <p id="armState" class="small"></p>
+      </aside>
+      <section class="derivation">
+    <h2>先把前面的基础搬过来</h2>
+    <p>两连杆不是一套新数学；它只是把前面学过的坐标系换成了“基座、关节、末端”。先把对应关系钉牢：</p>
+    <div class="card">
+      <ol>
+        <li><strong>坐标表示：</strong>同一个几何对象，在不同坐标系下会有不同的数字。这里的末端 E 就是坐标系 2 的原点；因此它在 2 中的齐次坐标始终是 <span data-tex="[0;0;1]"></span>。</li>
+        <li><strong>位姿：</strong><span data-tex="{}^0T_1"></span> 描述的正是坐标系 1 相对基座 0 的完整位姿：左上 <span data-tex="2\times2"></span> 块是 <span data-tex="{}^0R_1"></span>（1 的两根轴在 0 中的方向），最后一列是 <span data-tex="{}^0p_{1ORG}"></span>（1 的原点在 0 中的位置）。</li>
+        <li><strong>齐次坐标：</strong>末尾的 <span data-tex="1"></span> 说明它是一个点而不是方向，所以变换矩阵的平移列会作用到它。</li>
+        <li><strong>变换链：</strong>要把末端从 2 写到 0，右边先做 <span data-tex="2\rightarrow1"></span>，再做 <span data-tex="1\rightarrow0"></span>：<span data-tex="{}^0T_2={}^0T_1{}^1T_2"></span>。</li>
+      </ol>
+    </div>
+    <p>因此，正运动学的第一句话可以直接写成：</p>
+    <span class="math-block" data-tex="\begin{bmatrix}{}^0p_E\\1\end{bmatrix}={}^0T_1{}^1T_2\begin{bmatrix}0\\0\\1\end{bmatrix}"></span>
+    <div class="card"><strong>读法：</strong>右侧的 <span data-tex="[0;0;1]"></span> 是“末端 E 在自己的坐标系 2 中”；经过两段局部坐标变换后，左侧得到“同一个末端 E 在基座 0 中”。后面的三角函数式，只是把这句坐标变换算开。</div>
+
+    <h2>先认模型：每一段只描述自己的局部变化</h2>
+    <p>坐标系 0 固定在基座的关节 1；坐标系 1 固定在关节 2，也就是连杆 1 的末端；坐标系 2 固定在末端 E。每个坐标系的 <span data-tex="x_i"></span> 轴都朝向自己的连杆。</p>
+    <p>第 1 个关节使 <span data-tex="x_1"></span> 相对 <span data-tex="x_0"></span> 转过 <span data-tex="q_1"></span>；沿 <span data-tex="x_1"></span> 走 <span data-tex="a_1"></span> 就到关节 2。第 2 个关节使 <span data-tex="x_2"></span> 相对 <span data-tex="x_1"></span> 再转 <span data-tex="q_2"></span>；沿 <span data-tex="x_2"></span> 走 <span data-tex="a_2"></span> 就到末端 E。</p>
+
+    <h2>角度的正负怎样约定</h2>
+    <div class="card"><strong>本页采用二维旋转的标准约定：</strong>在纸面上看 <span data-tex="x"></span> 向右、<span data-tex="y"></span> 向上；从纸面外的 <span data-tex="+z"></span> 方向看向原点，<strong>逆时针为正，顺时针为负</strong>。因此 <span data-tex="q_1"></span> 是从 <span data-tex="x_0"></span> 转到第一根连杆的有符号角；<span data-tex="q_2"></span> 是从第一根连杆的局部正向 <span data-tex="x_1"></span> 转到第二根连杆的有符号角。换句话说：<span data-tex="q_2>0"></span> 表示第二根相对第一根逆时针弯，<span data-tex="q_2<0"></span> 表示顺时针弯。</div>
+
+    <h2>先认符号：公式到底在写什么</h2>
+    <div class="card"><ul><li><span data-tex="{}^0T_1"></span>：不是幂。左上的 <span data-tex="0"></span> 表示“结果用坐标系 0 写”；右下的 <span data-tex="1"></span> 表示“对象是坐标系 1”。它把 1 中的齐次坐标改写成 0 中的齐次坐标。</li><li><span data-tex="T"></span>：齐次变换矩阵，里面同时装着旋转和位置。</li><li><span data-tex="R(q)"></span>：在这个二维平面内旋转 <span data-tex="q"></span>；控制面板里 <span data-tex="q_1,q_2"></span> 的单位是度。</li><li><span data-tex="T_x(a)"></span>：沿<strong>当前局部 x 轴</strong>平移长度 <span data-tex="a"></span>；<span data-tex="a_1,a_2"></span> 是两根连杆的长度，不是角度。</li></ul></div>
+    <p>所以第一段 <span data-tex="{}^0T_1=R(q_1)T_x(a_1)"></span> 的意思是：先在局部坐标里沿 x 走 <span data-tex="a_1"></span>，再用 <span data-tex="q_1"></span> 的方向把它写到 0 中。它的完整矩阵是：</p>
+    <span class="math-block" data-tex="{}^0T_1=\begin{bmatrix}\cos q_1&-\sin q_1&a_1\cos q_1\\\sin q_1&\cos q_1&a_1\sin q_1\\0&0&1\end{bmatrix}"></span>
+    <div class="card"><strong>只先看最后一列：</strong><span data-tex="[a_1\cos q_1;a_1\sin q_1]"></span> 就是关节 2（坐标系 1 原点）在基座 0 中的位置。前面的 <span data-tex="2\times2"></span> 块才是朝向。</div>
+    <span class="math-block" data-tex="{}^0T_1=R(q_1)\,T_x(a_1),\qquad {}^1T_2=R(q_2)\,T_x(a_2)"></span>
+    <div class="card"><strong>最容易错的一句：</strong><span data-tex="q_2"></span> 不是相对基座的角，而是相对<strong>连杆 1</strong>的角。因此末端的绝对朝向是 <span data-tex="q_1+q_2"></span>。</div>
+
+    <h2>图中这两段是什么</h2>
+    <p>左侧图里的<strong>橙色第一段</strong>是基座到关节 2 的位置向量 <span data-tex="{}^0p_{1ORG}"></span>；<strong>蓝色第二段</strong>是关节 2 到末端的向量，先在 1 中写成 <span data-tex="{}^1p_{E/1}"></span>，再旋转到 0 中，即 <span data-tex="{}^0R_1{}^1p_{E/1}"></span>。它们相加就是粉色末端 E 的位置。</p>
+    <span id="armPointFormula" class="math-block"></span>
+    <span id="armChainFormula" class="math-block"></span>
+
+    <h2>把两段局部变换连起来</h2>
+    <p>末端坐标系 2 的原点在 2 中是 <span data-tex="[0;0;1]"></span>。它先经 <span data-tex="{}^1T_2"></span> 写到 1 中，再经 <span data-tex="{}^0T_1"></span> 写到 0 中：</p>
+    <span class="math-block" data-tex="\begin{bmatrix}{}^0p_E\\1\end{bmatrix}={}^0T_1{}^1T_2\begin{bmatrix}0\\0\\1\end{bmatrix}={}^0T_2\begin{bmatrix}0\\0\\1\end{bmatrix}"></span>
+    <p><strong>先不要看最终式，先把末端 E 的位置拆成两段路：</strong>基座到关节 2，以及关节 2 到末端。只有把两段都写成基座 0 的分量，才能相加。</p>
+    <p>第一段是连杆 1：它已经用基座 0 写出，因此关节 2（坐标系 1 原点）的位置是：</p>
+    <span class="math-block" data-tex="{}^0p_{1ORG}=\begin{bmatrix}a_1\cos q_1\\a_1\sin q_1\end{bmatrix}"></span>
+    <p>第二段是连杆 2：在坐标系 1 中，它的位移是 <span data-tex="[a_2\cos q_2;a_2\sin q_2]"></span>。这还是 1 中的分量，不能直接与第一段相加；必须先用 <span data-tex="{}^0R_1"></span> 改写成基座 0 的分量：</p>
+    <span class="math-block" data-tex="{}^0p_E=\begin{bmatrix}a_1\cos q_1\\a_1\sin q_1\end{bmatrix}+\begin{bmatrix}\cos q_1&-\sin q_1\\\sin q_1&\cos q_1\end{bmatrix}\begin{bmatrix}a_2\cos q_2\\a_2\sin q_2\end{bmatrix}"></span>
+    <p>乘开第二项后，x、y 分量分别含有 <span data-tex="\cos q_1\cos q_2-\sin q_1\sin q_2"></span> 与 <span data-tex="\sin q_1\cos q_2+\cos q_1\sin q_2"></span>。它们正好是和角公式：</p>
+    <span class="math-block" data-tex="\cos(q_1+q_2)=\cos q_1\cos q_2-\sin q_1\sin q_2,\qquad\sin(q_1+q_2)=\sin q_1\cos q_2+\cos q_1\sin q_2"></span>
+    <p>现在两段都在 0 中，才得到末端位置的紧凑写法：</p>
+    <span class="math-block" data-tex="{}^0p_E=\begin{bmatrix}a_1\cos q_1+a_2\cos(q_1+q_2)\\a_1\sin q_1+a_2\sin(q_1+q_2)\end{bmatrix}"></span>
+    <h2>“x 投影”到底投到哪里</h2>
+    <div class="card"><p><strong>不是投到连杆自身的 <span data-tex="x_2"></span> 轴。</strong>主动画底部的橙色、紫色水平箭头都沿固定基座轴 <span data-tex="x_0"></span>：橙色是 <span data-tex="\overrightarrow{O_0O_1}"></span> 的投影，紫色是 <span data-tex="\overrightarrow{O_1O_2}"></span> 的投影。两箭头首尾相接，终点就是末端的基座 x 坐标；两条灰色虚线分别从 <span data-tex="O_1,O_2"></span> 落到 <span data-tex="x_0"></span>。</p><span class="math-block" data-tex="x_E=a_1\cos q_1+a_2\cos(q_1+q_2)"></span><p>这里问的是末端<strong>在基座 <span data-tex="\{0\}"></span> 中的 x 坐标</strong>，所以投影方向必须是 <span data-tex="x_0"></span>，而不是会随连杆转动的 <span data-tex="x_2"></span>。把滑块调到 <span data-tex="q_1=30^\circ,q_2=60^\circ"></span>：第二段竖直，仍有长度 <span data-tex="a_2"></span>，但它沿 <span data-tex="x_0"></span> 的投影为 0。</p></div>
+    <div class="card"><strong>这不是一条新规则。</strong>它就是前一节的 <span data-tex="{}^0T_2={}^0T_1{}^1T_2"></span>，现在把坐标系 1、2 换成了机械臂的两个关节。</div>
+
+    <h2>这一节的过关线</h2>
+    <div class="card"><ol><li>给定 <span data-tex="q_1,q_2,a_1,a_2"></span>，能说出这是“已知关节，求末端”的正运动学。</li><li>知道 <span data-tex="q_2"></span> 是相对连杆 1 的局部角，所以末端朝向是 <span data-tex="q_1+q_2"></span>。</li><li>能读出 <span data-tex="{}^0T_2={}^0T_1{}^1T_2"></span>：右边先做 2 → 1，左边再做 1 → 0。</li><li>能把两连杆的末端位置与两条三角函数式对应起来。</li></ol><p>下一步先进入 <a href="05-3d-single-axis-rotations.html">笔记 04：三维单轴旋转</a>，把二维旋转升级到三维；之后才把它应用到机械臂和 DH 参数。</p></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    window.addEventListener('load',()=>{
+      const $=id=>document.getElementById(id),c=$('armCanvas'),g=c.getContext('2d'),D=Math.PI/180;
+      const items=[['q1','关节 1 角 q1',-170,170,1,35],['q2','关节 2 角 q2',-170,170,1,-55],['a1','连杆 1 长 a1',.5,4,.1,2.6],['a2','连杆 2 长 a2',.5,4,.1,2.0]],ids=items.map(item=>item[0]);
+      const value=id=>Number($(id).value),fmt=n=>(Math.abs(n)<.005?0:n).toFixed(2);let resetFrame=null;
+      function setup(){const host=$('armControls');host.innerHTML=items.map(item=>'<label class="control">'+item[1]+'<input id="'+item[0]+'" type="range" min="'+item[2]+'" max="'+item[3]+'" step="'+item[4]+'" value="'+item[5]+'"><input id="'+item[0]+'n" type="number" min="'+item[2]+'" max="'+item[3]+'" step="'+item[4]+'" value="'+item[5]+'"></label>').join('');ids.forEach(id=>{const r=$(id),n=$(id+'n');r.oninput=()=>{cancelReset();n.value=r.value;draw()};n.oninput=()=>{cancelReset();r.value=n.value;draw()}})}
+      function cancelReset(){if(resetFrame!==null){cancelAnimationFrame(resetFrame);resetFrame=null}}function add(a,b){return[a[0]+b[0],a[1]+b[1]]}function arrow(a,b,color,width=3){if(Math.hypot(b[0]-a[0],b[1]-a[1])<1)return;const angle=Math.atan2(b[1]-a[1],b[0]-a[0]),head=10;g.strokeStyle=color;g.fillStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();g.beginPath();g.moveTo(...b);g.lineTo(b[0]-head*Math.cos(angle-.45),b[1]-head*Math.sin(angle-.45));g.lineTo(b[0]-head*Math.cos(angle+.45),b[1]-head*Math.sin(angle+.45));g.fill()}function dot(p,color,r=7){g.fillStyle=color;g.beginPath();g.arc(...p,r,0,Math.PI*2);g.fill()}function matrix(angle,length){const C=Math.cos(angle),S=Math.sin(angle);return'\\begin{bmatrix}'+fmt(C)+'&'+fmt(-S)+'&'+fmt(length*C)+'\\\\'+fmt(S)+'&'+fmt(C)+'&'+fmt(length*S)+'\\\\0&0&1\\end{bmatrix}'}function column(v){return'\\begin{bmatrix}'+v.map(fmt).join('\\\\')+'\\end{bmatrix}'}function render(tex,id){if(window.katex)window.katex.render(tex,$(id),{displayMode:true,throwOnError:false})}
+      function draw(){
+        const q1=value('q1')*D,q2=value('q2')*D,a1=value('a1'),a2=value('a2'),total=q1+q2,p0=[0,0],p1=[a1*Math.cos(q1),a1*Math.sin(q1)],p2=add(p1,[a2*Math.cos(total),a2*Math.sin(total)]),points=[p0,p1,p2],xs=points.map(point=>point[0]),ys=points.map(point=>point[1]),spanX=Math.max(1,Math.max(...xs)-Math.min(...xs)),spanY=Math.max(1,Math.max(...ys)-Math.min(...ys)),S=Math.min(160,c.width*.80/(spanX+1.4),c.height*.70/(spanY+1.4)),midX=(Math.max(...xs)+Math.min(...xs))/2,midY=(Math.max(...ys)+Math.min(...ys))/2,origin=[c.width*.50-S*midX,c.height*.54+S*midY],screen=point=>[origin[0]+point[0]*S,origin[1]-point[1]*S],textColor=getComputedStyle(document.body).color;
+        g.clearRect(0,0,c.width,c.height);g.strokeStyle='var(--muted)';g.lineWidth=1;const gridMinX=Math.max(-12,Math.floor(-origin[0]/S)-1),gridMaxX=Math.min(12,Math.ceil((c.width-origin[0])/S)+1),gridMinY=Math.max(-12,Math.floor((origin[1]-c.height)/S)-1),gridMaxY=Math.min(12,Math.ceil(origin[1]/S)+1);for(let i=gridMinX;i<=gridMaxX;i++){g.beginPath();g.moveTo(...screen([i,gridMinY]));g.lineTo(...screen([i,gridMaxY]));g.stroke()}for(let i=gridMinY;i<=gridMaxY;i++){g.beginPath();g.moveTo(...screen([gridMinX,i]));g.lineTo(...screen([gridMaxX,i]));g.stroke()}
+        const label=(text,point,color,dx=8,dy=-8)=>{g.fillStyle=color;g.font='17px system-ui';g.fillText(text,point[0]+dx,point[1]+dy)},axis=(point,angle,color,name)=>{const base=screen(point),x=screen(add(point,[.58*Math.cos(angle),.58*Math.sin(angle)])),y=screen(add(point,[-.58*Math.sin(angle),.58*Math.cos(angle)]));arrow(base,x,color,2);arrow(base,y,color,2);label('x_'+name,x,color);label('y_'+name,y,color)},lengthLabel=(start,end,lengthText,vectorText,color)=>{const dx=end[0]-start[0],dy=end[1]-start[1],length=Math.hypot(dx,dy),normal=[-dy/length,dx/length],mid=[(start[0]+end[0])/2+normal[0]*31,(start[1]+end[1])/2+normal[1]*31];g.fillStyle=color;g.font='18px system-ui';g.fillText(lengthText,mid[0]-26,mid[1]-8);if(vectorText){g.font='15px system-ui';g.fillText(vectorText,mid[0]-38,mid[1]+12)}},angleLabel=(point,from,to,radius,color,text)=>{const center=screen(point),mid=(from+to)/2;if(Math.abs(to-from)>.02){g.strokeStyle=color;g.lineWidth=2;g.beginPath();g.arc(center[0],center[1],radius,-from,-to,to>from);g.stroke()}const textPoint=[center[0]+(radius+19)*Math.cos(-mid),center[1]+(radius+19)*Math.sin(-mid)];label(text,textPoint,color)};
+        axis(p0,0,'#e38600','0');axis(p1,q1,'#159bc9','1');axis(p2,total,'#36a269','2');const s0=screen(p0),s1=screen(p1),s2=screen(p2),baseP1=screen([p1[0],0]),baseP2=screen([p2[0],0]),firstProjection=a1*Math.cos(q1),secondProjection=a2*Math.cos(total),firstMid=[(s0[0]+baseP1[0])/2,(s0[1]+baseP1[1])/2],secondMid=[(baseP1[0]+baseP2[0])/2,(baseP1[1]+baseP2[1])/2];g.lineCap='round';g.strokeStyle='#e38600';g.lineWidth=16;g.beginPath();g.moveTo(...s0);g.lineTo(...s1);g.stroke();g.strokeStyle='#159bc9';g.beginPath();g.moveTo(...s1);g.lineTo(...s2);g.stroke();g.lineCap='butt';g.setLineDash([7,6]);g.strokeStyle='#7c8799';g.lineWidth=2;g.beginPath();g.moveTo(...s1);g.lineTo(...baseP1);g.moveTo(...s2);g.lineTo(...baseP2);g.stroke();g.setLineDash([]);arrow(s0,baseP1,'#e38600',4);arrow(baseP1,baseP2,'#d34687',4);lengthLabel(s0,s1,'a₁='+fmt(a1),'','#e38600');lengthLabel(s1,s2,'a₂='+fmt(a2),'','#159bc9');angleLabel(p0,0,q1,46,'#d34687','q1='+fmt(q1/D)+'°');angleLabel(p1,q1,total,37,'#d34687','q2='+fmt(q2/D)+'°');dot(s0,'#e38600',9);dot(s1,'#159bc9',9);dot(s2,'#d34687',9);label('O₀ / 基座',s0,textColor,8,21);label('O₁',s1,textColor,8,20);label('末端 E',s2,'#d34687',8,-10);label('a₁ cos q₁='+fmt(firstProjection),firstMid,'#e38600',-58,42);label('a₂ cos(q₁+q₂)='+fmt(secondProjection),secondMid,'#d34687',-88,64);
+        $('armState').textContent='局部角：q1='+fmt(q1/D)+'°, q2='+fmt(q2/D)+'°；末端相对基座朝向：q1+q2='+fmt(total/D)+'°；xE='+fmt(firstProjection)+' + '+fmt(secondProjection)+' = '+fmt(p2[0])+'。';
+        render('\\underbrace{'+column([p2[0],p2[1],1])+'}_{\\text{E in 0}}=\\underbrace{'+matrix(q1,a1)+'}_{{}^0T_1\\;(1\\to0)}\\underbrace{'+matrix(q2,a2)+'}_{{}^1T_2\\;(2\\to1)}\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}',$('armPointFormula').id);
+        render('{}^0T_2=\\underbrace{'+matrix(q1,a1)+'}_{{}^0T_1\\;(1\\to0)}\\underbrace{'+matrix(q2,a2)+'}_{{}^1T_2\\;(2\\to1)}',$('armChainFormula').id);
+      }
+      function reset(){cancelReset();const start={q1:value('q1'),q2:value('q2')},began=performance.now(),duration=800;const tick=now=>{const t=Math.min(1,(now-began)/duration),e=1-Math.pow(1-t,3);['q1','q2'].forEach(id=>{const n=start[id]*(1-e);$(id).value=n;$(id+'n').value=n.toFixed(2)});draw();if(t<1)resetFrame=requestAnimationFrame(tick);else resetFrame=null};resetFrame=requestAnimationFrame(tick)}
+      setup();$('armReset').onclick=reset;let tries=0;const ready=()=>{if(window.katex)draw();else if(tries++<30)setTimeout(ready,100)};ready();
+    });
+  </script>
+  <script>
+    window.addEventListener('load',()=>{let attempts=0;const renderStatic=()=>{if(!window.katex){if(attempts++<30)setTimeout(renderStatic,100);return}document.querySelectorAll('[data-tex]').forEach(element=>window.katex.render(element.dataset.tex,element,{displayMode:element.classList.contains('math-block'),throwOnError:false}))};renderStatic()});
+  </script>
+</body>
+</html>

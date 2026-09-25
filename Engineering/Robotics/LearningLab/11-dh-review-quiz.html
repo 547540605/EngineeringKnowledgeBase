@@ -1,0 +1,76 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DH 专项自测</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script><style>
+:root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,"Microsoft YaHei",sans-serif}main{max-width:930px;margin:auto;padding:28px 20px 70px}h2{margin-top:2.3rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.card,.q{border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}.q h3{margin:0 0 .7rem;font-size:1rem}.choice{display:block;margin:.4rem 0}input[type=text],textarea{width:100%;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px;font:inherit}textarea{min-height:96px}details{margin-top:12px;background:var(--ans);border-radius:7px;padding:0 12px}summary{cursor:pointer;font-weight:700;padding:8px 0}.answer{padding:0 0 10px}.explain{margin-top:.65rem}.explain p{margin:.65rem 0}.math{display:block;text-align:center;margin:.7rem 0;overflow:auto}.tag{border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:.85rem}@media(max-width:580px){main{padding:22px 14px}}
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style></head><body><main>
+<p><a href="00-progress.html">学习进度</a> · <a href="08-dh-coordinate-assignment.html">笔记 04</a> · <a href="09-dh-single-link-transform.html">笔记 04</a> · <a href="10-dh-table-to-forward-kinematics.html">笔记 04</a></p>
+<h1>DH 专项自测</h1><div class="card">覆盖 DH 建系、四参数、单段矩阵、变换链、DH 表和两连杆正运动学。建议先在 iPad 上做；每题独立展开答案。</div><div id="root"></div>
+<script>
+const K=t=>'<span class="inline-math" data-tex="'+t+'"></span>',B=t=>'<span class="math" data-tex="'+t+'"></span>';
+const M=[
+['第 '+K('i')+' 个转动关节轴是？',K('x_i')+'|'+K('y_i')+'|'+K('z_{i-1}')+'|'+K('z_i'),'C','标准 DH 的编号故意错一位：在生成 '+K('\\{i\\}')+' 前，先绕旧坐标系 '+K('\\{i-1\\}')+' 的 '+K('z_{i-1}')+' 旋转 '+K('\\theta_i')+'；因此 '+K('z_{i-1}')+' 是第 '+K('i')+' 个关节轴，'+K('z_i')+' 留给第 '+K('i+1')+' 个关节。详见笔记 09 的“为什么下标错一位”说明。'],
+['DH 四因子顺序？',K('R_z(\\theta)T_z(d)T_x(a)R_x(\\alpha)')+'|'+K('T_x(a)R_z(\\theta)T_z(d)R_x(\\alpha)')+'|'+K('R_x(\\alpha)T_x(a)T_z(d)R_z(\\theta)')+'|任意','A','顺序固定为 '+K('R_z(\\theta)T_z(d)T_x(a)R_x(\\alpha)')+'。'],
+[''+K('a_i')+' 是？','沿 z 的距离|绕 z 的角度|沿 '+K('x_i')+' 的距离|绕 '+K('x_i')+' 的角度','C',K('a_i')+' 是公共法线长度。'],
+[''+K('\\alpha_i')+' 是？','绕 z 的角|沿 z 的距离|沿 x 的距离|绕 '+K('x_i')+' 的扭转角','D',K('\\alpha_i')+' 描述两根 z 轴绕 '+K('x_i')+' 的关系。'],
+['平面两连杆中 '+K('d_i=0')+' 的原因？','长度为 0|没有沿 z 的偏移|'+K('q_i')+' 为 0|矩阵不能有 d','B','所有关节 z 轴垂直纸面且无 z 向偏移。'],
+['单段齐次矩阵前三列表示？','速度|新 x、y、z 轴|旧 x、y、z 轴|DH 参数','B','它们是新坐标系三轴在旧坐标系中的坐标。'],
+['第 1 行 '+K('(q_1,0,L_1,0)')+' 对应？',K('R_z(q_1)T_z(0)T_x(L_1)R_x(0)')+'|'+K('R_z(L_1)T_x(q_1)')+'|'+K('T_z(q_1)R_x(L_1)')+'|'+K('R_z(q_2)T_x(L_2)'),'A','逐项代入通用式。'],
+[K('{}^0T_1{}^1T_2')+' 可乘因为？','都是 4×4|中间 '+K('\\{1\\}')+' 接上|q 相等|可交换','B','右项把 '+K('\\{2\\}')+' 改写到 '+K('\\{1\\}')+'，左项再到 '+K('\\{0\\}')+'。'],
+['第二连杆对基座绝对角？',K('q_2')+'|'+K('q_1')+'|'+K('q_1+q_2')+'|'+K('q_1-q_2'),'C','局部 '+K('q_2')+' 叠加在 '+K('q_1')+' 后。'],
+[K('{}^0R_1{}^1p_{2ORG}')+' 的作用？','缩短第二段|把向量 O₁→O₂ 的坐标列改用 '+K('\\{0\\}')+' 表示|求逆|消掉 '+K('q_2'),'B','这里的“第二段”不是一根要被改变的杆，而是向量 O₁→O₂。'+K('{}^1p_{2ORG}')+' 的数字是沿 '+K('x_1,y_1,z_1')+' 报出的；左乘 '+K('{}^0R_1')+' 后，得到的是沿 '+K('x_0,y_0,z_0')+' 报出的同一根箭头。例：若 '+K('q_1=90^\\circ')+'，且 '+K('{}^1p_{2ORG}=\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}')+'，意思是“沿 x₁ 走 2”；由于 x₁ 此时指向 y₀，它改写后就是 '+K('{}^0R_1{}^1p_{2ORG}=\\begin{bmatrix}0\\\\2\\\\0\\end{bmatrix}')+'。长度仍是 2，只有三个分量的参照轴换了；这样才能与已经用 '+K('\\{0\\}')+' 写好的第一段相加。']
+];
+const F=[
+[''+K('{}^{i-1}T_i')+' 的输入坐标来自 ___，输出坐标写在 ___。',K('\\{i\\}')+'；'+K('\\{i-1\\}'),'这里的 T 是完整齐次变换，不是单独的平移；上标是输出坐标系，下标 i 对应输入坐标系，它把同一个对象从 '+K('\\{i\\}')+' 改写到 '+K('\\{i-1\\}')+'。只有 '+K('T_z(d)')+'、'+K('T_x(a)')+' 才是纯平移因子。'],
+['补全：'+K('R_z(\\theta_i)')+' ___ '+K('T_x(a_i)R_x(\\alpha_i)')+'。',K('T_z(d_i)'),'第二因子是沿 z 平移。'],
+[''+K('\\theta_i')+' 绕 ___ 转。',K('z_{i-1}'),'转动关节变量通常在 '+K('\\theta_i')+'。'],
+[''+K('d_i')+' 沿 ___ 走。',K('z_{i-1}'),'移动关节变量通常在 '+K('d_i')+'。'],
+[''+K('a_i')+' 沿 ___ 走。',K('x_i'),'它是公共法线长度。'],
+[''+K('\\alpha_i')+' 绕 ___ 转。',K('x_i'),'它是扭转角。'],
+[''+K('{}^0T_2')+' = ___ 。',K('{}^0T_1{}^1T_2'),'中间 '+K('\\{1\\}')+' 接上。'],
+[''+K('{}^0p_{1ORG}')+' 从 ___ 指向 ___。',K('O_0')+'；'+K('O_1'),'它用 '+K('\\{0\\}')+' 写。'],
+['两连杆末端 x 坐标中，第二段贡献的是 ___。',K('L_2\\cos(q_1+q_2)'),'先把末端位置拆成两根箭头：'+K('{}^0p_{2ORG}=\\overrightarrow{O_0O_1}+\\overrightarrow{O_1O_2}')+'。第一段已经相对基座转了 '+K('q_1')+'，所以 x 投影是 '+K('L_1\\cos q_1')+'。第二段再相对第一段转 '+K('q_2')+'，它相对基座的绝对朝向就累计成 '+K('q_1+q_2')+'，所以它自己的 x 投影必须是“长度 × 该绝对角的余弦”：'+K('L_2\\cos(q_1+q_2)')+'。例如 '+K('q_1=30^\\circ,q_2=60^\\circ')+' 时，第二段朝 '+K('90^\\circ')+'，x 投影为 0，而不是 '+K('L_2\\cos60^\\circ')+'。'],
+['在 '+K('{}^AT_B')+' 中，第四列前三项是 ___。','坐标系 '+K('\\{B\\}')+' 原点 '+K('O_B')+' 在 '+K('\\{A\\}')+' 中的位置','完整矩阵可按四块读：'+K('{}^AT_B=\\begin{bmatrix}{}^AR_B&{}^Ap_{BORG}\\\\0^T&1\\end{bmatrix}')+'。前三列 '+K('{}^AR_B')+' 是 B 的三根单位轴在 A 中的分量；第四列的 '+K('{}^Ap_{BORG}')+' 则是从 A 原点指向 B 原点的向量、用 A 的轴报出的三个数。比如 '+K('{}^0T_2')+' 的第四列前三项，就是末端坐标系原点 '+K('O_2')+' 在基座 '+K('\\{0\\}')+' 中的位置。']
+];
+const J=[
+['DH 表中“一行”已经描述整条机械臂相对基座。','错','以两连杆为例：第 1 行只生成 '+K('{}^0T_1')+'，即把 '+K('\\{1\\}')+' 写到 '+K('\\{0\\}')+'；第 2 行只生成 '+K('{}^1T_2')+'，即把 '+K('\\{2\\}')+' 写到 '+K('\\{1\\}')+'。没有任何一行单独等于“末端相对基座”。必须把所有行按坐标系链相乘：'+K('{}^0T_2={}^0T_1{}^1T_2')+'，这个总矩阵才描述末端 '+K('\\{2\\}')+' 相对基座 '+K('\\{0\\}')+' 的位姿。'],
+['相邻 z 轴平行同向时 '+K('\\alpha_i=0')+'。','对','不需要绕 '+K('x_i')+' 扭转。'],
+['完成前三因子后，中间 z 轴仍平行 '+K('z_{i-1}')+'。','对','还没执行 '+K('R_x(\\alpha_i)')+'。'],
+[''+K('a_i')+' 沿 '+K('z_{i-1}')+' 测得。','错',K('a_i')+' 沿 '+K('x_i')+'；'+K('d_i')+' 才沿 z。'],
+['平面两连杆可有 '+K('\\alpha_1=\\alpha_2=0')+'。','对','各 z 轴平行。'],
+[''+K('{}^0R_1{}^1p_{2ORG}')+' 仍用 '+K('\\{1\\}')+' 写。','错','左乘后成为 '+K('\\{0\\}')+' 分量。'],
+[''+K('{}^0T_1{}^1T_2')+' 可与 '+K('{}^1T_2{}^0T_1')+' 交换。','错','上下标不能连续，矩阵也不可交换。'],
+['标准 DH 中，若第 '+K('i')+' 个关节是转动关节，则随控制量变化的 DH 参数通常是 '+K('\\theta_i')+'。','对','这里容易混三个名字：'+K('q_i')+' 是第 i 个关节的通用控制变量；若它是转动关节，通常写成 '+K('\\theta_i=q_i+\\theta_{\\text{offset}}')+'，所以变化的是 '+K('\\theta_i')+'。若它是移动关节，才通常写成 '+K('d_i=q_i+d_{\\text{offset}}')+'，变化的是 '+K('d_i')+'。其余 DH 参数描述固定的机构几何。'],
+[''+K('{}^0T_2')+' 第四列前三项是 '+K('O_2')+' 在 '+K('\\{0\\}')+' 的位置。','对','第四列是后一帧原点。'],
+[''+K('q_1+q_2')+' 出现是因为 '+K('q_1=q_2')+'。','错','它是连续旋转的累计朝向。']
+];
+const W=[
+['1. 读 DH 表','第 1 行 '+K('(\\theta_1,d_1,a_1,\\alpha_1)=(30^\\circ,0,2,0)')+'。写出 '+K('{}^0T_1')+'。',B('{}^0T_1=\\begin{bmatrix}\\sqrt3/2&-1/2&0&\\sqrt3\\\\1/2&\\sqrt3/2&0&1\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix}'),'<p><strong>第 1 步：先写本行的标准 DH 通式。</strong></p>'+B('{}^0T_1=R_z(\\theta_1)T_z(d_1)T_x(a_1)R_x(\\alpha_1)')+'<p><strong>第 2 步：逐项代入表中数字。</strong></p>'+B('{}^0T_1=R_z(30^\\circ)T_z(0)T_x(2)R_x(0)=R_z(30^\\circ)T_x(2)')+'<p>因为沿 z 走 0 和绕 x 转 0 都不改变任何东西，所以它们是单位变换，可以划掉。</p><p><strong>第 3 步：把剩下两项写成矩阵。</strong></p>'+B('R_z(30^\\circ)=\\begin{bmatrix}\\sqrt3/2&-1/2&0&0\\\\1/2&\\sqrt3/2&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\quad T_x(2)=\\begin{bmatrix}1&0&0&2\\\\0&1&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix}')+'<p><strong>第 4 步：做乘法时，前三列只是旋转矩阵；第四列是把局部位移 '+K('[2,0,0]^T')+' 旋转到 {0} 中：</strong></p>'+B('R_z(30^\\circ)\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}=\\begin{bmatrix}\\sqrt3\\\\1\\\\0\\end{bmatrix}')+'<p>所以把这根位移填到第四列，就得到答案。重点不是背结果：先写四步通式，再看哪些参数为 0。</p>'],
+['2. 变换链','补全 '+K('{}^0T_2')+'，并说明顺序。',B('{}^0T_2={}^0T_1{}^1T_2'),'<p><strong>第 1 步：先只看每个矩阵的“输入坐标系 → 输出坐标系”。</strong></p>'+B('{}^1T_2:\\ \{2\\}\\to\\{1\\},\\qquad {}^0T_1:\\ \{1\\}\\to\\{0\\}')+'<p><strong>第 2 步：从最右边开始处理一个点。</strong></p>'+B('{}^0p={}^0T_1\\left({}^1T_2{}^2p\\right)')+'<p>右边先把 '+K('{}^2p')+' 改写成 {1} 分量，左边再把结果改写成 {0} 分量；中间的 {1} 正好接上。因此乘积只能按 '+K('{}^0T_1{}^1T_2')+' 写，不是因为两个矩阵都是 4×4 就随便相乘。</p>'],
+['3. 末端位置',K('L_1=2,L_2=1,q_1=30^\\circ,q_2=60^\\circ')+'，求 '+K('{}^0p_{2ORG}')+'。',B('{}^0p_{2ORG}=\\begin{bmatrix}\\sqrt3\\\\2\\\\0\\end{bmatrix}'),'<p><strong>第 1 步：写两连杆末端的通式。</strong></p>'+B('{}^0p_{2ORG}=\\begin{bmatrix}L_1\\cos q_1+L_2\\cos(q_1+q_2)\\\\L_1\\sin q_1+L_2\\sin(q_1+q_2)\\\\0\\end{bmatrix}')+'<p><strong>第 2 步：第二根的绝对朝向不是 '+K('q_2')+'，而是累计角 '+K('q_1+q_2=90^\\circ')+'。</strong></p>'+B('\\begin{aligned}{}^0p_{2ORG}&=\\begin{bmatrix}2\\cos30^\\circ+1\\cos90^\\circ\\\\2\\sin30^\\circ+1\\sin90^\\circ\\\\0\\end{bmatrix}\\\\&=\\begin{bmatrix}\\sqrt3+0\\\\1+1\\\\0\\end{bmatrix}=\\begin{bmatrix}\\sqrt3\\\\2\\\\0\\end{bmatrix}\\end{aligned}')+'<p>也可以把它看成两根箭头相加：第一段 '+K('[\\sqrt3,1,0]^T')+'，第二段 '+K('[0,1,0]^T')+'。</p>'],
+['4. 先改写再相加',K('{}^0p_{1ORG}=\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\ {}^0R_1=R_z(90^\\circ),\\ {}^1p_{2ORG}=\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}')+'，求末端。',B('{}^0p_{2ORG}=\\begin{bmatrix}1\\\\2\\\\0\\end{bmatrix}'),'<p><strong>第 1 步：先写“前一段位置 + 改写后的后一段”。</strong></p>'+B('{}^0p_{2ORG}={}^0p_{1ORG}+{}^0R_1{}^1p_{2ORG}')+'<p><strong>第 2 步：把第二段从 {1} 改写到 {0}。</strong></p>'+B('R_z(90^\\circ)\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}=\\begin{bmatrix}0&-1&0\\\\1&0&0\\\\0&0&1\\end{bmatrix}\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}=\\begin{bmatrix}0\\\\2\\\\0\\end{bmatrix}')+'<p><strong>第 3 步：现在两个向量都用 {0} 写了，才可以相加。</strong></p>'+B('\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix}+\\begin{bmatrix}0\\\\2\\\\0\\end{bmatrix}=\\begin{bmatrix}1\\\\2\\\\0\\end{bmatrix}')+'<p>这里的旋转矩阵不缩短第二段；它只把“沿 {1} 的 x 轴走 2”改写成“沿 {0} 的 y 轴走 2”。</p>'],
+['5. 读单段矩阵',K('{}^{i-1}T_i=\\begin{bmatrix}1&0&0&1.5\\\\0&0&-1&0\\\\0&1&0&0.4\\\\0&0&0&1\\end{bmatrix}')+'。写新原点和第三列含义。','原点 '+B('\\begin{bmatrix}1.5\\\\0\\\\0.4\\end{bmatrix}')+'；第三列 '+B('\\begin{bmatrix}0\\\\-1\\\\0\\end{bmatrix}')+' 是新 '+K('z_i')+' 指向旧负 y。','<p><strong>第 1 步：先按齐次矩阵的固定结构分块。</strong></p>'+B('{}^{i-1}T_i=\\begin{bmatrix}R & p\\\\0^T&1\\end{bmatrix}')+'<p><strong>第 2 步：右上角第四列（去掉最后的 1）就是新原点 '+K('O_i')+' 在旧坐标系 '+K('\\{i-1\\}')+' 中的位置。</strong></p>'+B('{}^{i-1}p_{iORG}=\\begin{bmatrix}1.5\\\\0\\\\0.4\\end{bmatrix}')+'<p><strong>第 3 步：旋转矩阵的每一列是一根新单位轴用旧坐标系写出的分量。</strong> 第三列为 '+K('[0,-1,0]^T')+'，所以新的 '+K('z_i')+' 指向旧 '+K('y_{i-1}')+' 的负方向。</p>']
+];
+W[0][3]='<p><strong>第 1 步：先写本行的标准 DH 通式。</strong></p>'+B('{}^0T_1=R_z(\\theta_1)T_z(d_1)T_x(a_1)R_x(\\alpha_1)')+'<p><strong>第 2 步：逐项代入表中数字。</strong></p>'+B('{}^0T_1=R_z(30^\\circ)T_z(0)T_x(2)R_x(0)=R_z(30^\\circ)T_x(2)')+'<p>因为沿 z 走 0 和绕 x 转 0 都不改变任何东西，所以 '+K('T_z(0)')+'、'+K('R_x(0)')+' 都是单位变换，可以划掉。</p><p><strong>第 3 步：先写剩下两个基本变换的通用原式。</strong></p>'+B('R_z(\\theta)=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta&0&0\\\\\\sin\\theta&\\cos\\theta&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\qquad T_x(a)=\\begin{bmatrix}1&0&0&a\\\\0&1&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix}')+'<p>这里 '+K('R_z')+' 的左上角 2×2 块，就是笔记 01 的二维旋转矩阵；'+K('T_x')+' 是沿当前 x 轴平移，因此第四列的 x 分量才是 '+K('a')+'。</p><p><strong>第 4 步：再代入 '+K('\\theta=30^\\circ,a=2')+'。</strong> 使用 '+K('\\cos30^\\circ=\\sqrt3/2')+'、'+K('\\sin30^\\circ=1/2')+'：</p>'+B('R_z(30^\\circ)=\\begin{bmatrix}\\sqrt3/2&-1/2&0&0\\\\1/2&\\sqrt3/2&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\quad T_x(2)=\\begin{bmatrix}1&0&0&2\\\\0&1&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix}')+'<p><strong>第 5 步：做乘法时，前三列只是旋转矩阵；第四列是把局部位移 '+K('[2,0,0]^T')+' 旋转到 {0} 中：</strong></p>'+B('R_z(30^\\circ)\\begin{bmatrix}2\\\\0\\\\0\\end{bmatrix}=\\begin{bmatrix}\\sqrt3\\\\1\\\\0\\end{bmatrix}')+'<p>所以把这根位移填到第四列，就得到答案。重点不是背结果：先写通式，再看哪些参数为 0，最后才代三角函数值。</p>';
+function D(a,e){return '<details><summary>显示答案与讲解</summary><div class="answer"><strong>答案：</strong>'+a+'<div class="explain">'+e+'</div></div></details>'}
+function block(title,n,arr,type){let s='<h2>'+title+' <span class="tag">'+n+'</span></h2>';arr.forEach(function(x,i){let b='<section class="q"><h3>'+((type==='w')?x[0]:(i+1)+'. '+x[0])+'</h3>';if(type==='m'){x[1].split('|').forEach(function(v,j){b+='<label class="choice"><input type="radio" name="m'+i+'"> '+String.fromCharCode(65+j)+'. '+v+'</label>'});b+=D(x[2],x[3])}else if(type==='f'){b+='<input type="text" placeholder="在此作答">'+D(x[1],x[2])}else if(type==='j'){b+='<label class="choice"><input type="radio" name="j'+i+'"> 对</label><label class="choice"><input type="radio" name="j'+i+'"> 错</label>'+D(x[1],x[2])}else{b+='<p>'+x[1]+'</p><textarea placeholder="在这里记录过程，或在 iPad 上手算"></textarea>'+D(x[2],x[3])}s+=b+'</section>'});return s}
+const root=document.getElementById('root');root.innerHTML=block('一、选择题','10 题',M,'m')+block('二、填空题','10 题',F,'f')+block('三、判断题','10 题',J,'j')+block('四、手算题','5 题',W,'w');
+addEventListener('load',function(){let n=0;function go(){if(window.katex){root.querySelectorAll('[data-tex]').forEach(function(e){katex.render(e.dataset.tex,e,{displayMode:e.classList.contains('math'),throwOnError:false})})}else if(n++<40)setTimeout(go,100)}go()});
+</script></body></html>

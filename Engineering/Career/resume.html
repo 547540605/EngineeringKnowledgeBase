@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机械臂运动控制算法工程师-陈嘉明</title>
+    <style>
+        /* ================= 基础重置与排版变量 ================= */
+        :root {
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --brand-primary: #1e3a8a;
+            --brand-accent: #2563eb;
+            --border-color: #e2e8f0;
+            --bg-tag: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-primary);
+            line-height: 1.55;
+            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ================= 打印与页面控制 ================= */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 0;
+            gap: 24px;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            padding: 16mm 18mm;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部打印悬浮按钮 */
+        .print-bar {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+        }
+
+        .print-btn {
+            background: var(--brand-accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .print-btn:hover {
+            background: var(--brand-primary);
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .page-container {
+                padding: 0;
+                gap: 0;
+            }
+            .page {
+                box-shadow: none;
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                padding: 15mm 16mm;
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            .page:last-child {
+                page-break-after: auto;
+            }
+            .print-bar {
+                display: none;
+            }
+        }
+
+        /* ================= 头部个人信息 ================= */
+        .header {
+            border-bottom: 2px solid var(--brand-primary);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-main h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--brand-primary);
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .header-main .target-job {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .header-contact {
+            text-align: right;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ================= 板块标题通用 ================= */
+        .section {
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--brand-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 3.5px;
+            height: 13px;
+            background-color: var(--brand-accent);
+            border-radius: 2px;
+        }
+
+        /* ================= 教育与工作经历 ================= */
+        .timeline-item {
+            margin-bottom: 8px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timeline-header .org {
+            color: var(--text-primary);
+        }
+
+        .timeline-header .role {
+            color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        .timeline-header .date {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .timeline-desc {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 4px;
+        }
+
+        .timeline-desc li {
+            position: relative;
+            padding-left: 12px;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 3px;
+        }
+
+        .timeline-desc li::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            color: var(--text-muted);
+        }
+
+        /* ================= 核心项目卡片 ================= */
+        .project-item {
+            margin-bottom: 14px;
+        }
+
+        .project-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .project-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .project-role {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--brand-accent);
+            background: #eff6ff;
+            padding: 1px 7px;
+            border-radius: 4px;
+            border: 1px solid #dbeafe;
+        }
+
+        .project-context {
+            margin: -1px 0 5px;
+            font-size: 11.2px;
+            line-height: 1.4;
+            color: var(--text-muted);
+        }
+
+        .project-context strong {
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .project-bullets {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .project-bullets li {
+            position: relative;
+            padding-left: 12px;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.52;
+            margin-bottom: 4.5px;
+            text-align: justify;
+        }
+
+        .project-bullets li::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            color: var(--brand-accent);
+            font-weight: bold;
+        }
+
+        .project-bullets strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ================= 专业技能板块 ================= */
+        .skills-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .skill-group {
+            position: relative;
+            padding-left: 12px;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.52;
+            text-align: justify;
+        }
+
+        .skill-group::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            color: var(--brand-accent);
+            font-weight: bold;
+        }
+
+        .skill-group strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* 页脚微注 */
+        .page-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-bar">
+        <button class="print-btn" onclick="window.print()">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            导出 / 打印 PDF (Ctrl + P)
+        </button>
+    </div>
+
+    <div class="page-container">
+
+        <!-- ==================== 第 1 页 ==================== -->
+        <div class="page">
+            <!-- 头部基本信息 -->
+            <header class="header">
+                <div class="header-main">
+                    <h1>陈嘉明</h1>
+                    <div class="target-job">求职意向：机器人运动控制与自动化设备工程师</div>
+                </div>
+                <div class="header-contact">
+                    <div>男 | 29岁 | 硕士 | 3年工作经验</div>
+                    <div>547540605@qq.com | 期望城市：深圳</div>
+                </div>
+            </header>
+
+            <!-- 教育经历 -->
+            <section class="section">
+                <div class="section-title">教育经历</div>
+                <div class="timeline-item">
+                    <div class="timeline-header">
+                        <span class="org">武汉理工大学 · 硕士</span>
+                        <span class="role">机械工程（双目立体视觉与位姿估计方向）</span>
+                        <span class="date">2020 - 2023</span>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-header">
+                        <span class="org">长沙理工大学 · 本科</span>
+                        <span class="role">机械设计制造及其自动化</span>
+                        <span class="date">2015 - 2019</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 工作经历 -->
+            <section class="section">
+                <div class="section-title">工作经历</div>
+                <div class="timeline-item">
+                    <div class="timeline-header">
+                        <span class="org">北京东舟技术股份有限公司</span>
+                        <span class="role">运动控制算法工程师</span>
+                        <span class="date">2024.03 - 至今</span>
+                    </div>
+                    <ul class="timeline-desc">
+                        <li>负责自研机械臂运动学求解、多轴连续平滑轨迹规划、手眼视觉标定与实时动态纠偏等核心控制算法研发。</li>
+                        <li>负责运控系统闭环调节、异构多机多轴协同控制及现场设备运动精度与平滑度调优，解决超调与振荡问题。</li>
+                    </ul>
+                </div>
+                <div class="timeline-item" style="margin-top: 4px;">
+                    <div class="timeline-header">
+                        <span class="org">日东智能装备科技有限公司</span>
+                        <span class="role">软件研发工程师</span>
+                        <span class="date">2023.07 - 2024.03</span>
+                    </div>
+                    <ul class="timeline-desc">
+                        <li>负责设备上位机软件开发与板卡多轴运动控制逻辑实现。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 核心项目经历 (1 - 3) -->
+            <section class="section" style="margin-bottom: 0;">
+                <div class="section-title">核心项目经历</div>
+                <div style="font-size:11.2px; color:var(--text-muted); margin:-3px 0 8px;">面向车企与消费电子制造场景的自动化设备交付与技术预研</div>
+
+                <!-- 项目 1 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">1. 便携式四轴触控机械臂运控开发</div>
+                        <span class="project-role">算法开发</span>
+                    </div>
+                    <div class="project-context"><strong>客户 / 场景 / 属性：</strong>奇瑞、东风等车企｜车载触控终端交互自动化｜公司自研通用产品</div>
+                    <ul class="project-bullets">
+                        <li><strong>非标机构建模与解析解耦</strong>：针对 1 轴带悬臂横向偏置的四轴机械臂，建立空间几何投影模型，通过平面偏置三角几何关系解析解耦基座回转与铅垂面运动学，避免高维矩阵冗余计算。</li>
+                        <li><strong>自适应最优逆解算法</strong>：针对铅垂面三连杆 1 维冗余多解问题，提出“固定大臂三角闭式解 + 自适应变步长二分搜索”复合求解策略，精准求解出末端触笔垂直度最高且关节运动代价最小的最优构型。</li>
+                        <li><strong>空间标定与连续轨迹插补</strong>：基于施密特正交化实现三点法工件坐标系空间标定；结合雷赛运控板卡开发关节空间多点连续平滑插补模块，实现屏幕点击、滑动与连续画图等平滑触控轨迹。</li>
+                    </ul>
+                </div>
+
+                <!-- 项目 2 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">2. 江淮汽车 WLTC/CLTC 工况双轴踏板速度跟随控制</div>
+                        <span class="project-role">算法开发</span>
+                    </div>
+                    <div class="project-context"><strong>客户 / 场景：</strong>江淮汽车｜WLTC/CLTC 能耗工况自动化复现</div>
+                    <ul class="project-bullets">
+                        <li><strong>两层纵向控制架构</strong>：基于雷赛运控板卡控制油门与刹车双轴，采用“上层速度 PID 与前馈规划 + 下层踏板动力学映射”解耦架构；引入起步前瞻与停车减速分段前馈，结合速度误差软死区与低速蠕行增益自适应，实现高精度平滑速度跟踪。</li>
+                        <li><strong>抗超调迟滞与振荡抑制</strong>：针对车辆大滞后系统的超调与频繁点刹问题，引入自然滑行减速度分界算法，避免微小减速时误踩刹车；设计反向积分动态指数泄放机制与微分 EMA 平滑，彻底消除油刹切换时的控制迟滞与系统振荡。</li>
+                        <li><strong>双轴安全管线与自动化标定</strong>：设计包含跨物理死区 EMA 平滑、死区快速释放与油刹双轴绝对互斥的安全后处理管线；开发油门与刹车轴响应特性自动化静态标定流程，支持动力学映射表的自动生成与参数适配。</li>
+                    </ul>
+                </div>
+
+                <!-- 项目 3 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">3. 自动化物料台与 AGV 协同控制</div>
+                        <span class="project-role">算法与软件开发</span>
+                    </div>
+                    <div class="project-context"><strong>客户 / 场景：</strong>奇瑞汽车｜产线物料流转、AGV 停靠与机械手自适应对接</div>
+                    <ul class="project-bullets">
+                        <li><strong>视觉动态纠偏与空间标定</strong>：针对 AGV 停靠的 3 自由度空间位姿偏差，设计基于微动差分的像素物理尺度标定算法；运行时通过特征定位实时解算空间位姿偏差，动态补偿机械手末端目标坐标，实现免示教路径的自适应精准对准。</li>
+                        <li><strong>AGV 协同调度与独占锁状态机</strong>：设计物料台与多 AGV 之间的独占互斥锁与心跳保活协议，结合后台托管服务实现失联超时自动释放与防死锁保护，保障多车流转的时序一致性与安全性。</li>
+                        <li><strong>硬件抽象与多 AGV 仿真模拟</strong>：设计运动控制、夹爪与相机的统一抽象接口；开发支持多台 AGV 并发交互的仿真模拟器与 Mock 虚拟硬件，在无实体设备环境下完成业务锁竞争、心跳超时与全流程仿真验证。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="page-footer">
+                <span>陈嘉明 - 个人简历</span>
+                <span>第 1 页 / 共 2 页</span>
+            </div>
+        </div>
+
+
+        <!-- ==================== 第 2 页 ==================== -->
+        <div class="page">
+            <!-- 核心项目经历 (4 - 6) -->
+            <section class="section" style="margin-bottom: 12px;">
+                <div class="section-title">核心项目经历（续）</div>
+
+                <!-- 项目 4 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">4. 小米多工位终端交互自动化机器人</div>
+                        <span class="project-role">算法开发</span>
+                    </div>
+                    <div class="project-context"><strong>客户 / 场景：</strong>小米｜消费电子终端交互自动化</div>
+                    <ul class="project-bullets">
+                        <li><strong>多轴平滑轨迹插补</strong>：基于 PVT 模式开发点击、折线滑动、连续画圆及弓字形复杂轨迹规划器，确保速度与加速度连续可微，消除机械手在拐角与变向处的抖动与停顿。</li>
+                        <li><strong>视觉空间高精度标定</strong>：设计像素坐标系与机械臂笛卡尔坐标系的标定算法，通过二维码特征定位计算像素-毫米映射比例与旋转偏差，实现多工位 LCD 区域的自动标定与精准定位。</li>
+                        <li><strong>硬件集成与接口开发</strong>：负责机械臂、相机、光源、压力传感器等设备集成，提供标准化 RESTful 运控 API 供上层设备调度系统调用。</li>
+                    </ul>
+                </div>
+
+                <!-- 项目 5 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">5. 车载多工位自动化操作与力敏柔顺插拔</div>
+                        <span class="project-role">算法与软件开发</span>
+                    </div>
+                    <div class="project-context"><strong>客户 / 场景：</strong>奇瑞汽车｜车载终端多工位自动化操作与力敏柔顺插拔</div>
+                    <ul class="project-bullets">
+                        <li><strong>异构多轴协同运控架构</strong>：基于 2 块雷赛运控卡与 1 台六轴关节机械手构建多工位自动化设备；通过统一硬件管理层协同调度六轴机械手空间上下料搬运与两套独立多轴精密插拔机构。</li>
+                        <li><strong>视觉粗定位与像素尺度映射</strong>：集成工业相机实现 USB 接口特征自动识别与轮廓提取，结合标定方向系数与像素物理比例实时解算空间偏差，实现插拔机构的快速对准。</li>
+                        <li><strong>力敏闭环探进与螺旋搜索算法</strong>：针对微小装配与定位公差，设计金属面微接触探测与外壳厚度自适应补偿；开发基于压力传感器闭环的回形螺旋搜索算法与两阶段变步长插入策略，实现无损柔顺精准插拔。</li>
+                    </ul>
+                </div>
+
+                <!-- 项目 6 -->
+                <div class="project-item">
+                    <div class="project-header">
+                        <div class="project-title">6. 七轴协作机械臂力控柔顺插拔预研</div>
+                        <span class="project-role">技术预研</span>
+                    </div>
+                    <div class="project-context"><strong>属性 / 场景：</strong>内部自研技术预研｜接触式装配、柔顺控制与接触搜索验证</div>
+                    <ul class="project-bullets">
+                        <li><strong>接触柔顺插拔流程设计</strong>：基于协作臂关节阻抗模式与力反馈接口，设计 USB 自动插拔状态机；在插入方向施加受控推力，在横向平面保持柔顺自适应，降低插拔过程中的硬接触磨损。</li>
+                        <li><strong>自适应搜索算法验证</strong>：针对微小对准偏差，编写螺旋与回字形接触搜索逻辑，在保持接触力监控的同时自动寻找入口。</li>
+                        <li><strong>容差边界验证</strong>：设计随机偏移验证脚本，定量记录不同位置与姿态偏差下的插拔成功率，为后续夹具设计与工装公差提供数据参考。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 专业技能 -->
+            <section class="section" style="margin-bottom: 0;">
+                <div class="section-title">专业技能</div>
+                <div class="skills-grid">
+                    <div class="skill-group">
+                        <strong>运动学与空间标定</strong>：熟练掌握 DH 参数建模、非标机构几何解耦、解析与数值逆解求解、速度雅可比矩阵计算；精通机械手视觉引导动态纠偏、微动差分标定与三点工件坐标系标定。
+                    </div>
+                    <div class="skill-group">
+                        <strong>运控算法与轨迹规划</strong>：掌握前馈控制、PID 闭环调节、反向积分泄放与系统振荡抑制；熟练掌握多轴 PVT 连续平滑插补与曲线规划；了解机械臂关节阻抗控制基本原理。
+                    </div>
+                    <div class="skill-group">
+                        <strong>软件架构与开发工具</strong>：熟练使用 C#、.NET、ASP.NET Core Web API、WinForms、Python，了解 C++ 与 Linux；具备硬件抽象层架构与工业状态机设计经验。
+                    </div>
+                    <div class="skill-group">
+                        <strong>机器人硬件与工业通信</strong>：熟练掌握主流六轴工业与协作机械手 SDK 二次开发；熟练掌握雷赛运动控制卡、电动夹爪、工业相机、传感器集成及 Modbus、CAN、RESTful 工业通信。
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-footer">
+                <span>陈嘉明 - 个人简历</span>
+                <span>第 2 页 / 共 2 页</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

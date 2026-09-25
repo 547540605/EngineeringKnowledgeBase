@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>25. 空间线速度递推：上一节怎样带动下一节原点</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1460px;margin:auto;padding:28px 22px 72px}h1,h2{line-height:1.28}h2{margin-top:2.35rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.lead{max-width:980px;color:var(--muted)}.lesson{display:grid;grid-template-columns:minmax(520px,1.08fr) minmax(0,.92fr);gap:28px;align-items:start}.lab{position:sticky;top:18px}.canvas-wrap{background:#20242b;border:1px solid var(--line);border-radius:9px;overflow:hidden}.canvas-wrap canvas{display:block;width:100%;aspect-ratio:1.22;touch-action:none;cursor:grab}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;color:var(--muted);font-size:.88rem}.legend span{display:flex;align-items:center;gap:6px}.dot{width:11px;height:11px;border-radius:50%;display:inline-block}.card,.derive{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}.derive{background:var(--soft)}.warn{background:var(--warn)}.math{display:block;text-align:center;margin:.8rem 0;overflow:auto}.small{font-size:.91rem;color:var(--muted)}.tip{border-left:4px solid #d946ef;padding-left:12px}.steps{margin:0;padding-left:1.45rem}.steps li{margin:.55rem 0}.controls{display:grid;gap:9px}.control{display:grid;grid-template-columns:110px minmax(0,1fr) 56px;gap:8px;align-items:center;font-size:.88rem}.actions,.toggles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{font:inherit;font-size:0.85rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}.actions button.active{background:#dbeef5;color:#0b1f2c;border-color:#5ca0bc;font-weight:700}.toggles label{font-size:.86rem;border:1px solid var(--line);border-radius:999px;padding:3px 8px;cursor:pointer}@media(max-width:920px){main{padding:22px 14px}.lesson{grid-template-columns:1fr}.lab{position:static}.canvas-wrap canvas{aspect-ratio:1.04}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body><main>
+  <p class="small"><a href="00-progress.html">学习进度</a> · <a href="23-angular-velocity-propagation.html">笔记 04：三维角速度递推</a> · <a href="ref-rigid-body-rotation-foundations.html">📖 基础专栏：刚体转动与角速度本质</a></p>
+  <h1>25. 三维线速度递推：上一节怎样带动下一节原点走</h1>
+  <p class="lead">笔记 04 解决了“上一节角速度如何传到下一节”。本篇回答机械臂运动控制的核心后果：<strong>上一连杆的原点在平移、杆身在旋转时，下一关节原点究竟拥有多大的绝对线速度？</strong></p>
+
+  <div class="lesson">
+    <!-- 左侧交互实验台 -->
+    <aside class="lab">
+      <div class="canvas-wrap">
+        <canvas id="scene" aria-label="三维机械臂相邻原点线速度递推交互图"></canvas>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot" style="background:#f59e0b"></i> 连杆矢量 pᵢ₊₁ (Oᵢ→Oᵢ₊₁)</span>
+        <span><i class="dot" style="background:#38bdf8"></i> 原点线速度 vᵢ</span>
+        <span><i class="dot" style="background:#34d399"></i> 转动贡献 ωᵢ × pᵢ₊₁</span>
+        <span><i class="dot" style="background:#ec4899"></i> 下一原点总速度 vᵢ₊₁</span>
+      </div>
+
+      <div class="card" style="margin:8px 0 0">
+        <p class="small"><strong>交互操作：</strong>动画默认连续平滑运行。鼠标可 360° 拖动三维视角，滚轮缩放。</p>
+        
+        <div class="actions">
+          <button id="view-3d" class="active" type="button">📐 3D 轴测透视</button>
+          <button id="view-top" type="button">👁 俯视图 (2D 平面)</button>
+        </div>
+
+        <div class="actions" style="margin-top:6px">
+          <button data-mode="both" class="active" type="button">1. 平移 + 转动复合</button>
+          <button data-mode="trans" type="button">2. 纯平移 (ωᵢ=0)</button>
+          <button data-mode="rot" type="button">3. 纯转动 (vᵢ=0)</button>
+        </div>
+
+        <div class="toggles" style="margin-top:8px">
+          <label><input data-layer="body" type="checkbox" checked> 连杆实体</label>
+          <label><input data-layer="axis" type="checkbox" checked> 转轴与轨道</label>
+          <label><input data-layer="vectors" type="checkbox" checked> 速度矢量与平行四边形</label>
+        </div>
+
+        <div class="controls" style="margin-top:10px">
+          <label class="control"><span>原点速度 vᵢ 模长</span><input id="vi-speed" type="range" min="0" max="2" step="0.1" value="0.8"><span id="vi-val">0.8 m/s</span></label>
+          <label class="control"><span>连杆角速度 |ωᵢ|</span><input id="wi-speed" type="range" min="-90" max="90" step="5" value="45"><span id="wi-val">45°/s</span></label>
+        </div>
+
+        <div class="actions" style="margin-top:8px">
+          <button id="anim-btn" type="button" style="background:#38bdf8;color:#0b1f2c;font-weight:700;border:none">⏸ 暂停动画</button>
+          <button id="reset" type="button">重置视角与轨迹</button>
+        </div>
+
+        <div style="margin-top:10px;padding:8px 10px;background:var(--soft);border-radius:6px;font-size:0.86rem">
+          <div><strong>实时递推数值计算：</strong></div>
+          <div id="math-display" class="math" style="margin:4px 0"></div>
+          <p id="state-text" class="small" style="margin:4px 0 0"></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧推导正文 -->
+    <section>
+      <h2>一、破除符号疑惑：公式里的「p」究竟是什么？</h2>
+      <div class="card">
+        <p>很多初学者看到公式中的 <span data-tex="{}^ip_{i+1}"></span> 会困惑：<em>“这个 p 到底是啥？左上标和右下标怎么读？”</em></p>
+        <ul class="steps">
+          <li><strong>p 的词源</strong>：来自英文 <strong>Position（位置）</strong>。</li>
+          <li><strong>物理实体</strong>：它就是从<strong>上一关节坐标系原点 <span data-tex="O_i"></span></strong> 指向<strong>下一关节坐标系原点 <span data-tex="O_{i+1}"></span></strong> 的<strong>空间相对位置向量</strong>（也就是图中的这根<strong>橙色连杆刚体本身</strong>！）。</li>
+          <li><strong>四角记号法读法</strong>：
+            <ul>
+              <li><strong>左上标 <span data-tex="i"></span></strong>：在坐标系 <span data-tex="\{i\}"></span> 中度量（在哪看）；</li>
+              <li><strong>右下标 <span data-tex="i+1"></span></strong>：指向第 <span data-tex="i+1"></span> 节关节原点（看谁）；</li>
+              <li>连起来读作：<em>“在坐标系 <span data-tex="\{i\}"></span> 下描述的，指向第 <span data-tex="i+1"></span> 节原点的连杆位置向量”</em>。</li>
+            </ul>
+          </li>
+        </ul>
+        <div class="tip" style="margin-top:10px">
+          💡 <strong>核心口诀：左边管「在哪看（坐标系）」，右边管「看的是谁（物理实体）」。</strong><br>
+          <span class="small">遇到任何角标疑惑，可随时查阅 <a href="ref-rigid-body-rotation-foundations.html#notation-dict">📖 基础专栏：机器人学四角记号法速查字典</a>。</span>
+        </div>
+      </div>
+
+      <h2>二、线速度递推公式的物理拆解（两份速度相加）</h2>
+      <div class="tip" style="margin-bottom:14px;font-size:1.02rem">
+        💡 <strong>一句话极简物理图像：</strong><br>
+        <strong>“下一关节原点的速度，等于上一关节带过来的平移速度，加上中间这根连杆自转甩出来的切线速度。”</strong>
+      </div>
+
+      <p>下一关节原点 <span data-tex="O_{i+1}"></span> 在空间中的绝对速度，严格由两部分叠加而成：</p>
+      <span class="math" data-tex="\boxed{\underbrace{{}^i\boldsymbol{v}_{i+1}}_{\textbf{下一关节走多快}} = \underbrace{{}^i\boldsymbol{v}_i}_{\textbf{上一关节平移带多快}} + \underbrace{{}^i\boldsymbol{\omega}_i \times {}^ip_{i+1}}_{\textbf{中间这根连杆自转甩多快}}}"></span>
+
+      <div class="card" style="margin:10px 0;background:var(--soft);font-size:0.9rem">
+        <strong>💡 为什么右下标有的是 <span data-tex="i"></span>、有的是 <span data-tex="i+1"></span>？</strong>
+        <ul style="margin:4px 0 0;padding-left:1.4rem">
+          <li><span data-tex="{}^i\boldsymbol{v}_i"></span> 与 <span data-tex="{}^i\boldsymbol{\omega}_i"></span>（右下标为 <span data-tex="i"></span>）：描述的是<strong>起点 <span data-tex="O_i"></span> 与连杆 <span data-tex="i"></span> 本身</strong>的平移与转动状态；</li>
+          <li><span data-tex="{}^ip_{i+1}"></span>（右下标为 <span data-tex="i+1"></span>）：是从起点伸向<strong>终点 <span data-tex="O_{i+1}"></span> 的连杆位置向量</strong>；</li>
+          <li><span data-tex="{}^i\boldsymbol{v}_{i+1}"></span>（右下标为 <span data-tex="i+1"></span>）：算出来的自然就是<strong>终点 <span data-tex="O_{i+1}"></span> 的最终线速度</strong>！</li>
+        </ul>
+      </div>
+
+      <div class="derive">
+        <p><strong>两份速度的物理机制（看左图三种模式切换）：</strong></p>
+        <ol class="steps">
+          <li><strong>第一份：起点原点 <span data-tex="O_i"></span> 的整体平移 <span data-tex="{}^i\boldsymbol{v}_i"></span>（蓝色）</strong><br>
+            如果连杆不转（<span data-tex="\boldsymbol{\omega}_i = 0"></span>），整根刚体连杆保持原有姿态平移，下一原点 <span data-tex="O_{i+1}"></span> 和起点原点 <span data-tex="O_i"></span> 以完全相同的速度移动：
+            <span class="math" data-tex="\boldsymbol{\omega}_i = 0 \quad\Rightarrow\quad {}^i\boldsymbol{v}_{i+1} = {}^i\boldsymbol{v}_i"></span>
+            <em>（在左图中点击【2. 纯平移】，绿色转动速度为 0，粉色总速度与蓝色平移速度完全重合）</em>
+          </li>
+          <li><strong>第二份：连杆 <span data-tex="i"></span> 自身转动甩出的切线速度 <span data-tex="{}^i\boldsymbol{\omega}_i \times {}^ip_{i+1}"></span>（绿色）</strong><br>
+            如果起点原点 <span data-tex="O_i"></span> 在空间中不动，整根连杆以角速度 <span data-tex="{}^i\boldsymbol{\omega}_i"></span> 绕穿过 <span data-tex="O_i"></span> 的轴线转动。连杆末端的下一原点 <span data-tex="O_{i+1}"></span> 走空间圆周轨迹，获得垂直于杆身和转轴的瞬时切线速度：
+            <span class="math" data-tex="\boldsymbol{v}_{\text{rot}} = {}^i\boldsymbol{\omega}_i \times {}^ip_{i+1}"></span>
+            <em>（在左图中点击【3. 纯转动】，蓝色平移速度为 0，粉色总速度完全由绿色切线速度提供）</em>
+          </li>
+          <li><strong>矢量合成：同一作用点上的空间平行四边形法则</strong><br>
+            当起点原点 <span data-tex="O_i"></span> 既平移、连杆 <span data-tex="i"></span> 又旋转时，下一原点 <span data-tex="O_{i+1}"></span> 处受到的真实总速度就是两者的<strong>空间矢量和（粉色大箭头）</strong>。
+          </li>
+        </ol>
+      </div>
+
+      <h2>三、坐标系投影：换到下一节坐标系表达</h2>
+      <p>公式 (5.46) 是在<strong>本节坐标系 <span data-tex="\{i\}"></span></strong> 中计算出的结果。为了传递给下一连杆，需乘以旋转矩阵投影到坐标系 <span data-tex="\{i+1\}"></span>，这就是 Craig 教材式 (5.47)：</p>
+      <span class="math" data-tex="{}^{i+1}\boldsymbol{v}_{i+1} = {}^{i+1}_i R \left( {}^i\boldsymbol{v}_i + {}^i\boldsymbol{\omega}_i \times {}^ip_{i+1} \right)"></span>
+      <div class="card tip">
+        <p><strong>注意：</strong>左乘旋转矩阵 <span data-tex="{}^{i+1}_i R"></span> 绝没有让物理实体产生额外的物理旋转，它仅仅是把同一个空间速度向量在坐标系 <span data-tex="\{i+1\}"></span> 的基底投影坐标求出来而已！</p>
+      </div>
+
+      <h2>四、全套串联机械臂速度递推公式总结（运动学到雅可比的桥梁）</h2>
+      <p>至此，我们已经掌握了多关节串联机械臂<strong>从基座 <span data-tex="\{0\}"></span> 一路向末端逐节传递的完整速度递推方程</strong>：</p>
+      <div class="derive">
+        <p><strong>Craig 第 5 章标准速度递推方程（转动关节）：</strong></p>
+        <span class="math" data-tex="\begin{aligned}
+        {}^{i+1}\boldsymbol{\omega}_{i+1} &= {}^{i+1}_i R \, {}^i\boldsymbol{\omega}_i + \dot\theta_{i+1} \, {}^{i+1}\hat Z_{i+1} &\quad \text{(角速度递推，式 5.45)} \[6pt]
+        {}^{i+1}\boldsymbol{v}_{i+1} &= {}^{i+1}_i R \left( {}^i\boldsymbol{v}_i + {}^i\boldsymbol{\omega}_i \times {}^ip_{i+1} \right) &\quad \text{(线速度递推，式 5.47)}
+        \end{aligned}"></span>
+        <p>有了这两条简洁优美的递推式，只要知道每个关节电机的实时转速 <span data-tex="\dot\theta_1, \dot\theta_2, \dots, \dot\theta_n"></span>，机械臂就能从基座一路算出末端执行器的所有空间线速度与角速度——这就是构建<strong>速度雅可比矩阵 <span data-tex="J(q)"></span></strong> 的终极地基！</p>
+      </div>
+
+      <div class="card small">
+        <p><strong>权威教材对应出处：</strong></p>
+        <ul>
+          <li>Craig《机器人学导论（原书第4版）》第 5.3 节（PDF P108/书页 97 式 5.10：刚体线速度与叉乘）；</li>
+          <li>Craig《机器人学导论（原书第4版）》第 5.6 节（PDF P113/书页 102 式 5.46、PDF P114/书页 103 式 5.47：线速度传递方程）。</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const cv = document.getElementById('scene');
+  if(!cv) return;
+  const c = cv.getContext('2d');
+  const D = Math.PI / 180;
+  let yaw = -0.65, pitch = 0.42, zoom = 1, drag = null;
+  let animTime = 0, isPlaying = true;
+  let trail = [];
+
+  const rodLen = 2.4;
+  let mode = 'both';
+  const layers = { body: true, axis: true, vectors: true };
+
+  // 3D 投影函数
+  function project(p, w, h) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const side = cy * p[0] - sy * p[1];
+    const depth = sy * p[0] + cy * p[1];
+    const up = cp * p[2] + sp * depth;
+    const unit = Math.min(w, h) * 0.16 * zoom;
+    return [w * 0.46 + side * unit, h * 0.62 - up * unit];
+  }
+
+  function arrow(c, a, b, color, width=3.5, dash=[], headSize=16) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+    if(len < 1) return;
+    c.save(); c.strokeStyle = color; c.fillStyle = color; c.lineWidth = width; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.setLineDash(dash); c.beginPath(); c.moveTo(...a); c.lineTo(...b); c.stroke(); c.setLineDash([]);
+    const head = Math.min(headSize, Math.max(8, len * 0.24)), ang = Math.atan2(dy, dx);
+    c.beginPath(); c.moveTo(...b);
+    c.lineTo(b[0] - head * Math.cos(ang - 0.42), b[1] - head * Math.sin(ang - 0.42));
+    c.lineTo(b[0] - (head * 0.72) * Math.cos(ang), b[1] - (head * 0.72) * Math.sin(ang));
+    c.lineTo(b[0] - head * Math.cos(ang + 0.42), b[1] - head * Math.sin(ang + 0.42));
+    c.closePath(); c.fill(); c.restore();
+  }
+
+  function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if(cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.fillStyle = '#20242b'; c.fillRect(0, 0, w, h);
+
+    const viMag = Number(document.getElementById('vi-speed').value);
+    const wiDeg = Number(document.getElementById('wi-speed').value);
+    const wiRad = wiDeg * D;
+
+    // 平滑往复平移周期
+    const transOmega = 0.8;
+    const transDist = viMag * 1.1;
+    
+    let posOi = [0, 0, 0];
+    let v_i = [0, 0, 0];
+    let w_i = [0, 0, wiRad];
+
+    if(mode === 'both' || mode === 'trans') {
+      // Oi 在平移轨道上往复移动
+      const sVal = Math.sin(animTime * transOmega);
+      const cVal = Math.cos(animTime * transOmega);
+      posOi = [sVal * transDist, sVal * transDist * 0.6, 0];
+      v_i = [cVal * transDist * transOmega, cVal * transDist * 0.6 * transOmega, 0];
+    }
+    if(mode === 'trans') {
+      w_i = [0, 0, 0];
+    } else if(mode === 'rot') {
+      posOi = [0, 0, 0];
+      v_i = [0, 0, 0];
+    }
+
+    const curPhi = animTime * w_i[2];
+    const p_rel = [rodLen * Math.cos(curPhi), rodLen * Math.sin(curPhi), 0];
+    const posOi1 = [posOi[0] + p_rel[0], posOi[1] + p_rel[1], 0];
+
+    const v_rot = [-w_i[2] * p_rel[1], w_i[2] * p_rel[0], 0];
+    const v_total = [v_i[0] + v_rot[0], v_i[1] + v_rot[1], 0];
+
+    // 记录下一原点的动态轨迹 (保留 150 个点)
+    if(isPlaying) {
+      trail.push([...posOi1]);
+      if(trail.length > 150) trail.shift();
+    }
+
+    // 地面网格
+    c.strokeStyle = '#2d3542'; c.lineWidth = 1;
+    for(let i = -4; i <= 4; i++){
+      const p1 = project([i, -4, 0], w, h), p2 = project([i, 4, 0], w, h);
+      c.beginPath(); c.moveTo(...p1); c.lineTo(...p2); c.stroke();
+      const p3 = project([-4, i, 0], w, h), p4 = project([4, i, 0], w, h);
+      c.beginPath(); c.moveTo(...p3); c.lineTo(...p4); c.stroke();
+    }
+
+    // 基坐标系
+    const orig = project([0,0,0], w, h);
+    arrow(c, orig, project([2.0, 0, 0], w, h), '#94a3b8', 2, [], 12);
+    arrow(c, orig, project([0, 2.0, 0], w, h), '#94a3b8', 2, [], 12);
+    const px0 = project([2.0, 0, 0], w, h), py0 = project([0, 2.0, 0], w, h);
+    c.fillStyle = '#cbd5e1'; c.font = 'bold 12px system-ui';
+    c.fillText('+x₀', px0[0] + 6, px0[1] + 4);
+    c.fillText('+y₀', py0[0] + 6, py0[1] - 4);
+
+    const projOi = project(posOi, w, h);
+    const projOi1 = project(posOi1, w, h);
+
+    // 动态轨迹绘制
+    if(trail.length > 1){
+      c.save();
+      c.strokeStyle = 'rgba(236, 72, 153, 0.45)'; c.lineWidth = 2.5; c.setLineDash([4, 4]);
+      c.beginPath();
+      trail.forEach((pt, idx) => {
+        const pr = project(pt, w, h);
+        if(idx === 0) c.moveTo(...pr); else c.lineTo(...pr);
+      });
+      c.stroke();
+      c.restore();
+    }
+
+    // 1. 转轴与轨迹圆
+    if(layers.axis){
+      const axisTop = project([posOi[0], posOi[1], 2.2], w, h);
+      const axisBot = project([posOi[0], posOi[1], -0.6], w, h);
+      c.save(); c.strokeStyle = 'rgba(192, 132, 252, 0.45)'; c.lineWidth = 2; c.setLineDash([4, 3]);
+      c.beginPath(); c.moveTo(...axisBot); c.lineTo(...axisTop); c.stroke(); c.restore();
+      arrow(c, projOi, axisTop, '#c084fc', 3, [], 16);
+      c.fillStyle = '#e9d5ff'; c.font = 'bold 13px system-ui';
+      c.fillText('转轴 zᵢ（随 Oᵢ 平移）', axisTop[0] + 8, axisTop[1] - 4);
+
+      // 围绕 Oi 的空间回转轨道圆
+      c.save(); c.strokeStyle = 'rgba(56, 189, 248, 0.35)'; c.lineWidth = 2; c.setLineDash([5, 4]);
+      c.beginPath();
+      for(let i = 0; i <= 40; i++){
+        const a_ang = (i / 40) * Math.PI * 2;
+        const pt = project([posOi[0] + rodLen * Math.cos(a_ang), posOi[1] + rodLen * Math.sin(a_ang), 0], w, h);
+        if(i === 0) c.moveTo(...pt); else c.lineTo(...pt);
+      }
+      c.stroke(); c.restore();
+    }
+
+    // 2. 连杆实体
+    if(layers.body){
+      arrow(c, projOi, projOi1, '#f59e0b', 8, [], 18);
+      const midRod = project([(posOi[0]+posOi1[0])/2, (posOi[1]+posOi1[1])/2, 0], w, h);
+      c.fillStyle = '#fbbf24'; c.font = 'bold 13px system-ui';
+      c.fillText('连杆 ᵖᵢ₊₁', midRod[0] - 28, midRod[1] - 12);
+
+      c.fillStyle = '#f8fafc'; c.beginPath(); c.arc(...projOi, 7, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#f59e0b'; c.beginPath(); c.arc(...projOi1, 8, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#f8fafc'; c.font = 'bold 13px system-ui'; c.fillText('Oᵢ（上一原点）', projOi[0] - 56, projOi[1] + 20);
+      c.fillStyle = '#fcd34d'; c.font = 'bold 13px system-ui'; c.fillText('Oᵢ₊₁（下一原点）', projOi1[0] + 12, projOi1[1] + 4);
+    }
+
+    // 3. 速度矢量与平行四边形合成
+    if(layers.vectors){
+      const v_scale = 0.55;
+      const oi_plus_vi = [posOi[0] + v_i[0] * v_scale, posOi[1] + v_i[1] * v_scale, 0];
+      const oi1_plus_vi = [posOi1[0] + v_i[0] * v_scale, posOi1[1] + v_i[1] * v_scale, 0];
+      const oi1_plus_vrot = [posOi1[0] + v_rot[0] * v_scale, posOi1[1] + v_rot[1] * v_scale, 0];
+      const oi1_plus_vtotal = [posOi1[0] + v_total[0] * v_scale, posOi1[1] + v_total[1] * v_scale, 0];
+
+      if(Math.hypot(...v_i) > 0.05){
+        arrow(c, projOi, project(oi_plus_vi, w, h), '#38bdf8', 4.5, [], 18);
+        const pViEnd = project(oi_plus_vi, w, h);
+        c.fillStyle = '#7dd3fc'; c.font = 'bold 13px system-ui';
+        c.fillText(`vᵢ (${Math.hypot(...v_i).toFixed(2)} m/s)`, pViEnd[0] + 6, pViEnd[1] - 4);
+
+        arrow(c, projOi1, project(oi1_plus_vi, w, h), '#38bdf8', 3, [4, 3], 14);
+      }
+
+      if(Math.hypot(...v_rot) > 0.05){
+        arrow(c, projOi1, project(oi1_plus_vrot, w, h), '#34d399', 5, [], 20);
+        const pVrotEnd = project(oi1_plus_vrot, w, h);
+        c.fillStyle = '#34d399'; c.font = 'bold 13px system-ui';
+        c.fillText(`ωᵢ×ᵖᵢ₊₁ (${Math.hypot(...v_rot).toFixed(2)} m/s)`, pVrotEnd[0] + 8, pVrotEnd[1] + 16);
+      }
+
+      if(Math.hypot(...v_total) > 0.05){
+        arrow(c, projOi1, project(oi1_plus_vtotal, w, h), '#ec4899', 6, [], 24);
+        const pVtotEnd = project(oi1_plus_vtotal, w, h);
+        c.save(); c.font = 'bold 14px system-ui';
+        const vTxt = `vᵢ₊₁ (${Math.hypot(...v_total).toFixed(2)} m/s)`;
+        const vw = c.measureText(vTxt).width;
+        c.fillStyle = 'rgba(32, 36, 43, 0.85)';
+        c.fillRect(pVtotEnd[0] + 6, pVtotEnd[1] - 14, vw + 8, 20);
+        c.fillStyle = '#f472b6';
+        c.fillText(vTxt, pVtotEnd[0] + 10, pVtotEnd[1] + 1);
+        c.restore();
+
+        if(Math.hypot(...v_i) > 0.05 && Math.hypot(...v_rot) > 0.05){
+          c.save(); c.strokeStyle = 'rgba(244, 114, 182, 0.6)'; c.lineWidth = 1.5; c.setLineDash([3, 3]);
+          c.beginPath();
+          c.moveTo(...project(oi1_plus_vi, w, h)); c.lineTo(...project(oi1_plus_vtotal, w, h));
+          c.moveTo(...project(oi1_plus_vrot, w, h)); c.lineTo(...project(oi1_plus_vtotal, w, h));
+          c.stroke(); c.restore();
+        }
+      }
+    }
+  }
+
+  function updateMath() {
+    const mathEl = document.getElementById('math-display');
+    const stateEl = document.getElementById('state-text');
+    if(!mathEl || !window.katex) return;
+
+    const viMag = Number(document.getElementById('vi-speed').value);
+    const wiDeg = Number(document.getElementById('wi-speed').value);
+    const wiRad = wiDeg * D;
+
+    let v_i_mag = viMag;
+    let w_i_rad = wiRad;
+    if(mode === 'trans') w_i_rad = 0;
+    if(mode === 'rot') v_i_mag = 0;
+
+    const v_rot_mag = Math.abs(w_i_rad) * rodLen;
+    const v_tot_mag = Math.hypot(v_i_mag, v_rot_mag);
+
+    katex.render(
+      `\\begin{aligned}
+      \\|{}^i\\boldsymbol{v}_i\\| &= \\mathbf{${v_i_mag.toFixed(2)}}\\ \\text{m/s} \\\\[3pt]
+      \\|{}^i\\boldsymbol{\\omega}_i \\times {}^i\\boldsymbol{p}_{i+1}\\| &= |\\omega_i| \\cdot r = ${Math.abs(w_i_rad).toFixed(2)} \\times ${rodLen.toFixed(2)} = \\mathbf{${v_rot_mag.toFixed(2)}}\\ \\text{m/s} \\\\[3pt]
+      \\|{}^i\\boldsymbol{v}_{i+1}\\| &= \\|{}^i\\boldsymbol{v}_i + {}^i\\boldsymbol{\\omega}_i \\times {}^ip_{i+1}\\| \\approx \\mathbf{${v_tot_mag.toFixed(2)}}\\ \\text{m/s}
+      \\end{aligned}`,
+      mathEl,
+      { displayMode: true, throwOnError: false }
+    );
+
+    if(mode === 'trans') {
+      stateEl.innerHTML = `<strong>当前模式：纯平移。</strong>角速度为 0，转动贡献为 0，下一原点线速度与上一原点完全相同。`;
+    } else if(mode === 'rot') {
+      stateEl.innerHTML = `<strong>当前模式：纯转动。</strong>上一原点静止，下一原点线速度完全由转动切线贡献提供。`;
+    } else {
+      stateEl.innerHTML = `<strong>当前模式：平移 + 转动复合。</strong>下一原点同时拥有平移带走速度与转动切线速度，合成粉色真实总速度。`;
+    }
+  }
+
+  // 连续 60FPS 动画循环
+  let lastNow = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.04, (now - lastNow) / 1000);
+    lastNow = now;
+    if(isPlaying) {
+      animTime += dt;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  document.getElementById('anim-btn').addEventListener('click', function() {
+    isPlaying = !isPlaying;
+    this.textContent = isPlaying ? '⏸ 暂停动画' : '▶ 播放旋转动画';
+    this.style.background = isPlaying ? '#38bdf8' : '#e2e8f0';
+    this.style.color = isPlaying ? '#0b1f2c' : '#1e293b';
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    animTime = 0;
+    trail = [];
+    document.getElementById('vi-speed').value = 0.8;
+    document.getElementById('wi-speed').value = 45;
+    document.getElementById('vi-val').textContent = '0.8 m/s';
+    document.getElementById('wi-val').textContent = '45°/s';
+    yaw = -0.65; pitch = 0.42; zoom = 1;
+    document.getElementById('view-3d').classList.add('active');
+    document.getElementById('view-top').classList.remove('active');
+    mode = 'both';
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === 'both'));
+    draw();
+    updateMath();
+  });
+
+  document.getElementById('vi-speed').addEventListener('input', e => {
+    document.getElementById('vi-val').textContent = e.target.value + ' m/s';
+    trail = [];
+    draw();
+    updateMath();
+  });
+  document.getElementById('wi-speed').addEventListener('input', e => {
+    document.getElementById('wi-val').textContent = e.target.value + '°/s';
+    trail = [];
+    draw();
+    updateMath();
+  });
+
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      trail = [];
+      draw();
+      updateMath();
+    });
+  });
+
+  document.querySelectorAll('[data-layer]').forEach(chk => {
+    chk.addEventListener('change', () => {
+      layers[chk.dataset.layer] = chk.checked;
+      draw();
+    });
+  });
+
+  document.getElementById('view-3d').addEventListener('click', function() {
+    yaw = -0.65; pitch = 0.42; zoom = 1;
+    this.classList.add('active');
+    document.getElementById('view-top').classList.remove('active');
+    draw();
+  });
+  document.getElementById('view-top').addEventListener('click', function() {
+    yaw = 0; pitch = 1.57; zoom = 1.1;
+    this.classList.add('active');
+    document.getElementById('view-3d').classList.remove('active');
+    draw();
+  });
+
+  cv.addEventListener('pointerdown', e => {
+    drag = [e.clientX, e.clientY];
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    if(!drag) return;
+    yaw += (e.clientX - drag[0]) * 0.009;
+    pitch = Math.max(-0.2, Math.min(1.57, pitch + (e.clientY - drag[1]) * 0.009));
+    drag = [e.clientX, e.clientY];
+    draw();
+  });
+  cv.addEventListener('pointerup', () => drag = null);
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoom = Math.max(0.6, Math.min(1.8, zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+    draw();
+  }, { passive: false });
+
+  draw();
+  requestAnimationFrame(loop);
+
+  let n = 0;
+  const boot = () => {
+    if(!window.katex) { if(n++ < 40) setTimeout(boot, 80); return; }
+    document.querySelectorAll('[data-tex]').forEach(e => {
+      if(e.dataset.tex && e.dataset.tex.trim() !== '') {
+        katex.render(e.dataset.tex, e, { displayMode: e.classList.contains('math'), throwOnError: false });
+      }
+    });
+    updateMath();
+  };
+  if(document.readyState === 'complete') boot();
+  else addEventListener('load', boot);
+})();
+</script>
+</body></html>

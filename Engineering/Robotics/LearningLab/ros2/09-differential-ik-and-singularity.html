@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 2 工程实战 09：微分 IK 与奇异位形规避</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script><style>:root{--bg:#070b15;--card:#10192b;--line:#293954;--fg:#eef5ff;--muted:#9baec8;--blue:#38bdf8;--green:#34d399;--amber:#fbbf24;--red:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.28}h1{margin:.25rem 0 .6rem;font-size:clamp(1.65rem,4vw,2.3rem)}h2{margin-top:2.5rem;border-bottom:1px solid var(--line);padding-bottom:.45rem}.crumb,.small{color:var(--muted);font-size:.9rem}.crumb a{color:var(--blue);text-decoration:none}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--blue);background:linear-gradient(110deg,#0c2943,#10192b)}.warn{border-left:5px solid var(--amber)}.good{border-left:5px solid var(--green)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.formula{display:block;text-align:center;overflow:auto;margin:1rem 0}.code{overflow:auto;background:#050914;border:1px solid var(--line);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.58 ui-monospace,Consolas,monospace;white-space:pre}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}.table th{color:var(--blue)}.end{background:linear-gradient(110deg,#102b27,#10192b);border-color:#216d5d}@media(max-width:700px){main{padding:22px 14px}.grid{grid-template-columns:1fr}.table{font-size:.9rem}}</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="08-3r-position-jacobian.html">ROS2-08：3R Jacobian</a> · <a href="04-13-engineering-roadmap.md">04–13 路线</a></p><h1>ROS 2 工程实战 09：微分 IK、DLS 与奇异位形规避</h1><p class="small">把“想让末端现在往哪儿走、多快走”转换成关节角速度；当这种转换不可靠时，优先保护关节，不假装还能精确跟随。</p>
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">工程痛点：同一个末端速度请求，为什么关节会突然飞车？</h2><p>ROS2-08 给出了 <code>v=J(q)q_dot</code>。若 J 可逆，形式上能写 <code>q_dot=J⁻¹v_des</code>。但接近奇异位形时，J 的某个方向几乎失去运动能力；为了挤出一个有限的末端速度，普通逆会要求无限大的关节速度。这不是控制器调得不好，而是当前姿态的几何退化。</p></section>
+<h2>1. 先区分三件事</h2><div class="grid"><section class="card"><h3>微分 IK</h3><p>输入期望末端<strong>速度</strong>，输出关节<strong>速度</strong>。它是局部瞬时关系，不等同于 ROS2-04 的位置 IK。</p></section><section class="card"><h3>奇异位形</h3><p>Jacobian 降秩，某些末端方向无法由有限关节速度产生。它是运动学问题，不是障碍物。</p></section><section class="card"><h3>碰撞规避</h3><p>关心机器人与环境几何体是否相交；后续由 MoveIt Planning Scene 处理，不能拿 DLS 代替。</p></section><section class="card"><h3>降级策略</h3><p>接近奇异时允许末端速度存在误差，换取关节速度有限、可预测和安全。</p></section></div>
+<h2>2. 普通逆与阻尼最小二乘</h2><span class="formula">\[\dot q=J^{-1}v_{des}\quad(\text{仅在 J 良态且可逆时})\]</span><p>实际实现更稳妥的第一版是阻尼最小二乘（Damped Least Squares, DLS）：</p><span class="formula">\[\dot q=J^T(JJ^T+\lambda^2I)^{-1}v_{des}\]</span><div class="card warn"><strong>λ 的物理意义：</strong>λ 越大，越不执着于“末端速度必须一丝不差”；代价是跟随误差更大，收益是不会在奇异点附近把关节速度放大到危险数值。它不是一个越小越好的魔法参数。</div>
+<h2>3. 实现顺序：先有监控，再有 DLS</h2><pre class="code">def differential_ik(J, v_des, sigma_min, velocity_limits):
+    # 1) 根据最小奇异值选择阻尼；阈值需由设备速度能力和任务误差决定
+    if sigma_min >= SIGMA_SAFE:
+        damping = LAMBDA_MIN
+    else:
+        ratio = 1.0 - max(0.0, sigma_min) / SIGMA_SAFE
+        damping = LAMBDA_MIN + ratio * (LAMBDA_MAX - LAMBDA_MIN)
+
+    # 2) 解 DLS；真实实现用稳定线性求解器，不显式求矩阵 inverse
+    q_dot = J.T @ solve(J @ J.T + damping*damping*I, v_des)
+
+    # 3) 单独限速，并记录被限速事实
+    q_dot_limited = clip_each_joint(q_dot, velocity_limits)
+    return q_dot_limited, damping
+
+# 每一控制周期还应记录：sigma_min、damping、||v_des-v_actual||、是否触发限速</pre>
+<h2>4. 如何验证“保护生效”？</h2><table class="table"><thead><tr><th>观察项</th><th>远离奇异位形</th><th>接近奇异位形</th></tr></thead><tbody><tr><td>最小奇异值 σmin</td><td>明显大于安全阈值</td><td>趋近 0，触发预警</td></tr><tr><td>普通逆关节速度</td><td>有限且可执行</td><td>快速放大，可能超限</td></tr><tr><td>DLS 关节速度</td><td>接近普通逆结果</td><td>保持有限，但末端速度允许偏差</td></tr><tr><td>上层动作</td><td>按正常速度继续</td><td>降速、重规划或退出危险姿态</td></tr></tbody></table>
+<section class="card good"><strong>需要显示的诊断量：</strong>在 RViz/终端面板显示 `σmin`、阻尼 λ、每关节 q_dot、期望与实际末端速度误差。只有看到这些量，才知道 DLS 是在正常工作还是在悄悄掩盖错误。</section>
+<h2>5. 本篇不替你做的事情</h2><ul><li>不解决碰撞，也不替代 MoveIt 的规划场景；</li><li>不处理完整六维姿态，只处理当前 3R 的位置 Jacobian；</li><li>不直接向真实设备下发速度命令；真实控制模式、限速与急停要由厂商驱动和 ros2_control 共同约束。</li></ul>
+<section class="card end"><h2 style="margin-top:0;border:0;padding:0">本篇结束时</h2><ul><li><strong>奇异性不是“不能动”，而是某些方向不能用有限关节速度动。</strong></li><li>你知道普通逆为何爆速，DLS 为何主动牺牲一点跟随误差。</li><li>下一篇进入 TF2：先确保目标点被转换到正确的 base_link，再谈 IK 或速度控制。</li></ul></section>
+</main><script>window.addEventListener('load',()=>{if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false}],throwOnError:false})})</script></body></html>

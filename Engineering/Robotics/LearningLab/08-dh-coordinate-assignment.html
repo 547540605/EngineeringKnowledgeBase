@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>笔记 04：DH 建系</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Microsoft YaHei",sans-serif;line-height:1.72}main{max-width:1120px;margin:auto;padding:28px 20px 72px}h1,h2{line-height:1.25}h2{margin-top:2.35rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.muted{color:var(--muted)}.card{border:1px solid var(--line);border-radius:11px;padding:16px;margin:14px 0}.key{background:var(--soft)}.math-block{display:block;text-align:center;margin:.9rem 0;overflow:auto}.workspace{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(290px,.85fr);gap:20px;align-items:start}.viewport{width:100%;aspect-ratio:1.25;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#20242b}.viewport canvas{display:block;width:100%;height:100%;touch-action:none}.legend{display:flex;gap:13px;flex-wrap:wrap;margin-top:8px;font-size:.9rem}.legend>span{display:flex;gap:5px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.steps{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.step{color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer;font:inherit}.step.active{background:#dbeef5;border-color:#5ca0bc;font-weight:700}.small{color:var(--muted);font-size:.93rem}.rules li{margin:.55rem 0}.table-wrap{overflow:auto}.dh-table{width:100%;border-collapse:collapse}.dh-table th,.dh-table td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}.dh-table th{white-space:nowrap}.case-view{width:100%;aspect-ratio:1.5;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#20242b}.case-view canvas{display:block;width:100%;height:100%;touch-action:none}.case-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.controls{display:grid;gap:10px;margin:13px 0}.control{display:grid;grid-template-columns:110px minmax(0,1fr) 92px;align-items:center;gap:10px}.control input[type="range"]{width:100%}.control input[type="number"]{width:100%;font:inherit;padding:4px 6px}@media(max-width:760px){main{padding:22px 14px}.workspace{grid-template-columns:1fr}.viewport{aspect-ratio:1.08}.control{grid-template-columns:1fr 92px}.control span{grid-column:1/-1}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body>
+<main>
+  <p class="muted"><a href="00-progress.html">学习进度</a> · <a href="06-3d-arm-coordinate-frames.html">笔记 04：三维机械臂</a> · <a href="05-3d-single-axis-rotations.html">笔记 04：三维单轴旋转</a></p>
+  <h1>笔记 04：DH 建系——先规定坐标系，再谈参数</h1>
+  <div class="card key"><strong>DH（Denavit–Hartenberg）不是一条凭空出现的矩阵公式。</strong>它是一套统一的“给每个关节附近放坐标系”的规则。只要相邻坐标系放法固定，描述它们相对位姿所需的数字就自然固定为四个。</div>
+  <div class="card"><strong>这四个数到底是谁的参数？</strong>它们不是“机械臂整体”的参数，也不是某一个点或某一根轴单独的参数；它们共同描述一小段从坐标系 <span data-tex="\{i-1\}"></span> 到坐标系 <span data-tex="\{i\}"></span> 的<strong>相对位姿</strong>。也就是说，第 <span data-tex="i"></span> 组 <span data-tex="\theta_i,d_i,a_i,\alpha_i"></span> 是这一次局部齐次变换 <span data-tex="{}^{i-1}T_i"></span> 的四个参数。下面先用四个动作看清它们各自的几何意义；下一笔记再把四步相乘。</div>
+
+  <h2>先在一对相邻关节轴上建系</h2>
+  <div class="workspace">
+    <section>
+      <div id="dh-view" class="viewport" role="img" aria-label="两根相邻关节轴及标准 DH 坐标系建立步骤的三维交互图"></div>
+      <div class="legend"><span><i class="dot" style="background:#aab3c2"></i><span data-tex="z_{i-1}"></span></span><span><i class="dot" style="background:#60a5fa"></i><span data-tex="x_{i-1}"></span></span><span><i class="dot" style="background:#a78bfa"></i><span data-tex="y_{i-1}"></span></span><span><i class="dot" style="background:#22c55e"></i><span data-tex="z_i"></span></span><span><i class="dot" style="background:#f59e0b"></i><span data-tex="x_i"></span></span><span><i class="dot" style="background:#d946ef"></i><span data-tex="y_i"></span></span></div>
+      <p class="small">拖动左图改变视角，滚轮缩放。这不是完整机械臂，而是从机械臂中抽出的“一段连杆 + 两个相邻转动关节”；先看清关节轴，再建立坐标系。</p>
+    </section>
+    <section class="card">
+      <strong>按 1 → 2 → 3 建系</strong>
+      <div class="steps" role="group" aria-label="DH 建系步骤">
+        <button class="step active" type="button" data-step="1">1. 先定 z 轴</button>
+        <button class="step" type="button" data-step="2">2. 再定 x 轴</button>
+        <button class="step" type="button" data-step="3">3. 放原点并补 y</button>
+      </div>
+      <p id="dh-state"></p>
+      <span id="dh-formula" class="math-block"></span>
+      <p class="small">此页先讲“坐标系怎么放”。四个 DH 参数和单段矩阵在下一步才进入。</p>
+    </section>
+  </div>
+
+  <h2>本笔记采用的标准 DH 约定</h2>
+  <ol class="rules">
+    <li><strong>先找关节轴：</strong>第 <span data-tex="i"></span> 个关节的运动轴定为 <span data-tex="z_{i-1}"></span>。转动关节就绕它转；移动关节就沿它移动。</li>
+    <li><strong>再找公共法线：</strong><span data-tex="x_i"></span> 垂直于 <span data-tex="z_{i-1}"></span> 和 <span data-tex="z_i"></span>，并从前一根轴指向后一根轴。图中的橙线就是这条最短连线。</li>
+    <li><strong>把原点放到交点：</strong><span data-tex="O_i"></span> 放在 <span data-tex="x_i"></span> 与 <span data-tex="z_i"></span> 的交点；图中是橙线右端的点。</li>
+    <li><strong>最后补齐右手系：</strong>有了 <span data-tex="x_i,z_i"></span> 后，令 <span data-tex="y_i=z_i\times x_i"></span>。不是自由再选一根轴。</li>
+  </ol>
+  <div class="card key"><strong>为什么第 <span data-tex="i"></span> 个关节偏偏叫 <span data-tex="z_{i-1}"></span>，而不是 <span data-tex="z_i"></span>？</strong>这不是物理规律，而是<strong>标准 DH 的编号选择</strong>：第 <span data-tex="i"></span> 段局部变换要把 <span data-tex="\{i\}"></span> 写到 <span data-tex="\{i-1\}"></span> 中，即 <span data-tex="{}^{i-1}T_i"></span>。在“生成 <span data-tex="\{i\}"></span>”的起点，手里已有的是旧坐标系 <span data-tex="\{i-1\}"></span>，所以先绕它的 <span data-tex="z_{i-1}"></span> 转 <span data-tex="\theta_i"></span>、沿它走 <span data-tex="d_i"></span>；这根轴就是第 <span data-tex="i"></span> 个关节真正的运动轴。之后才通过 <span data-tex="a_i,\alpha_i"></span> 对准下一根关节轴，并把那根轴编号为 <span data-tex="z_i"></span>。因此 <span data-tex="z_i"></span> 是<strong>第 <span data-tex="i+1"></span> 个关节</strong>的运动轴。这样每一段都能统一写成 <span data-tex="{}^{i-1}T_i"></span>，变换链也能自然首尾相接。</div>
+  <div class="card"><strong>先记住一个目的：</strong>坐标系不是为了“看起来顺眼”，而是为了让每一段从 <span data-tex="\{i-1\}"></span> 到 <span data-tex="\{i\}"></span> 的相对关系可以用同一种格式填写。之后机械臂结构不同，表格写法仍相同。</div>
+
+  <h2>两根关节轴的特殊关系怎么办</h2>
+  <p>先点下面三种图形看差别。它们都是从相邻两根关节轴出发，问题始终相同：<strong><span data-tex="x_i"></span> 到底该放在哪里？</strong></p>
+  <div class="workspace">
+    <section>
+      <div id="case-view" class="case-view" role="img" aria-label="相邻关节轴错开、平行和相交时的可旋转三维 DH x 轴选择图"></div>
+      <div class="legend"><span><i class="dot" style="background:#aab3c2"></i><span data-tex="z_{i-1}"></span></span><span><i class="dot" style="background:#60a5fa"></i><span data-tex="x_{i-1}"></span></span><span><i class="dot" style="background:#a78bfa"></i><span data-tex="y_{i-1}"></span></span><span><i class="dot" style="background:#22c55e"></i><span data-tex="z_i"></span></span><span><i class="dot" style="background:#f59e0b"></i>所选 <span data-tex="x_i"></span></span><span><i class="dot" style="background:#d946ef"></i><span data-tex="y_i"></span></span></div>
+      <p class="small">拖动图面旋转视角，滚轮缩放。旋转到侧面可以验证橙色 <span data-tex="x_i"></span> 是否真的同时垂直两根关节轴。</p>
+    </section>
+    <section class="card">
+      <strong>切换两根轴的关系</strong>
+      <div class="case-buttons" role="group" aria-label="相邻关节轴关系"><button class="step active" type="button" data-case="skew">错开且不平行</button><button class="step" type="button" data-case="parallel">平行</button><button class="step" type="button" data-case="intersect">相交</button></div>
+      <p id="case-state"></p>
+      <span id="case-formula" class="math-block"></span>
+    </section>
+  </div>
+  <div class="table-wrap"><table class="dh-table">
+    <thead><tr><th>相邻 z 轴关系</th><th>如何选 x 轴</th><th>原点直觉</th></tr></thead>
+    <tbody>
+      <tr><td>错开且不平行</td><td>唯一的公共法线，取两轴间最短连线方向。</td><td>公共法线与各自 z 轴的交点。</td></tr>
+      <tr><td>平行</td><td>可选任意一条垂直两轴的连线；通常选自然经过机械结构的位置。</td><td>选定连线与 z 轴的交点。</td></tr>
+      <tr><td>相交</td><td>取垂直于两轴所张平面的方向。</td><td>两轴交点就是最自然的原点。</td></tr>
+    </tbody>
+  </table></div>
+  <p>这些情况的选法细节不同，但不变的顺序始终是：<strong>先关节轴 z，再公共法线 x，再用右手系得到 y。</strong></p>
+
+  <h2>四个参数预告：它们只是在描述这两套已建好的坐标系</h2>
+  <div class="card"><strong>先把名字念顺：</strong><span data-tex="\theta_i"></span> 读“theta 下标 i”（口头常说“西塔 i”）；<span data-tex="d_i"></span> 读“d 下标 i”；<span data-tex="a_i"></span> 读“a 下标 i”；<span data-tex="\alpha_i"></span> 读“alpha 下标 i”（“阿尔法 i”）。下标 <span data-tex="i"></span> 只是第 <span data-tex="i"></span> 段/第 <span data-tex="i"></span> 组相邻坐标系的编号，不是乘法；<span data-tex="i-1"></span> 就是它前一组。</div>
+  <div class="card key"><strong>为什么转动关节的变量是 <span data-tex="\theta_i"></span>？</strong>先别把 <span data-tex="q_i"></span> 和 <span data-tex="\theta_i"></span> 当成两种运动。<span data-tex="q_i"></span> 是控制器给第 <span data-tex="i"></span> 个物理关节的通用读数；标准 DH 已把这根物理关节轴定为 <span data-tex="z_{i-1}"></span>。若它是<strong>转动关节</strong>，它实际能做的事就是绕 <span data-tex="z_{i-1}"></span> 转，所以 DH 用“绕 z 的角” <span data-tex="\theta_i"></span> 记录它：<span data-tex="\theta_i=q_i+\theta_{\text{offset}}"></span>，而 <span data-tex="d_i"></span> 固定。若它是<strong>移动关节</strong>，它实际能做的事就是沿同一根 <span data-tex="z_{i-1}"></span> 滑，所以写作 <span data-tex="d_i=q_i+d_{\text{offset}}"></span>，而 <span data-tex="\theta_i"></span> 固定。<span data-tex="a_i,\alpha_i"></span> 描述的是机构本身的固定几何关系，通常不随关节控制量变化。</div>
+  <div class="table-wrap"><table class="dh-table">
+    <thead><tr><th>参数</th><th>读法 / 类型</th><th>沿/绕哪根轴</th><th>回答的问题</th></tr></thead>
+    <tbody>
+      <tr><td><span data-tex="\theta_i"></span></td><td>西塔 i；角度</td><td>绕 <span data-tex="z_{i-1}"></span></td><td>围绕上一根关节轴转了多少？转动关节的变量通常在这里。</td></tr>
+      <tr><td><span data-tex="d_i"></span></td><td>d i；长度</td><td>沿 <span data-tex="z_{i-1}"></span></td><td>沿上一根关节轴走了多远？移动关节的变量通常在这里。</td></tr>
+      <tr><td><span data-tex="a_i"></span></td><td>a i；长度</td><td>沿 <span data-tex="x_i"></span></td><td>两根关节轴之间的公共法线长度是多少？</td></tr>
+      <tr><td><span data-tex="\alpha_i"></span></td><td>阿尔法 i；角度</td><td>绕 <span data-tex="x_i"></span></td><td>从上一根 z 轴扭到下一根 z 轴，需要转多少？</td></tr>
+    </tbody>
+  </table></div>
+  <h2>继续：把四个参数按顺序作用到坐标系</h2>
+  <p>建系已经完成，四个参数就不再是孤立字母。下面固定上一帧 <span data-tex="\{i-1\}"></span>，一步步生成下一帧 <span data-tex="\{i\}"></span>；左边始终保留两套完整坐标轴，右边选步骤和改数值。</p>
+  <div class="workspace">
+    <section>
+      <div id="param-view" class="case-view" role="img" aria-label="标准 DH 四个参数依次生成下一坐标系的三维交互图"></div>
+      <div class="legend"><span><i class="dot" style="background:#aab3c2"></i><span data-tex="z_{i-1}"></span></span><span><i class="dot" style="background:#60a5fa"></i><span data-tex="x_{i-1}"></span></span><span><i class="dot" style="background:#a78bfa"></i><span data-tex="y_{i-1}"></span></span><span><i class="dot" style="background:#22c55e"></i><span data-tex="z_i"></span></span><span><i class="dot" style="background:#f59e0b"></i><span data-tex="x_i"></span></span><span><i class="dot" style="background:#d946ef"></i><span data-tex="y_i"></span></span></div>
+      <p class="small">拖动图面旋转视角，滚轮缩放。当前选中的步骤只显示截至该步已经产生的下一坐标系。</p>
+    </section>
+    <section class="card">
+      <strong>选择正在做的动作</strong>
+      <div class="steps" role="group" aria-label="DH 参数动作步骤"><button class="step active" type="button" data-param-step="1">1. 绕 z 转 θ</button><button class="step" type="button" data-param-step="2">2. 沿 z 走 d</button><button class="step" type="button" data-param-step="3">3. 沿 x 走 a</button><button class="step" type="button" data-param-step="4">4. 绕 x 扭 α</button></div>
+      <div id="param-controls" class="controls"></div>
+      <p id="param-control-hint" class="small"></p>
+      <p id="param-summary" class="small"></p>
+      <p id="param-state"></p>
+      <span id="param-formula" class="math-block"></span>
+    </section>
+  </div>
+  <div class="card"><strong>先把动作和轴对上：</strong><span data-tex="\theta_i,d_i"></span> 都围绕或沿上一帧的 <span data-tex="z_{i-1}"></span>；<span data-tex="a_i,\alpha_i"></span> 都沿或绕选好的 <span data-tex="x_i"></span>。下一笔记才把这四步真正乘开，得到完整的 <span data-tex="{}^{i-1}T_i"></span>。</div>
+  <div class="card key"><strong>到这里仍然不要背矩阵。</strong>能看着图说清“哪根是关节轴、公共法线在哪里、四个参数各自沿/绕哪根轴”就够了。下一笔记才把这四步真正乘开，得到 <span data-tex="{}^{i-1}T_i"></span>。</div>
+</main>
+<script>
+addEventListener('load',()=>{let n=0;const go=()=>window.katex?document.querySelectorAll('[data-tex]').forEach(x=>katex.render(x.dataset.tex,x,{displayMode:x.classList.contains('math-block'),throwOnError:false})):(n++<40&&setTimeout(go,100));go()});
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/controls/OrbitControls.js';
+const host=document.getElementById('dh-view'),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(42,1,.1,100),renderer=new THREE.WebGLRenderer({antialias:true}),orbit=new OrbitControls(camera,renderer.domElement);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x20242b);host.appendChild(renderer.domElement);camera.position.set(4.8,3.4,5.6);orbit.target.set(0,0,.25);orbit.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x1d2634,2.2),new THREE.GridHelper(7,7,0x56606f,0x39414d));
+function label(text,color,scale=1){const c=document.createElement('canvas'),g=c.getContext('2d');c.width=360;c.height=96;g.font='600 34px system-ui';g.lineWidth=5;g.strokeStyle='rgba(0,0,0,.88)';g.strokeText(text,12,58);g.fillStyle=color;g.fillText(text,12,58);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(1.05*scale,.28*scale,1);return s}
+function lineBetween(a,b,color,width=.035){const d=b.clone().sub(a),m=a.clone().add(b).multiplyScalar(.5),mesh=new THREE.Mesh(new THREE.CylinderGeometry(width,width,d.length(),12),new THREE.MeshStandardMaterial({color}));mesh.position.copy(m);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return mesh}
+function axis(origin,dir,color,text,labelScale=1){const g=new THREE.Group(),u=dir.clone().normalize(),a=origin.clone().addScaledVector(u,-1.15),b=origin.clone().addScaledVector(u,1.15),shaft=lineBetween(a,b,color,.025),arrow=new THREE.ArrowHelper(u,origin.clone().addScaledVector(u,.88),.32,color,.1,.06),tag=label(text,new THREE.Color(color).getStyle(),labelScale);tag.position.copy(b).addScaledVector(u,.18);g.add(shaft,arrow,tag);return g}
+function frameAxis(origin,dir,color,text,length=.72,labelScale=1){const g=new THREE.Group(),u=dir.clone().normalize(),arrow=new THREE.ArrowHelper(u,origin,.58*length,color,.09,.05),tag=label(text,new THREE.Color(color).getStyle(),labelScale);tag.position.copy(origin).addScaledVector(u,length);g.add(arrow,tag);return g}
+function joint(pos,dir,color){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.42,24),new THREE.MeshStandardMaterial({color,metalness:.18,roughness:.42}));mesh.position.copy(pos);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize());return mesh}
+function originPoint(pos,text,labelScale=1){const g=new THREE.Group(),ball=new THREE.Mesh(new THREE.SphereGeometry(.09,20,12),new THREE.MeshStandardMaterial({color:0xf8fafc,emissive:0x334155})),tag=label(text,'#f8fafc',labelScale);ball.position.copy(pos);tag.position.copy(pos).add(new THREE.Vector3(.06,.08,.14));g.add(ball,tag);return g}
+const prevO=new THREE.Vector3(-1.45,0,.45),currO=new THREE.Vector3(1.35,0,.45),zPrev=new THREE.Vector3(0,0,1),zCurr=new THREE.Vector3(0,1,0),xPrev=new THREE.Vector3(0,1,0),yPrev=new THREE.Vector3().crossVectors(zPrev,xPrev).normalize(),xCurr=currO.clone().sub(prevO).normalize(),yCurr=new THREE.Vector3().crossVectors(zCurr,xCurr).normalize();
+const previousAxis=axis(prevO,zPrev,0xaab3c2,'zᵢ₋₁'),currentAxis=axis(currO,zCurr,0x22c55e,'zᵢ'),prevFrameX=frameAxis(prevO,xPrev,0x60a5fa,'xᵢ₋₁'),prevFrameY=frameAxis(prevO,yPrev,0xa78bfa,'yᵢ₋₁'),linkBody=lineBetween(prevO,currO,0xc98b16,.14),linkTag=label('连杆','#fbbf24'),prevJoint=joint(prevO,zPrev,0x64748b),currJoint=joint(currO,zCurr,0x0891b2),common=lineBetween(prevO,currO,0xf59e0b,.05),commonArrow=new THREE.ArrowHelper(xCurr,prevO,2.15,0xf59e0b,.13,.07),commonTag=label('公共法线 xᵢ','#f59e0b'),prevOrigin=originPoint(prevO,'Oᵢ₋₁'),currOrigin=originPoint(currO,'Oᵢ'),frameXArrow=new THREE.ArrowHelper(xCurr,currO,.7,0xf59e0b,.12,.06),frameXTag=label('xᵢ','#f59e0b'),yArrow=new THREE.ArrowHelper(yCurr,currO,.75,0xd946ef,.12,.06),yTag=label('yᵢ','#d946ef');
+linkTag.position.copy(prevO).lerp(currO,.5).add(new THREE.Vector3(0,-.18,.22));commonTag.position.copy(prevO).lerp(currO,.5).add(new THREE.Vector3(0,.12,.24));frameXTag.position.copy(currO).addScaledVector(xCurr,.92);yTag.position.copy(currO).addScaledVector(yCurr,.95);scene.add(linkBody,linkTag,prevJoint,currJoint,previousAxis,currentAxis,prevFrameX,prevFrameY,common,commonArrow,commonTag,prevOrigin,currOrigin,frameXArrow,frameXTag,yArrow,yTag);
+const buttons=[...document.querySelectorAll('.step')],state=document.getElementById('dh-state'),formula=document.getElementById('dh-formula');
+function update(step){const second=step>=2,third=step>=3;common.visible=second;commonArrow.visible=second;commonTag.visible=second;prevOrigin.visible=third;currOrigin.visible=third;prevFrameX.visible=third;prevFrameY.visible=third;frameXArrow.visible=third;frameXTag.visible=third;yArrow.visible=third;yTag.visible=third;
+  if(step===1){state.textContent='先把它当作一小段真实机构：金色连杆连接两个关节座。灰色和绿色的长轴分别是这两个转动关节真正绕着转的轴，所以先定为 z(i-1) 与 z(i)。';if(window.katex)katex.render('z_{i-1}=\\text{第 i 个关节的运动轴}',formula,{displayMode:true,throwOnError:false})}
+  if(step===2){state.textContent='现在问：两根关节轴之间最短、并且同时垂直于它们的方向在哪里？橙色线就是公共法线。DH 规定把这条方向选为 x(i)，因此连杆长度会落在 x(i) 方向。';if(window.katex)katex.render('x_i\\perp z_{i-1},\\qquad x_i\\perp z_i',formula,{displayMode:true,throwOnError:false})}
+  if(step===3){state.textContent='现在两个完整坐标系都画出来了：左端蓝 x(i-1)、紫 y(i-1)、灰 z(i-1) 是 {i-1}；右端橙 x(i)、紫 y(i)、绿 z(i) 是 {i}。O(i) 放在公共法线与绿色关节轴的交点，y(i) 由右手系自动补齐。';if(window.katex)katex.render('O_i=x_i\\cap z_i,\\qquad y_i=z_i\\times x_i',formula,{displayMode:true,throwOnError:false})}
+}
+buttons.forEach(button=>button.addEventListener('click',()=>{const step=Number(button.dataset.step);buttons.forEach(b=>b.classList.toggle('active',b===button));update(step)}));
+const caseHost=document.getElementById('case-view'),caseScene=new THREE.Scene(),caseCamera=new THREE.PerspectiveCamera(42,1,.1,100),caseRenderer=new THREE.WebGLRenderer({antialias:true}),caseOrbit=new OrbitControls(caseCamera,caseRenderer.domElement),caseGroup=new THREE.Group();
+caseRenderer.setPixelRatio(Math.min(devicePixelRatio,2));caseRenderer.setClearColor(0x20242b);caseHost.appendChild(caseRenderer.domElement);caseCamera.position.set(4.5,3.3,5.2);caseOrbit.target.set(0,0,.25);caseOrbit.enableDamping=true;caseScene.add(new THREE.HemisphereLight(0xffffff,0x1d2634,2.2),new THREE.GridHelper(7,7,0x56606f,0x39414d),caseGroup);
+function clearCase(){while(caseGroup.children.length)caseGroup.remove(caseGroup.children[0])}
+function caseOrigin(pos){const dot=new THREE.Mesh(new THREE.SphereGeometry(.1,18,12),new THREE.MeshStandardMaterial({color:0xf8fafc,emissive:0x334155}));dot.position.copy(pos);caseGroup.add(dot)}
+function caseX(origin,dir,length){const u=dir.clone().normalize(),end=origin.clone().addScaledVector(u,length),shaft=lineBetween(origin,end,0xf59e0b,.045),arrow=new THREE.ArrowHelper(u,end.clone().addScaledVector(u,-.25),.25,0xf59e0b,.1,.055),tag=label('公共法线 xᵢ','#fbbf24');tag.position.copy(origin).lerp(end,.5).add(new THREE.Vector3(.05,.1,.14));caseGroup.add(shaft,arrow,tag)}
+function caseAxis(origin,dir,color,text){caseGroup.add(axis(origin,dir,color,text))}
+function caseFrameAxis(origin,dir,color,text){caseGroup.add(frameAxis(origin,dir,color,text,.66))}
+const caseButtons3=[...document.querySelectorAll('[data-case]')],caseState=document.getElementById('case-state'),caseFormula=document.getElementById('case-formula');
+function caseUpdate(kind){clearCase();caseButtons3.forEach(b=>b.classList.toggle('active',b.dataset.case===kind));
+  if(kind==='skew'){const a=new THREE.Vector3(-1.4,0,.45),b=new THREE.Vector3(1.4,0,.45),zp=new THREE.Vector3(0,0,1),zc=new THREE.Vector3(0,1,0),xp=new THREE.Vector3(0,1,0),yp=new THREE.Vector3().crossVectors(zp,xp).normalize(),xc=b.clone().sub(a).normalize(),yc=new THREE.Vector3().crossVectors(zc,xc).normalize();caseAxis(a,zp,0xaab3c2,'zᵢ₋₁');caseAxis(b,zc,0x22c55e,'zᵢ');caseFrameAxis(a,xp,0x60a5fa,'xᵢ₋₁');caseFrameAxis(a,yp,0xa78bfa,'yᵢ₋₁');caseFrameAxis(b,xc,0xf59e0b,'xᵢ');caseFrameAxis(b,yc,0xd946ef,'yᵢ');caseOrigin(a);caseOrigin(b);caseX(a,xc,2.8);caseState.textContent='两根轴既不平行也不相交。橙色线是唯一一条同时垂直两轴的最短线；图中每端都补齐了完整三轴：左端是 {i-1}，右端是 {i}。';if(window.katex)katex.render('x_i\\perp z_{i-1},\\qquad x_i\\perp z_i',caseFormula,{displayMode:true,throwOnError:false})}
+  if(kind==='parallel'){const a=new THREE.Vector3(-1.3,0,.25),b=new THREE.Vector3(1.3,0,.25),zp=new THREE.Vector3(0,0,1),zc=new THREE.Vector3(0,0,1),xp=new THREE.Vector3(0,1,0),yp=new THREE.Vector3().crossVectors(zp,xp).normalize(),xc=b.clone().sub(a).normalize(),yc=new THREE.Vector3().crossVectors(zc,xc).normalize();caseAxis(a,zp,0xaab3c2,'zᵢ₋₁');caseAxis(b,zc,0x22c55e,'zᵢ');caseFrameAxis(a,xp,0x60a5fa,'xᵢ₋₁');caseFrameAxis(a,yp,0xa78bfa,'yᵢ₋₁');caseFrameAxis(b,xc,0xf59e0b,'xᵢ');caseFrameAxis(b,yc,0xd946ef,'yᵢ');caseOrigin(a);caseOrigin(b);caseX(a,xc,2.6);caseState.textContent='平行轴之间有无数条垂线，因此 x(i) 不唯一。橙线是本次选中的一条；左右两端都显示完整坐标系，便于看出选定 x(i) 后 y(i) 如何由右手系补出。';if(window.katex)katex.render('x_i\\perp z_{i-1},\\qquad x_i\\perp z_i\\quad(\\text{但可选多条})',caseFormula,{displayMode:true,throwOnError:false})}
+  if(kind==='intersect'){const o=new THREE.Vector3(0,0,.25),zp=new THREE.Vector3(0,0,1),zc=new THREE.Vector3(0,1,0),xp=new THREE.Vector3(.7,.7,0).normalize(),yp=new THREE.Vector3().crossVectors(zp,xp).normalize(),xc=new THREE.Vector3(1,0,0),yc=new THREE.Vector3().crossVectors(zc,xc).normalize();caseAxis(o,zp,0xaab3c2,'zᵢ₋₁');caseAxis(o,zc,0x22c55e,'zᵢ');caseFrameAxis(o,xp,0x60a5fa,'xᵢ₋₁');caseFrameAxis(o,yp,0xa78bfa,'yᵢ₋₁');caseFrameAxis(o,xc,0xf59e0b,'xᵢ');caseFrameAxis(o,yc,0xd946ef,'yᵢ');caseOrigin(o);caseX(o,xc,1.15);caseState.textContent='两根轴在同一点相交，两个原点也放在这个交点。虽然两套坐标系的原点重合，蓝/紫/灰仍是 {i-1}，橙/粉/绿仍是 {i}；橙 x(i) 垂直于两根 z 轴所张的平面。';if(window.katex)katex.render('O_i=z_{i-1}\\cap z_i,\\qquad a_i=0',caseFormula,{displayMode:true,throwOnError:false})}
+}
+caseButtons3.forEach(button=>button.addEventListener('click',()=>caseUpdate(button.dataset.case)));
+const paramHost=document.getElementById('param-view'),paramScene=new THREE.Scene(),paramCamera=new THREE.PerspectiveCamera(42,1,.1,100),paramRenderer=new THREE.WebGLRenderer({antialias:true}),paramOrbit=new OrbitControls(paramCamera,paramRenderer.domElement),paramGroup=new THREE.Group();
+paramRenderer.setPixelRatio(Math.min(devicePixelRatio,2));paramRenderer.setClearColor(0x20242b);paramHost.appendChild(paramRenderer.domElement);paramCamera.position.set(3.35,2.45,3.9);paramOrbit.target.set(.55,0,.45);paramOrbit.enableDamping=true;paramScene.add(new THREE.HemisphereLight(0xffffff,0x1d2634,2.2),new THREE.GridHelper(5.5,6,0x56606f,0x39414d),paramGroup);
+const paramItems=[['paramTheta','θᵢ (deg)',-180,180,1,35],['paramD','dᵢ',-2.2,2.2,.1,.9],['paramA','aᵢ',0,3,.1,1.8],['paramAlpha','αᵢ (deg)',-180,180,1,70]],paramButtons=[...document.querySelectorAll('[data-param-step]')],paramState=document.getElementById('param-state'),paramControlHint=document.getElementById('param-control-hint'),paramSummary=document.getElementById('param-summary'),paramFormula=document.getElementById('param-formula');let paramStep=1;
+const paramValue=id=>Number(document.getElementById(id).value),paramFmt=n=>(Math.abs(n)<.005?0:n).toFixed(2);
+function clearParam(){while(paramGroup.children.length)paramGroup.remove(paramGroup.children[0])}
+function paramLine(a,b,color,text){const shaft=lineBetween(a,b,color,.045),mid=a.clone().lerp(b,.5),tag=label(text,new THREE.Color(color).getStyle(),.62);tag.position.copy(mid).add(new THREE.Vector3(.08,.12,.14));paramGroup.add(shaft,tag)}
+function angleArc(origin,axisDir,startDir,angle,color,text){const u=axisDir.clone().normalize(),start=startDir.clone().projectOnPlane(u).normalize();if(Math.abs(angle)<.02){const zero=label(text+' = 0',new THREE.Color(color).getStyle(),.62);zero.position.copy(origin).addScaledVector(start,.78).addScaledVector(u,.16);paramGroup.add(zero);return}const radius=.56,count=Math.max(10,Math.ceil(Math.abs(angle)*16)),points=[];for(let i=0;i<=count;i++)points.push(origin.clone().addScaledVector(start.clone().applyAxisAngle(u,angle*i/count),radius));const curve=new THREE.CatmullRomCurve3(points),arc=new THREE.Mesh(new THREE.TubeGeometry(curve,count,.018,8,false),new THREE.MeshBasicMaterial({color,depthTest:false})),end=start.clone().applyAxisAngle(u,angle),tangent=u.clone().cross(end).multiplyScalar(Math.sign(angle)).normalize(),arrow=new THREE.ArrowHelper(tangent,points[points.length-1].clone().addScaledVector(tangent,-.16),.25,color,.09,.05),startDot=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),new THREE.MeshBasicMaterial({color:0x60a5fa,depthTest:false})),endDot=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),new THREE.MeshBasicMaterial({color:0xf59e0b,depthTest:false})),tag=label(text,new THREE.Color(color).getStyle(),.62),middle=start.clone().applyAxisAngle(u,angle*.5);startDot.position.copy(points[0]);endDot.position.copy(points[points.length-1]);tag.position.copy(origin).addScaledVector(middle,.88).addScaledVector(u,.18);paramGroup.add(arc,arrow,startDot,endDot,tag)}
+function setupParameters(){const host=document.getElementById('param-controls');host.innerHTML=paramItems.map((item,index)=>'<label class="control" data-param-control="'+index+'"><span>'+item[1]+'</span><input id="'+item[0]+'" type="range" min="'+item[2]+'" max="'+item[3]+'" step="'+item[4]+'" value="'+item[5]+'" aria-label="'+item[1]+' 滑块"><input id="'+item[0]+'n" type="number" min="'+item[2]+'" max="'+item[3]+'" step="'+item[4]+'" value="'+item[5]+'" aria-label="'+item[1]+' 数值"></label>').join('');paramItems.forEach(item=>{const id=item[0],range=document.getElementById(id),number=document.getElementById(id+'n');range.oninput=()=>{number.value=range.value;updateParameters(paramStep)};number.oninput=()=>{range.value=number.value;updateParameters(paramStep)}})}
+function updateParameters(step){paramStep=step;paramButtons.forEach(button=>button.classList.toggle('active',Number(button.dataset.paramStep)===step));document.querySelectorAll('[data-param-control]').forEach((control,index)=>control.hidden=index!==step-1);const allTheta=paramValue('paramTheta'),allD=paramValue('paramD'),allA=paramValue('paramA'),allAlpha=paramValue('paramAlpha');paramControlHint.textContent='当前只编辑 '+paramItems[step-1][1]+'；要改其他参数，请先切换到它所属的步骤。';paramSummary.textContent='已保存整组参数：θᵢ='+paramFmt(allTheta)+'°，dᵢ='+paramFmt(allD)+'，aᵢ='+paramFmt(allA)+'，αᵢ='+paramFmt(allAlpha)+'°。';clearParam();const theta=allTheta*Math.PI/180,d=step>=2?allD:0,a=step>=3?allA:0,alpha=step>=4?allAlpha*Math.PI/180:0,base=new THREE.Vector3(0,0,.25),zPrev=new THREE.Vector3(0,0,1),xPrev=new THREE.Vector3(1,0,0),yPrev=new THREE.Vector3(0,1,0),turn=new THREE.Quaternion().setFromAxisAngle(zPrev,theta),xCurr=xPrev.clone().applyQuaternion(turn),yBefore=yPrev.clone().applyQuaternion(turn),zBefore=zPrev.clone(),atD=base.clone().addScaledVector(zPrev,d),origin=atD.clone().addScaledVector(xCurr,a),yCurr=yBefore.clone().applyAxisAngle(xCurr,alpha),zCurr=zBefore.clone().applyAxisAngle(xCurr,alpha);
+  paramGroup.add(axis(base,zPrev,0xaab3c2,'zᵢ₋₁',.62),frameAxis(base,xPrev,0x60a5fa,'xᵢ₋₁',.72,.62),frameAxis(base,yPrev,0xa78bfa,'yᵢ₋₁',.72,.62),originPoint(base,'Oᵢ₋₁',.62));
+  if(step>=2)paramLine(base,atD,0x22c55e,'dᵢ：沿 zᵢ₋₁');if(step>=3)paramLine(atD,origin,0xf59e0b,'aᵢ：沿 xᵢ');
+  if(step===1){const sameZ=label('zᵢ = zᵢ₋₁','#f8fafc',.62);sameZ.position.copy(base).addScaledVector(zPrev,1.35).add(new THREE.Vector3(.1,.1,0));paramGroup.add(sameZ)}else paramGroup.add(axis(origin,zCurr,0x22c55e,'zᵢ',.62));
+  if(step===4)paramGroup.add(frameAxis(origin,zBefore,0xaab3c2,'α 起点 zᵢ₋₁',.72,.62));
+  paramGroup.add(frameAxis(origin,xCurr,0xf59e0b,'xᵢ',.72,.62),frameAxis(origin,yCurr,0xd946ef,'yᵢ',.72,.62),originPoint(origin,'Oᵢ',.62));
+  if(step===1)angleArc(base,zPrev,xPrev,theta,0xf8fafc,'θᵢ：xᵢ₋₁ → xᵢ');if(step===4)angleArc(origin,xCurr,zBefore,alpha,0xf8fafc,'αᵢ：zᵢ₋₁ → zᵢ');
+  const states=['第 1 步：绕灰色 zᵢ₋₁ 旋转 θᵢ。原点尚未移动，因此 zᵢ 与 zᵢ₋₁ 重合；橙色 xᵢ 的方位先被确定。','第 2 步：沿灰色 zᵢ₋₁ 平移 dᵢ。绿色标注线显示 Oᵢ 沿关节轴走出的距离。','第 3 步：沿橙色 xᵢ 平移 aᵢ。橙色公共法线段把 Oᵢ 移到下一根关节轴附近。','第 4 步：绕橙色 xᵢ 旋转 αᵢ。只扭转 yᵢ、zᵢ；xᵢ 自己不变。'];const pending=['dᵢ、aᵢ、αᵢ','aᵢ、αᵢ','αᵢ','无'];paramState.textContent=states[step-1]+' 当前画面已执行到第 '+step+' 步；尚未作用到图中的参数：'+pending[step-1]+'。';
+  const formulas=['{}^{i-1}T^{(1)}=R_z(\\theta_i)','{}^{i-1}T^{(2)}=R_z(\\theta_i)T_z(d_i)','{}^{i-1}T^{(3)}=R_z(\\theta_i)T_z(d_i)T_x(a_i)','{}^{i-1}T_i=R_z(\\theta_i)T_z(d_i)T_x(a_i)R_x(\\alpha_i)'];if(window.katex)katex.render(formulas[step-1],paramFormula,{displayMode:true,throwOnError:false});
+}
+paramButtons.forEach(button=>button.addEventListener('click',()=>updateParameters(Number(button.dataset.paramStep))));
+function resize(){const w=host.clientWidth,h=host.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
+function caseResize(){const w=caseHost.clientWidth,h=caseHost.clientHeight;caseCamera.aspect=w/h;caseCamera.updateProjectionMatrix();caseRenderer.setSize(w,h,false)}
+function paramResize(){const w=paramHost.clientWidth,h=paramHost.clientHeight;paramCamera.aspect=w/h;paramCamera.updateProjectionMatrix();paramRenderer.setSize(w,h,false)}
+new ResizeObserver(resize).observe(host);new ResizeObserver(caseResize).observe(caseHost);new ResizeObserver(paramResize).observe(paramHost);
+function loop(){orbit.update();renderer.render(scene,camera);caseOrbit.update();caseRenderer.render(caseScene,caseCamera);paramOrbit.update();paramRenderer.render(paramScene,paramCamera);requestAnimationFrame(loop)}
+addEventListener('load',()=>{let n=0;const ready=()=>window.katex?(update(1),caseUpdate('skew'),setupParameters(),updateParameters(1)):(n++<40&&setTimeout(ready,100));ready()});resize();caseResize();paramResize();caseUpdate('skew');loop();
+</script>
+</body>
+</html>

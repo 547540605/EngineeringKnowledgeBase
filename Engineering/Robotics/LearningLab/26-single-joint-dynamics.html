@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔记 04：单关节动力学——力矩从哪里来？惯性、重力、摩擦与前馈补偿</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+    h1, h2, h3, h4 { color: #ffffff; }
+    h1 { font-size: 1.8rem; margin: 0 0 10px; }
+    .lead { font-size: 1.05rem; color: var(--muted); margin-bottom: 24px; }
+    .back-nav { margin-bottom: 18px; font-size: 0.92rem; }
+    .back-nav a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .back-nav a:hover { text-decoration: underline; }
+    
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 18px 0;
+    }
+    .tip {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--success);
+      padding: 12px 16px;
+      margin: 14px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95rem;
+    }
+    .warn {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 12px 16px;
+      margin: 14px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95rem;
+    }
+    .derive {
+      background: var(--card-sub);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 14px 0;
+    }
+    
+    .lab-layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(0, 1.35fr);
+      gap: 22px;
+      align-items: start;
+      margin: 20px 0;
+    }
+    @media (max-width: 960px) {
+      .lab-layout { grid-template-columns: 1fr; }
+    }
+    
+    .canvas-box {
+      background: #111827;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1.15;
+      background: #0f172a;
+      border-radius: 6px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .ctrl-group {
+      margin: 10px 0;
+    }
+    .ctrl-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      margin: 8px 0;
+    }
+    .ctrl-group input[type=range] {
+      flex: 1;
+      margin: 0 10px;
+    }
+    .val-badge {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 70px;
+      text-align: right;
+    }
+    
+    .math {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 2px 0;
+    }
+    .bar-container {
+      margin-top: 12px;
+      background: #0f172a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+      font-size: 0.86rem;
+    }
+    .bar-label {
+      width: 130px;
+      color: var(--muted);
+    }
+    .bar-track {
+      flex: 1;
+      height: 14px;
+      background: #334155;
+      border-radius: 7px;
+      overflow: hidden;
+      position: relative;
+      margin: 0 10px;
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.05s linear;
+    }
+    .bar-val {
+      width: 80px;
+      text-align: right;
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .badge-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .badge-green { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-amber { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .badge-red { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="back-nav">
+    <a href="index.html">← 返回课程主目录</a> | 
+    <a href="25-two-link-velocity-recursion.html">上一篇：26. 两连杆速度递推</a> | 
+    <a href="27-recursive-newton-euler-dynamics.html">下一篇：28. 多连杆空间加速度递推 →</a>
+  </p>
+
+  <h1>笔记 04：单关节动力学——力矩从哪里来？惯性、重力、摩擦与前馈补偿</h1>
+  <p class="lead">
+    从运动学正式迈入动力学！彻底理解机械臂电机输出的力矩到底在抵抗什么：单摆旋转动力学方程的四大部分拆解、实时受力仿真、以及工业运控中“重力与摩擦前馈补偿”的核心价值。
+  </p>
+
+  <div class="tip" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <strong>🌱 感到力矩、转动惯量或正逆动力学概念陌生？</strong><br>
+      推荐先阅读前置补课专栏：用高中推箱子对比直觉，彻底打通平动到转动的物理基础。
+    </div>
+    <a href="ref-dynamics-foundations-force-torque-inertia.html" style="background:#0284c7; color:#fff; font-weight:700; text-decoration:none; padding:6px 14px; border-radius:5px; font-size:0.88rem; white-space:nowrap;">
+      📖 阅读：动力学前置补课专栏 →
+    </a>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🎯 本节核心学习目标：</h3>
+    <ul style="margin:6px 0;padding-left:1.4rem">
+      <li><strong>分清两类动力学问题</strong>：什么是<strong>逆动力学</strong>（已知运动 $\to$ 求控制力矩 $\tau$）与<strong>正动力学</strong>（已知力矩 $\tau \to$ 求运动仿真）。</li>
+      <li><strong>掌握单关节动力学方程</strong>：深入剖析惯性力矩 $I\ddot q$、重力力矩 $mgL_c\cos q$、粘性摩擦 $b\dot q$ 与库仑摩擦 $\tau_c\operatorname{sgn}(\dot q)$。</li>
+      <li><strong>理解前馈补偿原理</strong>：为什么工程中加上“重力补偿”和“摩擦补偿”后，电机可以在极低增益下实现毫米级精准定位。</li>
+    </ul>
+  </div>
+
+  <!-- 第一部分：两大动力学问题 -->
+  <h2>一、动力学的两大核心任务</h2>
+  <div class="card">
+    <p>在前面第 2–5 章的运动学中，我们只关心几何位置 $q$、速度 $\dot q$ 和姿态，<strong>完全不考虑产生这些运动需要多大的力</strong>。但电机是有扭矩上限的，连杆是有质量的。动力学正是研究<strong>“力矩 $\tau$ 与运动 $(q, \dot q, \ddot q)$ 之间的因果规律”</strong>。</p>
+    
+    <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:0.92rem">
+      <thead>
+        <tr style="border-bottom:1px solid var(--line);text-align:left">
+          <th style="padding:8px">动力学类型</th>
+          <th style="padding:8px">输入 $\to$ 输出</th>
+          <th style="padding:8px">典型工程与控制应用</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px"><strong>逆动力学 (Inverse Dynamics)</strong></td>
+          <td style="padding:8px">期望轨迹 $(q, \dot q, \ddot q) \longrightarrow \text{计算所需力矩 } \boldsymbol{\tau}$</td>
+          <td style="padding:8px"><span class="badge badge-blue">前馈控制核心</span> 计算力矩控制 (Computed Torque Control)、重力/摩擦前馈补偿、电机与减速器选型。</td>
+        </tr>
+        <tr>
+          <td style="padding:8px"><strong>正动力学 (Forward Dynamics)</strong></td>
+          <td style="padding:8px">电机给出力矩 $\boldsymbol{\tau} \longrightarrow \text{求解运动响应 } \ddot q \to \dot q \to q$</td>
+          <td style="padding:8px"><span class="badge badge-green">物理仿真</span> 动力学前向积分模拟 (ODE/Runge-Kutta)、物理引擎仿真 (MuJoCo, PyBullet)。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 第二部分：单关节力矩方程拆解 -->
+  <h2>二、单关节旋转动力学：四大部分物理拆解</h2>
+  <p>考虑一个安装在基座上的单旋转关节连杆（质量为 $m$，质心距离轴心 $L_c$，对转轴的转动惯量为 $I$）。根据刚体定轴转动定律与实际工况受力，电机输出的总力矩 $\tau$ 可以精确拆解为 4 部分：</p>
+
+  <div class="derive">
+    <span class="math" data-tex="\tau = \underbrace{I\,\ddot q}_{\text{1. 惯性力矩 } \tau_{\text{inertia}}} + \underbrace{m g L_c \cos q}_{\text{2. 重力力矩 } \tau_{\text{gravity}}} + \underbrace{b\,\dot q}_{\text{3. 粘性摩擦 } \tau_{\text{viscous}}} + \underbrace{\tau_c\,\operatorname{sgn}(\dot q)}_{\text{4. 库仑摩擦 } \tau_{\text{Coulomb}}}"></span>
+  </div>
+
+  <div class="lab-layout">
+    <!-- 交互实验台 -->
+    <div class="canvas-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+        <strong style="font-size:0.95rem; color:#38bdf8;">🕹️ 2D 单关节力学物理仿真台</strong>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="toggle-anim" style="background:#0284c7; color:#fff; border:0; padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:bold;">▶ 释放自由摆动</button>
+          <button id="reset-anim" style="background:#1e293b; color:#94a3b8; border:1px solid #334155; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.82rem;" title="将摆杆抬起至 45° 准备下落">🔄 抬起 45°</button>
+          <button id="toggle-gcomp" style="background:#1e293b; color:#10b981; border:1px solid #059669; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:bold;" title="开启后电机实时抵消重力，体验协作机器人零力悬浮示教">⚖️ 开启重力前馈补偿</button>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <canvas id="cv" style="cursor:grab;"></canvas>
+        <div id="drag-hint" style="position:absolute; bottom:10px; right:12px; font-size:0.78rem; color:#64748b; background:rgba(11,17,32,0.85); padding:3px 10px; border-radius:4px; pointer-events:none; border:1px solid #334155;">
+          💡 提示：可直接用鼠标在画布上拖拽连杆任意角度释放！
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:14px; margin-top:8px; font-size:0.82rem; color:var(--muted);">
+        <span><i style="display:inline-block; width:10px; height:10px; background:#38bdf8; border-radius:50%;"></i> 电机总力矩 $\tau$</span>
+        <span><i style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:50%;"></i> 重力 $mg$ (力臂 $L_c\cos q$)</span>
+        <span><i style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:50%;"></i> 摩擦阻力</span>
+        <span id="mode-status-badge" style="color:#10b981; font-weight:bold; margin-left:auto;">🌿 状态：自由阻尼摆动模式</span>
+      </div>
+    </div>
+
+    <!-- 右侧控制与各分量实时看板 -->
+    <div class="card" style="margin:0;">
+      <h3 style="margin-top:0;">⚙️ 运动与力学参数调节</h3>
+      <div class="ctrl-group">
+        <label><span>关节角度 <span data-tex="q"></span></span><input id="q" type="range" min="-180" max="180" step="1" value="45"><span id="qv" class="val-badge">45°</span></label>
+        <label><span>关节角速度 <span data-tex="\dot q"></span></span><input id="qd" type="range" min="-10" max="10" step="0.5" value="0.0"><span id="qdv" class="val-badge">0.0 rad/s</span></label>
+        <label><span>期望角加速度 <span data-tex="\ddot q"></span></span><input id="qdd" type="range" min="-20" max="20" step="1" value="0.0"><span id="qddv" class="val-badge">0.0 rad/s²</span></label>
+        <label><span>连杆质量 <span data-tex="m"></span></span><input id="m" type="range" min="0.5" max="5.0" step="0.5" value="2.0"><span id="mv" class="val-badge">2.0 kg</span></label>
+        <label><span>粘性摩擦系数 <span data-tex="b"></span></span><input id="b" type="range" min="0" max="2.0" step="0.1" value="0.4"><span id="bv" class="val-badge">0.4 Nms</span></label>
+        <label><span>库仑摩擦力矩 <span data-tex="\tau_c"></span></span><input id="tc" type="range" min="0" max="3.0" step="0.2" value="0.6"><span id="tcv" class="val-badge">0.6 Nm</span></label>
+      </div>
+
+      <!-- 力矩分量柱状看板 -->
+      <div class="bar-container">
+        <strong style="font-size:0.88rem; color:#f8fafc;">📊 各力矩分量贡献度拆解：</strong>
+        <div class="bar-row">
+          <span class="bar-label">1. 惯性力矩 $I\ddot q$:</span>
+          <div class="bar-track"><div id="bar-inert" class="bar-fill" style="background:#38bdf8;"></div></div>
+          <span id="val-inert" class="bar-val">0.00 Nm</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">2. 重力力矩 $mgL_c\cos q$:</span>
+          <div class="bar-track"><div id="bar-grav" class="bar-fill" style="background:#10b981;"></div></div>
+          <span id="val-grav" class="bar-val">0.00 Nm</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">3. 粘性摩擦 $b\dot q$:</span>
+          <div class="bar-track"><div id="bar-visc" class="bar-fill" style="background:#f59e0b;"></div></div>
+          <span id="val-visc" class="bar-val">0.00 Nm</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">4. 库仑摩擦 $\tau_c\operatorname{sgn}(\dot q)$:</span>
+          <div class="bar-track"><div id="bar-coul" class="bar-fill" style="background:#f43f5e;"></div></div>
+          <span id="val-coul" class="bar-val">0.00 Nm</span>
+        </div>
+        <div style="border-top:1px solid var(--line); margin-top:8px; padding-top:6px; display:flex; justify-content:space-between; font-weight:700;">
+          <span>总电机输出力矩 $\tau$:</span>
+          <span id="val-total" style="color:#38bdf8; font-family:ui-monospace,monospace;">0.00 Nm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 四分量的物理意义详解 -->
+  <h2>三、四大物理项的深度解析与直觉</h2>
+
+  <div class="card">
+    <h4>1. 惯性力矩项：<span data-tex="\tau_{\text{inertia}} = I\,\ddot q"></span></h4>
+    <p>
+      根据牛顿第二定律转动形式，物体具有“保持原本转速不变”的惯性。对于质量为 $m$、长度为 $L$ 的均匀细杆，绕端点转动的转动惯量为 <span data-tex="I = \frac{1}{3}mL^2"></span>。
+    </p>
+    <ul>
+      <li><strong>物理直觉</strong>：你想要关节转得越快加速（$\ddot q$ 越大），或者杆子越长越重（$I$ 越大），电机在启动和刹车瞬间需要爆发出的力矩就越大！</li>
+      <li><strong>匀速运动时（$\ddot q = 0$）</strong>：惯性力矩瞬间降为 0！</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>2. 重力力矩项：<span data-tex="\tau_{\text{gravity}} = mg\,L_c\cos q"></span></h4>
+    <p>
+      地心引力 $mg$ 竖直向下作用在连杆质心处（质心距转轴 $L_c = L/2$）。垂直于重力方向的<strong>水平有效力臂正是 $L_c\cos q$</strong>。
+    </p>
+    <ul>
+      <li><strong>水平伸平时（$q = 0^\circ$）</strong>：有效力臂最长（$\cos 0^\circ = 1$），重力力矩达到<strong>最大峰值 $mgL_c$</strong>！</li>
+      <li><strong>竖直向下悬挂时（$q = -90^\circ$）</strong>：力臂为 0（$\cos(-90^\circ) = 0$），重力力矩为 0。</li>
+      <li><strong>重力是位形相关的（Configuration-dependent）</strong>：它只跟当前角度 $q$ 有关，跟转速 $\dot q$ 和加速度 $\ddot q$ 完全无关！</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>3. 摩擦力矩项：<span data-tex="\tau_{\text{friction}} = b\,\dot q + \tau_c\,\operatorname{sgn}(\dot q)"></span></h4>
+    <p>
+      机器人关节由减速器（谐波/RV）和轴承组成，摩擦力矩主要由两部分叠加：
+    </p>
+    <ul>
+      <li><strong>粘性摩擦 (Viscous Friction) $b\dot q$</strong>：减速箱内部润滑油的流体剪切阻力。<strong>转速越快，阻力越大</strong>（正比于速度）。</li>
+      <li><strong>库仑摩擦 (Coulomb Friction) $\tau_c\operatorname{sgn}(\dot q)$</strong>：齿轮啮合面与轴承滚珠的干摩擦。<strong>只要关节在动，阻力大小恒定为 $\tau_c$</strong>，方向永远阻碍运动（由符号函数 $\operatorname{sgn}(\dot q)$ 决定）。</li>
+    </ul>
+  </div>
+
+  <!-- 第四部分：工程落地前馈补偿 -->
+  <h2>四、工程落地实战：为什么必须做“重力补偿”与“摩擦补偿”？</h2>
+
+  <div class="card">
+    <p>
+      在机械臂伺服控制中，一个经典的理论与实践问题是：<strong>“如果仅使用常规的线性 PID 反馈控制，当机械臂在水平重力最大的位置悬停时，会发生什么？”</strong>
+    </p>
+
+    <div class="warn">
+      <strong>纯 PID 控制的致命软肋：</strong>
+      当机械臂悬停在水平位置时，需要持续输出力矩对抗重力。如果只靠位置比例控制 $P \cdot (q_{\text{target}} - q)$，控制器必须<strong>存在持续的角度误差（下垂）</strong>才能输出对抗重力的电压！如果强行调大积分 $I$ 来消除静差，又极易引起<strong>积分饱和 (Anti-windup) 与超调振荡</strong>！
+    </div>
+
+    <h4>💡 工业级破局之道：动力学前馈补偿 (Feedforward Compensation)</h4>
+    <p>既然我们已经推导出了重力与摩擦的精确解析式，控制器为什么不<strong>“抢先一步”直接把已知的阻力抵消掉</strong>呢？</p>
+
+    <div class="derive">
+      <p><strong>前馈 + 误差反馈组合控制律：</strong></p>
+      <span class="math" data-tex="\tau_{\text{motor}} = \underbrace{\tau_{\text{gravity}}(q) + \tau_{\text{friction}}(\dot q)}_{\text{动力学前馈（预先抵消重力与摩擦）}} + \underbrace{K_p (q_{\text{target}} - q) + K_d (\dot q_{\text{target}} - \dot q)}_{\text{微小残余误差 PD 反馈调节}}"></span>
+    </div>
+
+    <div class="tip">
+      <strong>一句话总结工程收益：</strong>
+      加入重力补偿后，电机在静止悬停时完全“失重”，机械臂在任意角度悬停时位置误差趋近于 0，且位置环增益 $K_p$ 可以设得非常柔和，既安全又精准！这也是<strong>协作机器人「零力拖动示教 (Gravity-free Teaching)」</strong>的核心底层！
+    </div>
+  </div>
+
+  <div class="card small">
+    <strong>原书严格对照：</strong>Craig《机器人学导论（原书第 4 版）》第 6 章 §6.1, §6.8（书页 128, 142 / PDF P139, P153），第 9 章 §9.4（PDF P208）。
+  </div>
+
+  <div class="tip" style="text-align:center; padding:18px; margin-top:20px; border-radius:10px;">
+    <h3 style="margin-top:0; color:#10b981; font-size:1.15rem;">🎯 动力学实战闭环与自我考核</h3>
+    <p style="color:var(--text); margin-bottom:14px;">
+      完成单关节受力仿真与前馈补偿学习后，欢迎前往智能考核中心发起 Ch 06 动力学模块考核（支持随时中断续考）或进行每日三题打卡！
+    </p>
+    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+      <a href="27-recursive-newton-euler-dynamics.html" style="display:inline-block; background:#0284c7; color:#fff; font-weight:700; text-decoration:none; padding:8px 20px; border-radius:6px;">
+        🚀 进入下一篇：28. 多连杆空间加速度递推 →
+      </a>
+      <a href="quiz-center.html" style="display:inline-block; background:#10b981; color:#fff; font-weight:700; text-decoration:none; padding:8px 20px; border-radius:6px;">
+        🏆 启动 Ch 06 动力学专项考核 →
+      </a>
+      <a href="00-progress.html" style="display:inline-block; background:#1e293b; border:1px solid #334155; color:#38bdf8; font-weight:700; text-decoration:none; padding:8px 20px; border-radius:6px;">
+        🧭 返回全景总指挥看板
+      </a>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const D = Math.PI / 180;
+
+  // DOM 元素
+  const qIn = document.getElementById('q'), qv = document.getElementById('qv');
+  const qdIn = document.getElementById('qd'), qdv = document.getElementById('qdv');
+  const qddIn = document.getElementById('qdd'), qddv = document.getElementById('qddv');
+  const mIn = document.getElementById('m'), mv = document.getElementById('mv');
+  const bIn = document.getElementById('b'), bv = document.getElementById('bv');
+  const tcIn = document.getElementById('tc'), tcv = document.getElementById('tcv');
+  const animBtn = document.getElementById('toggle-anim');
+  const resetBtn = document.getElementById('reset-anim');
+  const gcompBtn = document.getElementById('toggle-gcomp');
+  const statusBadge = document.getElementById('mode-status-badge');
+
+  let isPlaying = false;
+  let isGCompOn = false; // 是否开启重力补偿
+  let isDragging = false;
+  let lastTime = performance.now();
+
+  const g = 9.81;
+  const L = 1.0; // 连杆总长 1m
+  const Lc = L / 2; // 质心 0.5m
+
+  // 物理状态变量 (弧度制)
+  let simQ = 45 * D;
+  let simQd = 0;
+  let simQdd = 0;
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = r.width * dpr;
+    cv.height = r.height * dpr;
+    ctx.scale(dpr, dpr);
+    draw();
+  }
+
+  function calcTorque(q_rad, qd_val, qdd_val, m_val, b_val, tc_val) {
+    const I = (1 / 3) * m_val * L * L; // 绕端点转动惯量
+    const tau_inert = I * qdd_val;
+    const tau_grav = m_val * g * Lc * Math.cos(q_rad);
+    const tau_visc = b_val * qd_val;
+    const tau_coul = (Math.abs(qd_val) > 0.01) ? tc_val * Math.sign(qd_val) : 0;
+    
+    let tau_total = tau_inert + (isGCompOn ? tau_grav : 0) + tau_visc + tau_coul;
+    if (!isPlaying) {
+      tau_total = tau_inert + tau_grav + tau_visc + tau_coul;
+    }
+
+    return { I, tau_inert, tau_grav, tau_visc, tau_coul, tau_total };
+  }
+
+  function updateMathAndBars() {
+    const q_rad = simQ;
+    const q_deg = Math.round(simQ / D);
+    const qd_val = simQd;
+    const qdd_val = simQdd;
+    const m_val = +mIn.value;
+    const b_val = +bIn.value;
+    const tc_val = +tcIn.value;
+
+    qIn.value = q_deg;
+    qdIn.value = qd_val.toFixed(1);
+    qddIn.value = qdd_val.toFixed(1);
+
+    qv.textContent = `${q_deg}°`;
+    qdv.textContent = `${qd_val.toFixed(1)} rad/s`;
+    qddv.textContent = `${qdd_val.toFixed(1)} rad/s²`;
+    mv.textContent = `${m_val.toFixed(1)} kg`;
+    bv.textContent = `${b_val.toFixed(1)} Nms`;
+    tcv.textContent = `${tc_val.toFixed(1)} Nm`;
+
+    const res = calcTorque(q_rad, qd_val, qdd_val, m_val, b_val, tc_val);
+
+    document.getElementById('val-inert').textContent = `${res.tau_inert.toFixed(2)} Nm`;
+    document.getElementById('val-grav').textContent = `${res.tau_grav.toFixed(2)} Nm`;
+    document.getElementById('val-visc').textContent = `${res.tau_visc.toFixed(2)} Nm`;
+    document.getElementById('val-coul').textContent = `${res.tau_coul.toFixed(2)} Nm`;
+    document.getElementById('val-total').textContent = `${res.tau_total.toFixed(2)} Nm`;
+
+    const maxRef = 20;
+    const setBar = (id, val) => {
+      const pct = Math.min(100, (Math.abs(val) / maxRef) * 100);
+      document.getElementById(id).style.width = `${pct}%`;
+    };
+    setBar('bar-inert', res.tau_inert);
+    setBar('bar-grav', res.tau_grav);
+    setBar('bar-visc', res.tau_visc);
+    setBar('bar-coul', res.tau_coul);
+  }
+
+  function draw() {
+    const r = cv.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+
+    // 适度扩大转动半径，布局清晰不拥挤
+    const ox = r.width * 0.46, oy = r.height * 0.50;
+    const armLen = Math.min(r.width, r.height) * 0.44;
+
+    const q_rad = simQ;
+    const qd_val = simQd;
+    const qdd_val = simQdd;
+    const m_val = +mIn.value;
+    const b_val = +bIn.value;
+    const tc_val = +tcIn.value;
+
+    const res = calcTorque(q_rad, qd_val, qdd_val, m_val, b_val, tc_val);
+
+    // 连杆末端与质心位置 (水平右侧为 0 度，逆时针向上为正，向下为负，-90° 垂直向下)
+    const ex = ox + armLen * Math.cos(q_rad);
+    const ey = oy - armLen * Math.sin(q_rad);
+    const cx = ox + (armLen * 0.55) * Math.cos(q_rad);
+    const cy = oy - (armLen * 0.55) * Math.sin(q_rad);
+
+    // 1. 基座十字参考线 (虚线)
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(ox - armLen * 0.7, oy); ctx.lineTo(ox + armLen * 1.1, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, oy - armLen * 0.7); ctx.lineTo(ox, oy + armLen * 1.1); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. 角度弧线与标注 (微调位置，彻底避开质心与力臂)
+    const q_deg = Math.round(q_rad / D);
+    const arcR = 30;
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ox, oy, arcR, 0, -q_rad, q_rad > 0);
+    ctx.stroke();
+
+    // 角度数值小胶囊
+    const midAngle = q_rad / 2;
+    const tagX = ox + (arcR + 18) * Math.cos(midAngle);
+    const tagY = oy - (arcR + 18) * Math.sin(midAngle);
+    ctx.fillStyle = '#0b1120';
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(tagX - 22, tagY - 10, 44, 20, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px ui-monospace, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`${q_deg}°`, tagX, tagY);
+
+    // 3. 实体连杆结构
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 16; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.strokeStyle = isGCompOn ? '#10b981' : '#0284c7'; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ex, ey); ctx.stroke();
+
+    // 4. 水平重力有效力臂 (清晰投影线)
+    if (Math.abs(cx - ox) > 6) {
+      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+      // 水平力臂线
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(cx, oy); ctx.stroke();
+      // 竖直投影虚线
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, oy); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 力臂端点小圆点
+      ctx.fillStyle = '#34d399';
+      ctx.beginPath(); ctx.arc(cx, oy, 3, 0, Math.PI * 2); ctx.fill();
+
+      // 力臂文字 (放在远离摆杆的上下侧)
+      const armTextY = (cy < oy) ? (oy + 16) : (oy - 10);
+      ctx.fillStyle = '#34d399'; ctx.font = '11px ui-monospace, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(`力臂 Lc·cos q`, ox + (cx - ox) / 2, armTextY);
+    }
+
+    // 5. 质心球体与法向偏移文字
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+
+    // 质心文字沿连杆法向向外偏移，绝不重叠
+    const normX = -Math.sin(q_rad), normY = -Math.cos(q_rad);
+    ctx.fillStyle = '#10b981'; ctx.font = 'bold 11px ui-monospace, sans-serif';
+    ctx.textAlign = (normX >= 0) ? 'left' : 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('质心 C', cx + normX * 18, cy + normY * 18);
+
+    // 6. 重力箭头 mg (恒定竖直向下)
+    const gLen = Math.min(55, m_val * 13);
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + gLen); ctx.stroke();
+    // 箭头尖端
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.moveTo(cx, cy + gLen); ctx.lineTo(cx - 4, cy + gLen - 7); ctx.lineTo(cx + 4, cy + gLen - 7); ctx.fill();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(`mg = ${(m_val * g).toFixed(1)} N`, cx + 8, cy + gLen * 0.7);
+
+    // 7. 电机输出力矩矢量环弧
+    const tauVal = res.tau_total;
+    if (Math.abs(tauVal) > 0.1) {
+      ctx.save();
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (tauVal >= 0) {
+        ctx.arc(ox, oy, 22, 0, -Math.PI * 0.7, true);
+      } else {
+        ctx.arc(ox, oy, 22, 0, Math.PI * 0.7, false);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 8. 基座关节电机轴承
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath(); ctx.arc(ox, oy, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 3; ctx.stroke();
+
+    // 9. 开启重力补偿时的悬浮发光标识
+    if (isGCompOn) {
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+      ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(12, 12, 190, 26, 4);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#10b981'; ctx.font = 'bold 11.5px ui-monospace, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('⚡ 重力前馈补偿中 (零力悬浮)', 18, 25);
+    }
+  }
+
+  // 物理微积分积分循环
+  function loop(now) {
+    if (isPlaying && !isDragging) {
+      const rawDt = Math.min(0.04, (now - lastTime) / 1000);
+      const subSteps = 4;
+      const dt = rawDt / subSteps;
+
+      const m_val = +mIn.value;
+      const b_val = +bIn.value;
+      const tc_val = +tcIn.value;
+      const I = (1 / 3) * m_val * L * L;
+
+      for (let step = 0; step < subSteps; step++) {
+        const tau_g = m_val * g * Lc * Math.cos(simQ);
+        const effective_tau_g = isGCompOn ? 0 : tau_g;
+        const tau_f = b_val * simQd + (Math.abs(simQd) > 0.005 ? tc_val * Math.sign(simQd) : 0);
+
+        simQdd = (-effective_tau_g - tau_f) / I;
+
+        simQd += simQdd * dt;
+        simQ += simQd * dt;
+      }
+
+      while (simQ > Math.PI) simQ -= 2 * Math.PI;
+      while (simQ < -Math.PI) simQ += 2 * Math.PI;
+
+      // 静止检测
+      if (!isGCompOn && Math.abs(simQ - (-Math.PI / 2)) < 0.02 && Math.abs(simQd) < 0.05) {
+        simQ = -Math.PI / 2;
+        simQd = 0;
+        simQdd = 0;
+        isPlaying = false;
+        animBtn.textContent = '▶ 释放自由摆动';
+        animBtn.style.background = '#0284c7';
+        statusBadge.textContent = '🏁 已平稳停在最低平衡位置 (-90°)';
+      }
+
+      updateMathAndBars();
+      draw();
+    }
+    lastTime = now;
+    requestAnimationFrame(loop);
+  }
+
+  // 绑定滑块手动调节
+  [qIn, qdIn, qddIn, mIn, bIn, tcIn].forEach(inp => {
+    inp.addEventListener('input', () => {
+      if (inp === qIn) {
+        simQ = +qIn.value * D;
+        simQd = 0;
+        simQdd = 0;
+      } else if (inp === qdIn) {
+        simQd = +qdIn.value;
+      } else if (inp === qddIn) {
+        simQdd = +qddIn.value;
+      }
+      updateMathAndBars();
+      draw();
+    });
+  });
+
+  // 按钮交互
+  animBtn.addEventListener('click', () => {
+    if (!isPlaying && Math.abs(simQ - (-Math.PI / 2)) < 0.05 && Math.abs(simQd) < 0.1) {
+      simQ = 45 * D;
+      simQd = 0;
+      simQdd = 0;
+    }
+    isPlaying = !isPlaying;
+    animBtn.textContent = isPlaying ? '⏸ 暂停摆动' : '▶ 释放自由摆动';
+    animBtn.style.background = isPlaying ? '#e11d48' : '#0284c7';
+    statusBadge.textContent = isPlaying ? (isGCompOn ? '🚀 零力悬浮模式中' : '🌿 自由阻尼摆动中') : '⏸ 暂停中';
+    updateMathAndBars();
+    draw();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    simQ = 45 * D;
+    simQd = 0;
+    simQdd = 0;
+    isPlaying = false;
+    animBtn.textContent = '▶ 释放自由摆动';
+    animBtn.style.background = '#0284c7';
+    statusBadge.textContent = '🔄 已抬起至 45° 初始位置，点击播放即可下落！';
+    updateMathAndBars();
+    draw();
+  });
+
+  gcompBtn.addEventListener('click', () => {
+    isGCompOn = !isGCompOn;
+    if (isGCompOn) {
+      gcompBtn.style.background = '#059669';
+      gcompBtn.style.color = '#fff';
+      gcompBtn.textContent = '✓ 重力补偿已开启 (零力悬浮)';
+      statusBadge.textContent = '🚀 零力悬浮示教中（重力被完全抵消，手推即走）';
+    } else {
+      gcompBtn.style.background = '#1e293b';
+      gcompBtn.style.color = '#10b981';
+      gcompBtn.textContent = '⚖️ 开启重力前馈补偿';
+      statusBadge.textContent = '🌿 自由阻尼摆动模式';
+    }
+    updateMathAndBars();
+    draw();
+  });
+
+  // 鼠标 / 触摸直接拖动连杆物理交互
+  function getMouseAngle(e) {
+    const rect = cv.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const mx = clientX - rect.left;
+    const my = clientY - rect.top;
+
+    const ox = rect.width * 0.46, oy = rect.height * 0.50;
+    const dx = mx - ox;
+    const dy = oy - my;
+
+    return Math.atan2(dy, dx);
+  }
+
+  cv.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    cv.style.cursor = 'grabbing';
+    simQ = getMouseAngle(e);
+    simQd = 0;
+    simQdd = 0;
+    updateMathAndBars();
+    draw();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    simQ = getMouseAngle(e);
+    simQd = 0;
+    simQdd = 0;
+    updateMathAndBars();
+    draw();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      cv.style.cursor = 'grab';
+      isPlaying = true;
+      animBtn.textContent = '⏸ 暂停摆动';
+      animBtn.style.background = '#e11d48';
+      statusBadge.textContent = isGCompOn ? '🚀 零力悬浮响应中' : '🌿 拖拽释放自由下落中';
+    }
+  });
+
+  // 触摸支持
+  cv.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    simQ = getMouseAngle(e);
+    simQd = 0;
+    simQdd = 0;
+    updateMathAndBars();
+    draw();
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    simQ = getMouseAngle(e);
+    updateMathAndBars();
+    draw();
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    if (isDragging) {
+      isDragging = false;
+      isPlaying = true;
+      animBtn.textContent = '⏸ 暂停摆动';
+      animBtn.style.background = '#e11d48';
+    }
+  });
+
+  window.addEventListener('resize', resize);
+
+  // 初始化 KaTeX 全局自动渲染 (全分隔符支持)
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\$$', right: '\$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\$', right: '\$', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+  document.querySelectorAll('[data-tex]').forEach(el => {
+    if (window.katex) {
+      katex.render(el.getAttribute('data-tex'), el, { displayMode: el.classList.contains('math') });
+    }
+  });
+
+  updateMathAndBars();
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

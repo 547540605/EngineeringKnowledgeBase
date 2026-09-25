@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>专题精析：求导顺序之谜——“坐标本身导数”与“机器人学投影速度”的区别与数值实算</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    }
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px 20px 80px;
+    }
+    .back-nav {
+      margin-bottom: 14px;
+      font-size: 0.92rem;
+    }
+    .back-nav a {
+      color: #0284c7;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-nav a:hover { text-decoration: underline; }
+    h1 {
+      font-size: 1.85rem;
+      line-height: 1.3;
+      margin: 0 0 10px;
+    }
+    h2 {
+      margin-top: 2.2rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.4rem;
+      font-size: 1.35rem;
+    }
+    h3 {
+      margin-top: 1.2rem;
+      font-size: 1.1rem;
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+    }
+    .card, .derive, .warn, .success {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .card { background: var(--card-bg); }
+    .derive { background: var(--soft); }
+    .warn { background: var(--warn); border-left: 5px solid #f59e0b; }
+    .danger { background: var(--danger); border-left: 5px solid #ef4444; }
+    .success { background: var(--success); border-left: 5px solid #10b981; }
+    .math {
+      display: block;
+      text-align: center;
+      margin: 0.8rem 0;
+      overflow-x: auto;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 820px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .lab-layout {
+      display: grid;
+      grid-template-columns: minmax(380px, 1fr) minmax(0, 1.35fr);
+      gap: 22px;
+      align-items: start;
+      margin: 20px 0;
+    }
+    @media (max-width: 1040px) {
+      .lab-layout { grid-template-columns: 1fr; }
+    }
+    .canvas-box {
+      background: #181d24;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+      width: 100%;
+    }
+    .card {
+      min-width: 0;
+    }
+    .math {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1.25;
+      touch-action: none;
+      cursor: grab;
+      border-radius: 6px;
+      background: #0f172a;
+    }
+    .ctrl-group {
+      margin: 10px 0;
+    }
+    .ctrl-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.92rem;
+      margin: 6px 0;
+    }
+    .ctrl-group input[type=range] {
+      flex: 1;
+      margin: 0 10px;
+    }
+    .val-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      color: #38bdf8;
+      min-width: 65px;
+      text-align: right;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-blue { background: #e0f2fe; color: #075985; }
+    .mode-btn {
+      font: inherit;
+      font-size: 0.84rem;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .mode-btn:hover {
+      border-color: #0284c7;
+    }
+    .mode-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      font-weight: 700;
+    }
+    table.compare {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.92rem;
+    }
+    table.compare th, table.compare td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    table.compare th {
+      background: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p class="back-nav">
+    <a href="00-progress.html">← 学习进度</a> · 
+    <a href="25-two-link-velocity-recursion.html">← 返回笔记 04：平面两连杆速度递推实战</a>
+  </p>
+
+  <h1>专题精析：求导顺序之谜——“坐标本身导数”与“机器人学投影速度”的区别与数值实算</h1>
+  <p class="lead">彻底剖析为什么“原点 2 在坐标系 2 中的速度”不是 0：数学求导顺序的本质冲突、带入具体数字的逐行实算、以及工程与传感器物理意义。</p>
+
+  <!-- 核心矛盾提炼 -->
+  <div class="warn">
+    <h3 style="margin-top:0">❓ 核心疑惑与直觉冲突：</h3>
+    <p><strong>你的直觉疑问：</strong>“原点 2（肘部 <span data-tex="O_2"></span>）就是坐标系 <span data-tex="\{2\}"></span> 自己的原点。在坐标系 <span data-tex="\{2\}"></span> 看来，原点 2 的坐标永远是 <span data-tex="[0,0,0]^T"></span>。对它求导 <span data-tex="\frac{d}{dt}[0,0,0]^T = [0,0,0]^T"></span>，为什么机器人学教材（Craig）里算出来的 <span data-tex="{}^2\boldsymbol{v}_2"></span> 却是一个非零的数值？”</p>
+    <p style="margin-bottom:0"><strong>一句话终极答案：</strong><strong>两种理解都没有算错，但它们回答的是完全不同的两个物理问题！冲突的根源在于“求导”与“旋转投影”这两个数学操作的前后先后顺序颠倒了。</strong></p>
+  </div>
+
+  <!-- 交互实验台与实时数值演算 -->
+  <h2>一、交互实验室：带入真实数字，实时验证两种计算路径</h2>
+  <p>通过下方滑块调节连杆 1 长度 <span data-tex="L_1"></span>、关节角 <span data-tex="q_1"></span>、转速 <span data-tex="\dot q_1"></span> 和关节角 <span data-tex="q_2"></span>。右侧面板会<strong>实时带入具体数字，把两个操作流程的每一步矩阵与向量全部乘出来</strong>对比：</p>
+
+  <div class="lab-layout">
+    <!-- 左侧 3D 投影场景 -->
+    <div class="canvas-box">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="mode-switcher">
+        <button class="mode-btn active" data-mode="all" type="button">🌟 全景总览</button>
+        <button class="mode-btn" data-mode="p0" type="button">🔴 1. 世界系 {0} 投影</button>
+        <button class="mode-btn" data-mode="p1" type="button">🟡 2. 连杆1系 {1} 投影</button>
+        <button class="mode-btn" data-mode="p2" type="button">🔵 3. 连杆2系 {2} 投影</button>
+        <button class="mode-btn" data-mode="prel" type="button">🔒 4. 本系求导 (相对速度=0)</button>
+      </div>
+      <canvas id="cv" aria-label="速度矢量投影 3D 演示"></canvas>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:0.85rem;color:var(--muted)">
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899"></i> 真实对地速度矢量 v (大小 |v| = L₁q̇₁)</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444"></i> 基坐标系 {0}</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b"></i> 坐标系 {1}</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0284c7"></i> 坐标系 {2}</span>
+      </div>
+      <p style="font-size:0.84rem;color:var(--muted);margin:8px 0 0">
+        🖱️ <strong>3D 交互</strong>：按住鼠标左键拖拽旋转视角，滚轮缩放。粉色大箭头为肘部的真实对地速度矢量。
+      </p>
+    </div>
+
+    <!-- 右侧控制与实时运算面板 -->
+    <div class="card" style="margin:0">
+      <h3 style="margin-top:0">⚙️ 实时参数控制</h3>
+      <div class="ctrl-group">
+        <label><span>连杆 1 长度 <span data-tex="L_1"></span></span><input id="l1" type="range" min="0.5" max="2.0" step="0.1" value="1.0"><span id="l1v" class="val-badge">1.0 m</span></label>
+        <label><span>关节 1 角度 <span data-tex="q_1"></span></span><input id="q1" type="range" min="-180" max="180" step="5" value="30"><span id="q1v" class="val-badge">30°</span></label>
+        <label><span>关节 1 转速 <span data-tex="\dot q_1"></span></span><input id="qd1" type="range" min="-5" max="5" step="0.5" value="2.0"><span id="qd1v" class="val-badge">2.0 rad/s</span></label>
+        <label><span>关节 2 折角 <span data-tex="q_2"></span></span><input id="q2" type="range" min="-180" max="180" step="5" value="45"><span id="q2v" class="val-badge">45°</span></label>
+      </div>
+
+      <div style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px">
+        <h4 style="margin:4px 0 10px">📊 实时数值计算结果对比：</h4>
+        <div id="calc-live" style="font-size:0.9rem">
+          <div style="background:var(--bg);padding:10px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px">
+            <strong>1. 世界系 {0} 绝对真速度（求导展开）：</strong>
+            <div id="math-step-1" class="math" style="margin:6px 0 0"></div>
+          </div>
+          <div style="background:var(--bg);padding:10px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px">
+            <strong>2. 投影到连杆 1 动系 {1}（旋转矩阵相乘）：</strong>
+            <div id="math-step-2" class="math" style="margin:6px 0 0"></div>
+          </div>
+          <div style="background:var(--bg);padding:10px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px">
+            <strong>3. 投影到连杆 2 动系 {2}（机器人学 Craig 定义）：</strong>
+            <div id="math-step-3" class="math" style="margin:6px 0 0"></div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08);padding:10px 12px;border:1px solid rgba(239,68,68,0.3);border-radius:6px">
+            <strong>4. 对本系坐标求导（路径 A 对比）：</strong>
+            <div id="math-step-4" class="math" style="margin:6px 0 0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 两种操作的逐行严格推导与对比 -->
+  <h2>二、两个不同定义的逐行数学实算对比</h2>
+
+  <div class="grid-2">
+    <!-- 定义 A：对本系坐标求导 -->
+    <div class="card danger">
+      <div class="badge badge-red">路径 A：你的直觉定义</div>
+      <h3 style="margin:8px 0 4px">“先定在动系 <span data-tex="\{2\}"></span>，再对本系坐标求导”</h3>
+      <p style="font-size:0.9rem;color:var(--muted)">物理含义：<strong>相对运动速度（站在连杆 2 上的人看自己的肘部）</strong></p>
+
+      <ol style="padding-left:1.3rem;font-size:0.92rem;margin:8px 0">
+        <li>
+          <strong>写出原点 2 在动坐标系 <span data-tex="\{2\}"></span> 里的瞬时位置：</strong>
+          <span class="math" data-tex="{}^2 P_{O_2}(t) \equiv \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}"></span>
+          <em>（因为 <span data-tex="O_2"></span> 就是坐标系 <span data-tex="\{2\}"></span> 自己的原点，在自己系里看永远在 <span data-tex="(0,0,0)"></span>）</em>
+        </li>
+        <li>
+          <strong>对这个本系坐标求时间导数：</strong>
+          <span class="math" data-tex="\boldsymbol{v}_{\text{rel}} = \frac{d}{dt}\left( {}^2 P_{O_2}(t) \right) = \frac{d}{dt}\begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}"></span>
+        </li>
+      </ol>
+      <div style="background:rgba(239,68,68,0.1);padding:8px 12px;border-radius:6px;font-size:0.88rem">
+        <strong>🚩 结论：</strong>如果你问的是“肘部相对连杆 2 有没有发生相对形变/位移？”，答案<strong>百分之百是 0</strong>。因为连杆是绝对刚体，肘部不会从连杆 2 上脱落！
+      </div>
+    </div>
+
+    <!-- 定义 B：机器人学投影速度 -->
+    <div class="card success">
+      <div class="badge badge-green">路径 B：机器人学 Craig 教材定义</div>
+      <h3 style="margin:8px 0 4px">“先对地面惯性系求导，再旋转投影到 <span data-tex="\{2\}"></span>”</h3>
+      <p style="font-size:0.9rem;color:var(--muted)">物理含义：<strong>绝对速度的局部投影（汽车速度表在仪表盘上的读数）</strong></p>
+
+      <ol style="padding-left:1.3rem;font-size:0.92rem;margin:8px 0">
+        <li>
+          <strong>先在世界基座系 <span data-tex="\{0\}"></span> 写出肘部的空间绝对轨迹：</strong>
+          <span class="math" data-tex="{}^0 P_{O_2}(t) = \begin{bmatrix} L_1 \cos q_1(t) \\ L_1 \sin q_1(t) \\ 0 \end{bmatrix}"></span>
+        </li>
+        <li>
+          <strong>在世界系里求导，得到对地绝对速度（真速度）：</strong>
+          <span class="math" data-tex="{}^0\boldsymbol{v}_2 = \frac{d}{dt}\left({}^0 P_{O_2}\right) = \begin{bmatrix} -L_1 \sin q_1 \, \dot q_1 \\ L_1 \cos q_1 \, \dot q_1 \\ 0 \end{bmatrix}"></span>
+          <em>（速度大小为 <span data-tex="\|\boldsymbol{v}\| = L_1 \dot q_1 \neq 0"></span>）</em>
+        </li>
+        <li>
+          <strong>把这个已经求完导的真实矢量，旋转投影到 <span data-tex="\{2\}"></span> 系基底：</strong>
+          <span class="math" data-tex="{}^2\boldsymbol{v}_2 \triangleq {}^2_0 R \; {}^0\boldsymbol{v}_2 = \begin{bmatrix} L_1 \sin q_2 \, \dot q_1 \\ L_1 \cos q_2 \, \dot q_1 \\ 0 \end{bmatrix}"></span>
+        </li>
+      </ol>
+      <div style="background:rgba(16,185,129,0.1);padding:8px 12px;border-radius:6px;font-size:0.88rem">
+        <strong>🌟 结论：</strong>算出来的模长依然是 <span data-tex="L_1\dot q_1"></span>，它度量的是<strong>肘部切切实实在空间中飞驰的真实物理速度</strong>，只是用连杆 2 的 <span data-tex="X_2"></span> 轴和 <span data-tex="Y_2"></span> 轴去报出分量！
+      </div>
+    </div>
+  </div>
+
+  <!-- 全套具体数字手把手算一遍 -->
+  <h2>三、带入具体数字：手把手验算一遍</h2>
+  <div class="derive">
+    <p>假设具体实测参数如下：</p>
+    <ul>
+      <li>连杆 1 长度：<span data-tex="L_1 = 1.0\text{ m}"></span></li>
+      <li>关节 1 实时角度：<span data-tex="q_1 = 30^\circ"></span>（<span data-tex="\cos 30^\circ = 0.866, \sin 30^\circ = 0.500"></span>）</li>
+      <li>关节 1 实时转速：<span data-tex="\dot q_1 = 2.0\text{ rad/s}"></span></li>
+      <li>关节 2 弯折角度：<span data-tex="q_2 = 45^\circ"></span>（<span data-tex="\cos 45^\circ = 0.707, \sin 45^\circ = 0.707"></span>）</li>
+    </ul>
+
+    <h3 style="margin-top:16px">第 1 步：算肘部在世界系 <span data-tex="\{0\}"></span> 里的真速度</h3>
+    <span class="math" data-tex="{}^0\boldsymbol{v}_2 = \begin{bmatrix} -L_1 \sin q_1 \dot q_1 \\ L_1 \cos q_1 \dot q_1 \\ 0 \end{bmatrix} = \begin{bmatrix} -1.0 \times 0.500 \times 2.0 \\ 1.0 \times 0.866 \times 2.0 \\ 0 \end{bmatrix} = \begin{bmatrix} -1.000 \\ 1.732 \\ 0 \end{bmatrix}\text{ m/s}"></span>
+    <p>此时物理总速度大小为：<span data-tex="\sqrt{(-1.000)^2 + 1.732^2} = 2.000\text{ m/s}"></span>（正好等于 <span data-tex="L_1 \dot q_1 = 1.0 \times 2.0 = 2.0\text{ m/s}"></span>）。</p>
+
+    <h3 style="margin-top:16px">第 2 步：旋转到坐标系 <span data-tex="\{1\}"></span>（旋转角 <span data-tex="30^\circ"></span>）</h3>
+    <span class="math" data-tex="{}^1\boldsymbol{v}_2 = {}^1_0 R \; {}^0\boldsymbol{v}_2 = \begin{bmatrix} \cos 30^\circ & \sin 30^\circ & 0 \\ -\sin 30^\circ & \cos 30^\circ & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} -1.000 \\ 1.732 \\ 0 \end{bmatrix} = \begin{bmatrix} 0.866(-1.000) + 0.500(1.732) \\ -0.500(-1.000) + 0.866(1.732) \\ 0 \end{bmatrix} = \begin{bmatrix} \mathbf{0.000} \\ \mathbf{2.000} \\ 0 \end{bmatrix}\text{ m/s}"></span>
+    <p>看！在坐标系 <span data-tex="\{1\}"></span> 看来，沿杆方向速度为 <span data-tex="0"></span>，所有 <span data-tex="2.000\text{ m/s}"></span> 的速度全都集中在切线 <span data-tex="Y_1"></span> 轴上！</p>
+
+    <h3 style="margin-top:16px">第 3 步：旋转到坐标系 <span data-tex="\{2\}"></span>（折角 <span data-tex="45^\circ"></span>）</h3>
+    <span class="math" data-tex="{}^2\boldsymbol{v}_2 = {}^2_1 R \; {}^1\boldsymbol{v}_2 = \begin{bmatrix} \cos 45^\circ & \sin 45^\circ & 0 \\ -\sin 45^\circ & \cos 45^\circ & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} 0.000 \\ 2.000 \\ 0 \end{bmatrix} = \begin{bmatrix} 2.000 \times \sin 45^\circ \\ 2.000 \times \cos 45^\circ \\ 0 \end{bmatrix} = \begin{bmatrix} \mathbf{1.414} \\ \mathbf{1.414} \\ 0 \end{bmatrix}\text{ m/s}"></span>
+    <p>再算模长：<span data-tex="\sqrt{1.414^2 + 1.414^2} = 2.000\text{ m/s}"></span>！</p>
+    <p><strong>这清清楚楚地表明：旋转矩阵 <span data-tex="{}^2_1 R"></span> 只是把这 <span data-tex="2.000\text{ m/s}"></span> 的真实速度，按照 <span data-tex="45^\circ"></span> 角分解成了 <span data-tex="X_2"></span> 轴上的 <span data-tex="1.414\text{ m/s}"></span> 和 <span data-tex="Y_2"></span> 轴上的 <span data-tex="1.414\text{ m/s}"></span>，它绝不可能把一个在空中高速飞行的速度变没了！</strong></p>
+  </div>
+
+  <!-- 为什么工程和物理必须使用定义 B -->
+  <h2>四、为什么机器人学与物理工程必须使用定义 B？</h2>
+  <table class="compare">
+    <thead>
+      <tr>
+        <th style="width:20%">应用场景</th>
+        <th style="width:40%">如果使用路径 A（对本系求导 = 0）</th>
+        <th style="width:40%">使用路径 B（机器人学定义 ≠ 0）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. 动能计算 (<span data-tex="E_k"></span>)</strong></td>
+        <td>连杆 2 的动能算出来是 <span data-tex="\frac{1}{2}m(\mathbf{0})^2 = 0"></span>。<br><em>（极其荒谬：高速甩动的连杆动能居然为 0）</em></td>
+        <td>动能为 <span data-tex="\frac{1}{2}m({}^2\boldsymbol{v}_2)^T({}^2\boldsymbol{v}_2) = \frac{1}{2}m(2.0)^2"></span>。<br><strong>完全符合物理真实能量！</strong></td>
+      </tr>
+      <tr>
+        <td><strong>2. 肘部 IMU/加速度计读数</strong></td>
+        <td>预测传感器读数为 0。<br><em>（与真实硬件实验严重冲突）</em></td>
+        <td>传感器输出为对地绝对运动在芯片本体敏感轴上的投影，<strong>读数与公式完全吻合！</strong></td>
+      </tr>
+      <tr>
+        <td><strong>3. 电机力矩与动力学 (<span data-tex="F=ma"></span>)</strong></td>
+        <td>算不出连杆 2 的惯性力，控制器输出力矩为 0，机械臂瞬间失控垮塌。</td>
+        <td>结合连杆 2 局部转动惯量矩阵 <span data-tex="I_2"></span>，精确算出驱动电机所需的牛顿-欧拉关节力矩！</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 总结卡片 -->
+  <div class="card" style="background:var(--soft);border-left:5px solid #0284c7">
+    <h3 style="margin-top:0">🧠 总结：一张图彻底分清</h3>
+    <ul style="margin:6px 0;padding-left:1.4rem">
+      <li><strong>微积分里的“相对导数”</strong>：<span data-tex="\frac{d}{dt}\left({}^B P_Q\right)"></span>，度量的是点 <span data-tex="Q"></span> 相对坐标系 <span data-tex="B"></span> 的相对位移速度（本系看本系当然为 0）；</li>
+      <li><strong>机器人学里的“速度向量投影”</strong>：<span data-tex="{}^B\boldsymbol{v}_Q \triangleq {}^B_0 R \left(\frac{d}{dt}{}^0 P_Q\right)"></span>，度量的是点 <span data-tex="Q"></span> 划破空间真实的物理速度，只是拿坐标系 <span data-tex="B"></span> 的标尺来报数！</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+
+  let L1 = 1.0, q1 = 30 * Math.PI / 180, qd1 = 2.0, q2 = 45 * Math.PI / 180;
+  let yaw = 35 * Math.PI / 180, pitch = 25 * Math.PI / 180, scale = 110;
+  let isDragging = false, lastX = 0, lastY = 0;
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = cv.getBoundingClientRect();
+    cv.width = rect.width * dpr;
+    cv.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    draw();
+  }
+
+  function project(p) {
+    const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+    const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
+    const x1 = p[0] * cosY - p[1] * sinY;
+    const y1 = p[0] * sinY + p[1] * cosY;
+    const z1 = p[2];
+    const x2 = x1;
+    const y2 = y1 * sinP - z1 * cosP;
+    const rect = cv.getBoundingClientRect();
+    const cx = rect.width / 2, cy = rect.height / 2 + 10;
+    return [cx + x2 * scale, cy - y2 * scale];
+  }
+
+  function arrow3D(from, to, color, width = 2, dash = []) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    ctx.lineTo(to[0], to[1]);
+    ctx.stroke();
+
+    const dx = to[0] - from[0], dy = to[1] - from[1];
+    const len = Math.hypot(dx, dy);
+    if (len > 8) {
+      const angle = Math.atan2(dy, dx);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(to[0], to[1]);
+      ctx.lineTo(to[0] - 8 * Math.cos(angle - Math.PI / 6), to[1] - 8 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to[0] - 8 * Math.cos(angle + Math.PI / 6), to[1] - 8 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function label(text, x, y, color = '#f8fafc', align = 'left') {
+    ctx.save();
+    ctx.font = '12px ui-monospace, sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  let projMode = 'all';
+
+  function draw() {
+    const rect = cv.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // 空间三维点
+    const O_3D = [0, 0, 0];
+    const A_3D = [L1 * Math.cos(q1), L1 * Math.sin(q1), 0]; // 肘部 O2
+    const L2_temp = 0.8;
+    const B_3D = [A_3D[0] + L2_temp * Math.cos(q1 + q2), A_3D[1] + L2_temp * Math.sin(q1 + q2), 0];
+
+    const O = project(O_3D), A = project(A_3D), B = project(B_3D);
+
+    // 1. 地面网格
+    ctx.strokeStyle = '#2d3748';
+    ctx.lineWidth = 1;
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath(); ctx.moveTo(...project([i, -3, 0])); ctx.lineTo(...project([i, 3, 0])); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(...project([-3, i, 0])); ctx.lineTo(...project([3, i, 0])); ctx.stroke();
+    }
+
+    // 2. 基座坐标系 {0}
+    const alpha0 = (projMode === 'all' || projMode === 'p0') ? 1.0 : 0.25;
+    ctx.save();
+    ctx.globalAlpha = alpha0;
+    arrow3D(O, project([1.4, 0, 0]), '#ef4444', 2);
+    arrow3D(O, project([0, 1.4, 0]), '#22c55e', 2);
+    arrow3D(O, project([0, 0, 1.4]), '#c084fc', 2);
+    label('X₀', project([1.5, 0, 0])[0], project([1.5, 0, 0])[1], '#ef4444');
+    label('Y₀', project([0, 1.5, 0])[0], project([0, 1.5, 0])[1], '#22c55e');
+    label('Z₀', project([0, 0, 1.5])[0], project([0, 0, 1.5])[1], '#c084fc');
+    ctx.restore();
+
+    // 3. 连杆 1 与 连杆 2
+    ctx.save();
+    ctx.globalAlpha = (projMode === 'prel') ? 0.35 : 1.0;
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(...O); ctx.lineTo(...A); ctx.stroke();
+    ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(...A); ctx.lineTo(...B); ctx.stroke();
+    ctx.restore();
+
+    // 4. 坐标系 {1}
+    const alpha1 = (projMode === 'all' || projMode === 'p1') ? 1.0 : 0.25;
+    ctx.save();
+    ctx.globalAlpha = alpha1;
+    const x1_pt = [0.9 * Math.cos(q1), 0.9 * Math.sin(q1), 0];
+    const y1_pt = [-0.9 * Math.sin(q1), 0.9 * Math.cos(q1), 0];
+    arrow3D(O, project(x1_pt), '#f59e0b', 2.5);
+    arrow3D(O, project(y1_pt), '#fbbf24', 2.2);
+    label('X₁ (沿杆1)', project(x1_pt)[0], project(x1_pt)[1] - 6, '#f59e0b');
+    label('Y₁ (切向)', project(y1_pt)[0] - 6, project(y1_pt)[1] - 6, '#fbbf24', 'right');
+    ctx.restore();
+
+    // 5. 坐标系 {2} (原点在肘部 A)
+    const alpha2 = (projMode === 'all' || projMode === 'p2' || projMode === 'prel') ? 1.0 : 0.25;
+    ctx.save();
+    ctx.globalAlpha = alpha2;
+    const ang2 = q1 + q2;
+    const x2_pt = [A_3D[0] + 0.8 * Math.cos(ang2), A_3D[1] + 0.8 * Math.sin(ang2), 0];
+    const y2_pt = [A_3D[0] - 0.8 * Math.sin(ang2), A_3D[1] + 0.8 * Math.cos(ang2), 0];
+    const z2_pt = [A_3D[0], A_3D[1], 1.2];
+    arrow3D(A, project(x2_pt), '#38bdf8', 2.5);
+    arrow3D(A, project(y2_pt), '#7dd3fc', 2.2);
+    arrow3D(A, project(z2_pt), '#67e8f9', 2.0);
+    label('X₂ (沿杆2)', project(x2_pt)[0], project(x2_pt)[1] - 6, '#38bdf8');
+    label('Y₂ (切向)', project(y2_pt)[0] - 6, project(y2_pt)[1] - 6, '#7dd3fc', 'right');
+    label('Z₂', project(z2_pt)[0], project(z2_pt)[1] - 6, '#67e8f9');
+    ctx.restore();
+
+    // 6. 真实对地速度矢量 v (在空间切线方向，粉色大粗箭头)
+    const v_tan = L1 * qd1;
+    const v_scale = 0.35;
+    const vx_0 = -v_tan * Math.sin(q1);
+    const vy_0 = v_tan * Math.cos(q1);
+    const v_tip_3D = [A_3D[0] + vx_0 * v_scale, A_3D[1] + vy_0 * v_scale, 0];
+    const P_tip = project(v_tip_3D);
+
+    if (projMode !== 'prel') {
+      arrow3D(A, P_tip, '#ec4899', 4.5);
+      label(`v_真 (|v|=${Math.abs(v_tan).toFixed(2)}m/s)`, P_tip[0] + 8, P_tip[1] - 4, '#f472b6');
+    }
+
+    // --- 7. 针对各个模式单独画出分解投影线与分量箭头 ---
+
+    if (projMode === 'p0') {
+      // 模式 1：在 {0} 系中分解 (X0 红, Y0 绿)
+      const P_vx0_3D = [A_3D[0] + vx_0 * v_scale, A_3D[1], 0];
+      const P_vy0_3D = [A_3D[0], A_3D[1] + vy_0 * v_scale, 0];
+      const P_vx0 = project(P_vx0_3D);
+      const P_vy0 = project(P_vy0_3D);
+
+      // 分量箭头
+      arrow3D(A, P_vx0, '#ef4444', 3.5);
+      arrow3D(A, P_vy0, '#22c55e', 3.5);
+
+      // 矩形投影虚线
+      ctx.save();
+      ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(...P_vx0); ctx.lineTo(...P_tip); ctx.stroke();
+      ctx.strokeStyle = '#86efac';
+      ctx.beginPath(); ctx.moveTo(...P_vy0); ctx.lineTo(...P_tip); ctx.stroke();
+      ctx.restore();
+
+      label(`v_x0 = ${vx_0.toFixed(2)} m/s`, P_vx0[0] - 10, P_vx0[1] + 16, '#ef4444', 'center');
+      label(`v_y0 = ${vy_0.toFixed(2)} m/s`, P_vy0[0] + 12, P_vy0[1], '#22c55e');
+    }
+    else if (projMode === 'p1') {
+      // 模式 2：在 {1} 系中分解 (X1 沿杆=0, Y1 切向=全部)
+      label(`✨ 完美重合：真实速度 v 完全贴在 Y₁ 切向轴上！`, A[0] - 20, A[1] - 30, '#fbbf24', 'center');
+      label(`v_x1 = 0.00 m/s (沿杆1无伸长)`, A[0] - 20, A[1] - 14, '#94a3b8', 'center');
+      label(`v_y1 = ${v_tan.toFixed(2)} m/s (100% 切向速度)`, P_tip[0] + 8, P_tip[1] + 12, '#fbbf24');
+    }
+    else if (projMode === 'p2') {
+      // 模式 3：在 {2} 系中分解 (X2 沿杆2, Y2 垂直杆2)
+      const u_x2 = [Math.cos(ang2), Math.sin(ang2), 0];
+      const u_y2 = [-Math.sin(ang2), Math.cos(ang2), 0];
+
+      const vx2_val = v_tan * Math.sin(q2);
+      const vy2_val = v_tan * Math.cos(q2);
+
+      const P_vx2_3D = [A_3D[0] + vx2_val * u_x2[0] * v_scale, A_3D[1] + vx2_val * u_x2[1] * v_scale, 0];
+      const P_vy2_3D = [A_3D[0] + vy2_val * u_y2[0] * v_scale, A_3D[1] + vy2_val * u_y2[1] * v_scale, 0];
+      const P_vx2 = project(P_vx2_3D);
+      const P_vy2 = project(P_vy2_3D);
+
+      // 分量箭头
+      arrow3D(A, P_vx2, '#38bdf8', 3.5);
+      arrow3D(A, P_vy2, '#7dd3fc', 3.5);
+
+      // 投影直角虚线
+      ctx.save();
+      ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(...P_vx2); ctx.lineTo(...P_tip); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(...P_vy2); ctx.lineTo(...P_tip); ctx.stroke();
+      ctx.restore();
+
+      label(`v_x2 = ${vx2_val.toFixed(2)} m/s`, P_vx2[0] + 8, P_vx2[1] + 14, '#38bdf8');
+      label(`v_y2 = ${vy2_val.toFixed(2)} m/s`, P_vy2[0] - 8, P_vy2[1] - 8, '#7dd3fc', 'right');
+    }
+    else if (projMode === 'prel') {
+      // 模式 4：本系相对求导 (相对速度 = 0)
+      ctx.save();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(...A, 14, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(A[0] - 18, A[1]); ctx.lineTo(A[0] + 18, A[1]); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(A[0], A[1] - 18); ctx.lineTo(A[0], A[1] + 18); ctx.stroke();
+      ctx.restore();
+
+      label(`🔒 本系相对速度 v_rel = 0`, A[0] + 20, A[1] - 8, '#ef4444');
+      label(`（肘部未脱落，相对连杆2无位移）`, A[0] + 20, A[1] + 10, '#f87171');
+    }
+
+    // 关节球
+    ctx.fillStyle = '#f8fafc';
+    for (const pt of [O, A, B]) {
+      ctx.beginPath(); ctx.arc(...pt, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    label('O₀ / O₁ (基座)', O[0] - 10, O[1] + 16, '#f8fafc', 'right');
+    label('O₂ (肘部)', A[0] + 10, A[1] + 14, '#f8fafc');
+    label('B (手部)', B[0] + 10, B[1] - 8, '#f8fafc');
+  }
+  function updateMath() {
+    if (!window.katex) return;
+    const q1Deg = Math.round(q1 * 180 / Math.PI);
+    const q2Deg = Math.round(q2 * 180 / Math.PI);
+    const v_abs = L1 * qd1;
+    const vx0 = -L1 * Math.sin(q1) * qd1;
+    const vy0 = L1 * Math.cos(q1) * qd1;
+
+    const c1 = Math.cos(q1).toFixed(3), s1 = Math.sin(q1).toFixed(3);
+    const c2 = Math.cos(q2).toFixed(3), s2 = Math.sin(q2).toFixed(3);
+
+    const vx1 = 0;
+    const vy1 = v_abs;
+
+    const vx2 = v_abs * Math.sin(q2);
+    const vy2 = v_abs * Math.cos(q2);
+
+    const tex1 = "\\begin{aligned}" +
+      "{}^0\\boldsymbol{v}_2 &= \\frac{d}{dt}\\begin{bmatrix} L_1\\cos q_1 \\\\ L_1\\sin q_1 \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} -L_1\\sin q_1 \\dot q_1 \\\\ L_1\\cos q_1 \\dot q_1 \\\\ 0 \\end{bmatrix} \\\\" +
+      "&= \\begin{bmatrix} -(" + L1.toFixed(1) + ") \\cdot (" + s1 + ") \\cdot (" + qd1.toFixed(1) + ") \\\\ (" + L1.toFixed(1) + ") \\cdot (" + c1 + ") \\cdot (" + qd1.toFixed(1) + ") \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} " + vx0.toFixed(3) + " \\\\ " + vy0.toFixed(3) + " \\\\ 0 \\end{bmatrix} \\text{ m/s} \\quad (|v| = " + Math.abs(v_abs).toFixed(3) + "\\text{ m/s})" +
+      "\\end{aligned}";
+
+    const tex2 = "\\begin{aligned}" +
+      "{}^1\\boldsymbol{v}_2 &= {}^1_0 R \\; {}^0\\boldsymbol{v}_2 = \\begin{bmatrix} \\cos(" + q1Deg + "^\\circ) & \\sin(" + q1Deg + "^\\circ) & 0 \\\\ -\\sin(" + q1Deg + "^\\circ) & \\cos(" + q1Deg + "^\\circ) & 0 \\\\ 0 & 0 & 1 \\end{bmatrix} \\begin{bmatrix} " + vx0.toFixed(3) + " \\\\ " + vy0.toFixed(3) + " \\\\ 0 \\end{bmatrix} \\\\" +
+      "&= \\begin{bmatrix} " + c1 + " & " + s1 + " & 0 \\\\ -" + s1 + " & " + c1 + " & 0 \\\\ 0 & 0 & 1 \\end{bmatrix} \\begin{bmatrix} " + vx0.toFixed(3) + " \\\\ " + vy0.toFixed(3) + " \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} \\mathbf{" + vx1.toFixed(3) + "} \\\\ \\mathbf{" + vy1.toFixed(3) + "} \\\\ 0 \\end{bmatrix} \\text{ m/s}" +
+      "\\end{aligned}";
+
+    const tex3 = "\\begin{aligned}" +
+      "{}^2\\boldsymbol{v}_2 &= {}^2_1 R \\; {}^1\\boldsymbol{v}_2 = \\begin{bmatrix} \\cos(" + q2Deg + "^\\circ) & \\sin(" + q2Deg + "^\\circ) & 0 \\\\ -\\sin(" + q2Deg + "^\\circ) & \\cos(" + q2Deg + "^\\circ) & 0 \\\\ 0 & 0 & 1 \\end{bmatrix} \\begin{bmatrix} 0.000 \\\\ " + vy1.toFixed(3) + " \\\\ 0 \\end{bmatrix} \\\\" +
+      "&= \\begin{bmatrix} (" + vy1.toFixed(3) + ") \\cdot \\sin(" + q2Deg + "^\\circ) \\\\ (" + vy1.toFixed(3) + ") \\cdot \\cos(" + q2Deg + "^\\circ) \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} \\mathbf{" + vx2.toFixed(3) + "} \\\\ \\mathbf{" + vy2.toFixed(3) + "} \\\\ 0 \\end{bmatrix} \\text{ m/s} \\quad (\\text{模长} = " + Math.abs(v_abs).toFixed(3) + "\\text{ m/s})" +
+      "\\end{aligned}";
+
+    const tex4 = "\\frac{d}{dt}({}^2 P_{O_2}) = \\frac{d}{dt}\\begin{bmatrix} 0 \\\\ 0 \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} \\mathbf{0.000} \\\\ \\mathbf{0.000} \\\\ 0 \\end{bmatrix} \\quad (\\text{度量的是相对位移速度，恒为 0})";
+
+    const m1 = document.getElementById('math-step-1');
+    const m2 = document.getElementById('math-step-2');
+    const m3 = document.getElementById('math-step-3');
+    const m4 = document.getElementById('math-step-4');
+
+    if (m1) katex.render(tex1, m1, { displayMode: true, throwOnError: false });
+    if (m2) katex.render(tex2, m2, { displayMode: true, throwOnError: false });
+    if (m3) katex.render(tex3, m3, { displayMode: true, throwOnError: false });
+    if (m4) katex.render(tex4, m4, { displayMode: true, throwOnError: false });
+  }
+  // 绑定模式切换按钮
+  document.querySelectorAll('#mode-switcher .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mode-switcher .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      projMode = btn.dataset.mode;
+      draw();
+    });
+  });
+
+  // 绑定事件
+  const l1In = document.getElementById('l1');
+  const q1In = document.getElementById('q1');
+  const qd1In = document.getElementById('qd1');
+  const q2In = document.getElementById('q2');
+
+  function syncInputs() {
+    L1 = parseFloat(l1In.value);
+    document.getElementById('l1v').textContent = `${L1.toFixed(1)} m`;
+
+    const q1Deg = parseFloat(q1In.value);
+    q1 = q1Deg * Math.PI / 180;
+    document.getElementById('q1v').textContent = `${q1Deg}°`;
+
+    qd1 = parseFloat(qd1In.value);
+    document.getElementById('qd1v').textContent = `${qd1.toFixed(1)} rad/s`;
+
+    const q2Deg = parseFloat(q2In.value);
+    q2 = q2Deg * Math.PI / 180;
+    document.getElementById('q2v').textContent = `${q2Deg}°`;
+
+    draw();
+    updateMath();
+  }
+
+  [l1In, q1In, qd1In, q2In].forEach(inp => inp.addEventListener('input', syncInputs));
+
+  // 鼠标拖拽 3D 视角
+  cv.addEventListener('pointerdown', e => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    yaw += dx * 0.008;
+    pitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, pitch + dy * 0.008));
+    draw();
+  });
+  cv.addEventListener('pointerup', e => {
+    isDragging = false;
+    cv.releasePointerCapture(e.pointerId);
+  });
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    scale = Math.max(50, Math.min(220, scale - e.deltaY * 0.1));
+    draw();
+  }, { passive: false });
+
+  window.addEventListener('resize', resize);
+  setTimeout(() => {
+    resize();
+    syncInputs();
+  }, 100);
+})();
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  let n = 0;
+  function bootMath() {
+    if (!window.katex) {
+      if (n++ < 50) setTimeout(bootMath, 60);
+      return;
+    }
+    // 渲染所有 data-tex 标签
+    document.querySelectorAll("[data-tex]").forEach(function(el) {
+      var tex = el.getAttribute("data-tex");
+      if (tex && tex.trim() !== '') {
+        var isBlock = el.classList.contains("math") || el.tagName === "DIV";
+        try {
+          katex.render(tex, el, { displayMode: isBlock, throwOnError: false });
+        } catch (err) {}
+      }
+    });
+    // 兜底渲染可能残留的 $...$ 文本
+    if (typeof renderMathInElement === "function") {
+      try {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "$", right: "$", display: false }
+          ],
+          throwOnError: false
+        });
+      } catch (err) {}
+    }
+  }
+  bootMath();
+});
+</script>

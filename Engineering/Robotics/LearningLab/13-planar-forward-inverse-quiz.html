@@ -1,0 +1,75 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>二维两连杆正逆运动学自测</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}main{max-width:930px;margin:auto;padding:28px 20px 70px}h1,h2{line-height:1.28}h2{margin-top:2.35rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.card,.q{border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}.intro{background:var(--soft)}.q h3{margin:0 0 .7rem;font-size:1rem}.choice{display:block;margin:.45rem 0}input[type=text],textarea{width:100%;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px;font:inherit}textarea{min-height:92px}details{margin-top:12px;background:var(--ans);border-radius:7px;padding:0 12px}summary{cursor:pointer;font-weight:700;padding:8px 0}.answer{padding:0 0 10px}.answer p{margin:.65rem 0}.math{display:block;text-align:center;margin:.75rem 0;overflow:auto}.tag{border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:.85rem}.muted{color:color-mix(in srgb,var(--fg) 62%,var(--bg))}@media(max-width:580px){main{padding:22px 14px}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body>
+<main>
+  <p class="muted"><a href="00-progress.html">学习进度</a> · <a href="04-planar-two-link-forward-kinematics.html">笔记 04：正运动学</a> · <a href="10-dh-table-to-forward-kinematics.html">笔记 04：DH 正运动学</a> · <a href="12-planar-two-link-inverse-kinematics.html">笔记 04：逆运动学</a></p>
+  <h1>正逆运动学混合自测</h1>
+  <div class="card intro"><strong>这一份只检查一个闭环：</strong>已知 <span data-tex="q_1,q_2"></span> 时能正向求末端；已知目标 <span data-tex="(x,y)"></span> 时能判可达、求两支逆解，并代回验证。先自行作答，再展开各题讲解。</div>
+  <div id="root"></div>
+</main>
+<script>
+const K=t=>'<span data-tex="'+t+'"></span>', B=t=>'<span class="math" data-tex="'+t+'"></span>';
+const questions=[
+  {kind:'choice',title:'已知两根连杆长度和关节角 '+K('q_1,q_2')+'，求末端坐标 '+K('(x,y)')+'，这是：',options:['逆运动学','正运动学','DH 建系','雅可比分析'],answer:'B',explain:'输入是关节变量，输出是末端位置，所以是正运动学。二维两连杆的结果为'+B('\\begin{bmatrix}x\\\\y\\end{bmatrix}=\\begin{bmatrix}L_1\\cos q_1+L_2\\cos(q_1+q_2)\\\\L_1\\sin q_1+L_2\\sin(q_1+q_2)\\end{bmatrix}')},
+  {kind:'choice',title:'两连杆长度为 '+K('L_1,L_2')+'。目标距离 '+K('r=\\sqrt{x^2+y^2}')+' 满足哪一个条件时才有实数逆解？',options:[K('0\\le r\\le L_1+L_2'),K('|L_1-L_2|\\le r\\le L_1+L_2'),K('r=L_1+L_2'),K('r\\ge |L_1-L_2|')],answer:'B',explain:'最远边界是完全伸直，最近边界是完全折叠；两条边界都要检查。'+B('|L_1-L_2|\\le r\\le L_1+L_2')},
+  {kind:'choice',title:'第二根连杆相对基座的绝对朝向是：',options:[K('q_2'),K('q_1'),K('q_1+q_2'),K('q_1-q_2')],answer:'C',explain:K('q_2')+' 是相对第一根的局部转角。第一根已经先转了 '+K('q_1')+'，所以第二根相对基座的朝向要累加为 '+K('q_1+q_2')+'。'},
+  {kind:'choice',title:'目标点 '+K('P=(x,y)')+' 的全局方向角 '+K('\\phi')+' 应写为：',options:[K('\\arccos(x/y)'),K('\\operatorname{atan2}(y,x)'),K('\\operatorname{atan2}(x,y)'),K('q_1+q_2')],answer:'B',explain:K('\\phi')+' 是从基座正 x 轴转到目标向量 '+K('[x,y]^T')+' 的角。'+K('\\operatorname{atan2}(y,x)')+' 使用两个分量，能区分四个象限。'},
+  {kind:'fill',title:'补全目标距离：'+K('r=\\underline{\\hspace{3cm}}'),answer:K('\\sqrt{x^2+y^2}'),explain:'这是从基座原点到目标点的直线距离，由勾股定理得到。'},
+  {kind:'fill',title:'补全逆解中肘角的余弦：'+K('c_2=\\cos q_2=\\underline{\\hspace{4cm}}'),answer:K('\\dfrac{x^2+y^2-L_1^2-L_2^2}{2L_1L_2}'),explain:'先把目标、两根连杆连成三角形，用余弦定理得到。注意分子里的 '+K('x^2+y^2')+' 就是 '+K('r^2')+'。'},
+  {kind:'fill',title:'已求得 '+K('\\phi')+' 和辅助角 '+K('\\beta')+' 后，肩角为：'+K('q_1=\\underline{\\hspace{3cm}}'),answer:K('\\phi-\\beta'),explain:'从基座 x 轴转到目标方向，等于先转肩角再转偏角：'+B('\\phi=q_1+\\beta\\quad\\Rightarrow\\quad q_1=\\phi-\\beta')},
+  {kind:'judge',title:'同一个可达目标通常会有“肘上”和“肘下”两组解，因为 '+K('\\cos q_2')+' 相同的 '+K('q_2')+' 可以一正一负。',answer:'对',explain:'对。'+K('q_2=\\pm\\arccos(c_2)')+'；对每一支再计算对应的 '+K('\\beta')+' 和 '+K('q_1')+'。目标落在最近或最远边界时，两支会合并。'},
+  {kind:'judge',title:'若 '+K('L_1=2,L_2=1')+'，目标 '+K('P=(4,0)')+' 仍有逆解，因为它在基座 x 轴上。',answer:'错',explain:'错。是否在 x 轴上不决定可达性。这里 '+K('r=4')+'，但最大可达距离只有 '+K('L_1+L_2=3')+'，所以不可达。'},
+  {kind:'judge',title:'逆解算出一组 '+K('(q_1,q_2)')+' 后，应把它代回正运动学，检查是否真的回到目标点。',answer:'对',explain:'对。这一步能同时检验象限选择、正负支和计算误差。'+B('\\begin{bmatrix}x_{\\mathrm{check}}\\\\y_{\\mathrm{check}}\\end{bmatrix}=\\begin{bmatrix}L_1\\cos q_1+L_2\\cos(q_1+q_2)\\\\L_1\\sin q_1+L_2\\sin(q_1+q_2)\\end{bmatrix}')},
+  {kind:'work',title:'手算 1：正运动学',prompt:'设 '+K('L_1=2,L_2=1,q_1=0^\\circ,q_2=90^\\circ')+'。求末端 '+K('(x,y)')+'。',answer:B('\\begin{bmatrix}x\\\\y\\end{bmatrix}=\\begin{bmatrix}2\\\\1\\end{bmatrix}'),explain:'第二根相对基座的绝对朝向是 '+K('q_1+q_2=90^\\circ')+'。'+B('\\begin{aligned}x&=2\\cos0^\\circ+1\\cos90^\\circ=2\\\\y&=2\\sin0^\\circ+1\\sin90^\\circ=1\\end{aligned}')},
+  {kind:'work',title:'手算 2：逆运动学',prompt:'设 '+K('L_1=L_2=2')+'，目标 '+K('P=(2,2)')+'。先判可达，再求两组 '+K('(q_1,q_2)')+'。',answer:'肘上：'+K('(q_1,q_2)=(0^\\circ,90^\\circ)')+'；肘下：'+K('(q_1,q_2)=(90^\\circ,-90^\\circ)'),explain:'先算 '+K('r=\\sqrt{2^2+2^2}=2\\sqrt2')+'，它位于 '+K('[0,4]')+' 内，故可达。'+B('c_2=\\frac{8-4-4}{2\\cdot2\\cdot2}=0\\quad\\Rightarrow\\quad q_2=\\pm90^\\circ')+'目标方向 '+K('\\phi=\\operatorname{atan2}(2,2)=45^\\circ')+'。肘上支的 '+K('\\beta=45^\\circ')+'，故 '+K('q_1=0^\\circ')+'；肘下支的 '+K('\\beta=-45^\\circ')+'，故 '+K('q_1=90^\\circ')+'。代回两组都会回到 '+K('(2,2)')+'。'}
+];
+const letters=['A','B','C','D'];
+function details(answer,explain){return '<details><summary>显示答案与讲解</summary><div class="answer"><strong>答案：</strong>'+answer+'<div>'+explain+'</div></div></details>'}
+function render(){let html='';let current='';questions.forEach((q,index)=>{const group=q.kind==='choice'?'概念选择':q.kind==='fill'?'公式填空':q.kind==='judge'?'判断': '手算';if(group!==current){current=group;html+='<h2>'+group+'</h2>'}let body='';if(q.kind==='choice'){body=q.options.map((option,i)=>'<label class="choice"><input type="radio" name="q'+index+'"> '+letters[i]+'. '+option+'</label>').join('')}else if(q.kind==='judge'){body='<label class="choice"><input type="radio" name="q'+index+'"> 对</label><label class="choice"><input type="radio" name="q'+index+'"> 错</label>'}else if(q.kind==='fill'){body='<input type="text" aria-label="第 '+(index+1)+' 题答案">'}else{body='<p>'+q.prompt+'</p><textarea aria-label="第 '+(index+1)+' 题演算过程"></textarea>'}html+='<section class="q"><h3>'+(index+1)+'. '+q.title+'</h3>'+body+details(q.answer,q.explain)+'</section>'});document.getElementById('root').innerHTML=html}
+function renderMath(){if(!window.katex)return setTimeout(renderMath,80);document.querySelectorAll('[data-tex]').forEach(node=>katex.render(node.dataset.tex,node,{displayMode:node.classList.contains('math'),throwOnError:false}))}
+render();addEventListener('load',renderMath);
+</script>
+<script>
+  addEventListener('load',()=>{
+    const answers=document.querySelectorAll('.q .answer');
+    const answer=answers[answers.length-1];
+    if(!answer)return;
+    answer.insertAdjacentHTML('beforeend',String.raw`<div class="explain"><p><strong>把两支解分开走一遍：</strong>不要在这一步把 <span data-tex="q_2"></span> 的正、负混在同一行里。</p><p><strong>1. 先判可达。</strong>目标到基座的距离为：</p><span class="math" data-tex="r=\sqrt{2^2+2^2}=2\sqrt2"></span><p>两根杆等长，所以最近边界为 <span data-tex="|L_1-L_2|=0"></span>，最远边界为 <span data-tex="L_1+L_2=4"></span>。因此 <span data-tex="0\le2\sqrt2\le4"></span>，目标可达。</p><p><strong>2. 求肘角的两支。</strong></p><span class="math" data-tex="c_2=\frac{r^2-L_1^2-L_2^2}{2L_1L_2}=\frac{8-4-4}{2\cdot2\cdot2}=0"></span><span class="math" data-tex="q_2^{\mathrm{up}}=+\arccos(0)=90^\circ,\qquad q_2^{\mathrm{down}}=-\arccos(0)=-90^\circ"></span><p><strong>3. 求目标自己的全局方向。</strong>这一项和肘上、肘下无关，因为目标点没有变：</p><span class="math" data-tex="\phi=\operatorname{atan2}(y,x)=\operatorname{atan2}(2,2)=45^\circ"></span><p><strong>4. 对肘上支求 <span data-tex="\beta"></span>，再求 <span data-tex="q_1"></span>。</strong></p><span class="math" data-tex="\beta_{\mathrm{up}}=\operatorname{atan2}(L_2\sin q_2^{\mathrm{up}},L_1+L_2\cos q_2^{\mathrm{up}})=\operatorname{atan2}(2,2)=45^\circ"></span><span class="math" data-tex="q_1^{\mathrm{up}}=\phi-\beta_{\mathrm{up}}=45^\circ-45^\circ=0^\circ"></span><p><strong>5. 对肘下支重复同一件事。</strong>这里只是第二根改为向另一侧弯，因而纵向分量变负：</p><span class="math" data-tex="\beta_{\mathrm{down}}=\operatorname{atan2}(L_2\sin q_2^{\mathrm{down}},L_1+L_2\cos q_2^{\mathrm{down}})=\operatorname{atan2}(-2,2)=-45^\circ"></span><span class="math" data-tex="q_1^{\mathrm{down}}=\phi-\beta_{\mathrm{down}}=45^\circ-(-45^\circ)=90^\circ"></span><p><strong>6. 最后各自代回正运动学验证。</strong></p><span class="math" data-tex="\begin{aligned}x_{\mathrm{up}}&=2\cos0^\circ+2\cos(0^\circ+90^\circ)=2\\y_{\mathrm{up}}&=2\sin0^\circ+2\sin(0^\circ+90^\circ)=2\end{aligned}"></span><span class="math" data-tex="\begin{aligned}x_{\mathrm{down}}&=2\cos90^\circ+2\cos(90^\circ-90^\circ)=2\\y_{\mathrm{down}}&=2\sin90^\circ+2\sin(90^\circ-90^\circ)=2\end{aligned}"></span><p>所以两组角都到同一个 <span data-tex="P=(2,2)"></span>；区别只在肘点位于目标向量的哪一侧。</p></div>`);
+    const renderAdded=()=>{if(!window.katex)return setTimeout(renderAdded,80);answer.querySelectorAll('[data-tex]').forEach(node=>katex.render(node.dataset.tex,node,{displayMode:node.classList.contains('math'),throwOnError:false}))};
+    renderAdded();
+  });
+</script>
+</body>
+</html>
+

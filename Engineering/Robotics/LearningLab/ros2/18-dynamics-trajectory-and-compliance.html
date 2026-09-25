@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 2 工程实战 18：动力学、轨迹约束与柔顺控制</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1100px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}.crumb a,a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.danger{border-left:5px solid var(--r)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:14px 0}.flow div{padding:10px;border:1px solid var(--l);border-radius:8px;background:var(--p2);font-size:.88rem}.flow b{display:block;color:var(--v);margin-bottom:3px}.table{border-collapse:collapse;width:100%}.table th,.table td{padding:10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:top}.table th{color:var(--b);white-space:nowrap}.code{white-space:pre;overflow:auto;background:#050914;border:1px solid var(--l);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.6 ui-monospace,Consolas,monospace}.eq{background:#080e1b;border:1px solid var(--l);padding:14px;border-radius:10px;overflow:auto;text-align:center;font:18px/1.7 ui-monospace,Consolas,monospace}.check{display:grid;gap:8px}.check div{padding:10px 12px;border-radius:8px;background:#0b1425;border-left:3px solid var(--g)}@media(max-width:760px){main{padding:22px 14px}.grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.table{font-size:.9rem}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="13-ros2-control-and-fake-hardware.html">ROS2-13：执行层</a> · <a href="04-13-engineering-roadmap.md">进阶路线</a></p>
+<h1>ROS 2 工程实战 18：动力学、轨迹约束与柔顺控制</h1><p class="muted">运动学解决“怎样到”；动力学解决“以这个速度和加速度运动，需要多大力矩”；柔顺控制解决“接触或受外力时，不要把位置误差硬顶到底”。三者有关，但不是同一个模块。</p>
+
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">先按工程顺序建立能力，而不是直接往真机写 torque</h2><div class="flow"><div><b>① 运动学</b>q → TCP 位姿/速度</div><div><b>② 时间参数化</b>路径 → q、q̇、q̈、jerk</div><div><b>③ 逆动力学</b>状态 → 需要的 τ</div><div><b>④ 前馈/补偿</b>重力、摩擦、载荷</div><div><b>⑤ 柔顺</b>接触力 ↔ 位移/速度修正</div></div><p>本篇首先在<strong>可计算模型和仿真/数据回放</strong>里建立这些概念。真机 torque 模式、力传感器、驱动器带宽和安全约束尚未确定前，不发布可直接驱动物理设备的控制指令。</p></section>
+
+<h2>1. 一条完整动力学方程，先读懂每一项在问什么</h2>
+<div class="eq">τ = M(q)q̈ + C(q,q̇)q̇ + g(q) + τ<sub>friction</sub>(q̇) + τ<sub>external-comp</sub></div>
+<table class="table"><thead><tr><th>项</th><th>含义</th><th>最直观的实验现象</th></tr></thead><tbody><tr><td><code>M(q)q̈</code></td><td>惯性项：要改变速度就需要力矩；质量分布和姿态都会影响</td><td>同样的加速度，伸直手臂比收回手臂更“费力”</td></tr><tr><td><code>C(q,q̇)q̇</code></td><td>速度耦合项：关节一起运动时彼此影响</td><td>高速联动时，单纯静态重力补偿不够</td></tr><tr><td><code>g(q)</code></td><td>重力项：静止悬停也要抵消重力</td><td>低速时手臂在不同姿态有不同下垂趋势</td></tr><tr><td><code>τ_friction</code></td><td>摩擦、粘滞、库仑摩擦等未理想化阻力</td><td>低速换向时误差、滞回、爬行</td></tr><tr><td><code>τ_external-comp</code></td><td>外力/工具/接触相关项，符号取决于模型约定</td><td>触碰工件时，实际力矩偏离空载预测</td></tr></tbody></table>
+<section class="card warn"><strong>符号不要背死：</strong>有的教材把外部 wrench 映射项移到等式左边，有的把摩擦合并到 <code>h(q,q̇)</code>。关键是明确“<code>τ</code> 是电机施加给机器人，还是环境施加给机器人”的约定，并用同一约定贯穿模型、日志和控制器。</section>
+
+<h2>2. 轨迹不只是位置列表：控制器真正面对 q、q̇、q̈ 与 jerk</h2>
+<p>若只给若干位置点和时间点，控制器可能通过插值补齐速度/加速度，但这不等于你已经验证了电机、减速机、结构和工艺允许这些变化。可执行轨迹至少需要考虑四类边界：</p>
+<div class="grid"><section class="card"><h3>位置 / 速度 / 加速度</h3><p><code>q_min ≤ q ≤ q_max</code>、<code>|q̇| ≤ q̇_max</code>、<code>|q̈| ≤ q̈_max</code> 是最基础的几何与驱动边界。速度缩放不能修复一条本身撞关节限位的路径。</p></section><section class="card"><h3>jerk（加加速度）</h3><p><code>j = d q̈ / dt</code> 约束加速度变化是否突兀。jerk 过大常带来机械冲击、振动、跟踪误差和工艺不稳定；它是“到得快”与“到得稳”之间的重要分界。</p></section></div>
+<pre class="code"># 对一条关节路径 q(s)，时间律 s(t) 决定它“怎么走”：
+q_dot  = dq/ds * s_dot
+q_ddot = d²q/ds² * s_dot² + dq/ds * s_ddot
+
+# 所以同一条空间路径，换一条时间律，峰值速度、加速度、力矩都可能不同。
+# ROS2-06 的五次时间律解决端点平滑；工业轨迹还需检查全程各关节约束。</pre>
+
+<h2>3. 逆动力学与动力学仿真：输入/输出别倒置</h2>
+<table class="table"><thead><tr><th>问题</th><th>已知</th><th>求什么</th><th>用途</th></tr></thead><tbody><tr><td>逆动力学（RNEA）</td><td>q、q̇、q̈、载荷/重力模型</td><td>τ</td><td>轨迹可行性、重力前馈、扭矩预测</td></tr><tr><td>正动力学</td><td>q、q̇、τ</td><td>q̈</td><td>仿真、研究外力或控制律下会如何运动</td></tr><tr><td>参数辨识</td><td>记录的状态、力矩/电流、激励轨迹</td><td>质量、质心、摩擦等参数</td><td>让模型逐步贴近真实设备</td></tr></tbody></table>
+<p>Craig 的 Newton–Euler 外推/内推正是逆动力学的递推思路：先计算每节的速度、加速度和质心加速度，再从末端向基座回传力与力矩。ROS 中的控制器接口不能替代这套模型；它只定义模型计算出的命令怎样被交给硬件。</p>
+
+<h2>4. 前馈与 PID：不是二选一</h2>
+<pre class="code">τ_command = τ_feedforward(q_ref, q_dot_ref, q_ddot_ref)
+          + Kp · (q_ref - q)
+          + Kd · (q_dot_ref - q_dot)
+
+# feedforward：根据模型预先抵消可预测负担（例如重力、期望加速）。
+# feedback：根据实际误差修正模型不准、扰动和未建模因素。
+# 真机是否允许外部 torque command，取决于厂商控制模式和安全设计。</pre>
+<div class="card"><strong>误区：</strong>“有了重力补偿就不需要 PID”不对；“PID 跟得上就不用动力学”也不对。低速、负载变化或高精度工艺时，前馈可以显著减小反馈必须承担的误差，但它的收益受参数质量、传感器和控制带宽限制。</div>
+
+<h2>5. 阻抗与导纳：必须从输入、输出判断</h2>
+<div class="grid"><section class="card"><h3>阻抗（Impedance）</h3><p><strong>输入：</strong>位置/速度误差。<strong>输出：</strong>期望力/力矩或等效控制作用。</p><div class="eq" style="font-size:15px">F<sub>cmd</sub> = K(x<sub>d</sub>-x) + D(v<sub>d</sub>-v)</div><p>像一个可调虚拟弹簧-阻尼器：偏得越多，推回去越强。</p></section><section class="card"><h3>导纳（Admittance）</h3><p><strong>输入：</strong>测得外力/力矩。<strong>输出：</strong>位置或速度修正。</p><div class="eq" style="font-size:15px">MΔẍ + DΔẋ + KΔx = F<sub>ext</sub></div><p>外力越大，参考轨迹允许偏移越多；常用于外层生成柔顺位置命令。</p></section></div>
+<section class="card danger"><strong>接触控制的前置条件：</strong>必须知道外力从何而来（六维力传感器、关节力矩估计或驱动器电流估计）、它的坐标系与滤波延迟；还要有速度/力/位移限值和机械/电气安全策略。没有这些，谈“柔顺”只是控制方程，不是安全功能。</section>
+
+<h2>6. 跟做顺序：从日志/仿真到真机</h2><div class="check"><div><strong>A. 先做单关节：</strong>用一条平滑 q(t) 画出 q、q̇、q̈、jerk；找出速度与加速度峰值发生在哪里。</div><div><strong>B. 再做两连杆：</strong>固定一组质量/质心参数，计算不同姿态下的重力项；验证手臂伸出与收回的差异。</div><div><strong>C. 加入完整三维/六轴模型：</strong>用 RNEA 或成熟动力学库计算给定轨迹的 τ；检查是否超过已知电机/关节边界。</div><div><strong>D. 参数辨识先留验证集：</strong>用一批激励轨迹拟合，另一批轨迹比较预测与记录残差；不能只报告拟合内误差。</div><div><strong>E. 在仿真中做单轴导纳：</strong>给定一个受限的外力输入，检查输出位移、速度和停止边界。</div><div><strong>F. 真机最后进入：</strong>先确认厂商是否提供批准的 torque/force mode、力传感器和安全机制；从低速、单轴、空载或受控柔性介质开始。</div></div>
+
+<section class="card ok"><strong>本篇完成判据：</strong>你能写出并解释动力学方程的每一项；能说明同一空间路径为何会因时间律不同而产生不同力矩；能不看标题而区分阻抗与导纳；也能明确哪些实验只能等真实设备和安全条件满足后再进行。</section>
+</main></body></html>

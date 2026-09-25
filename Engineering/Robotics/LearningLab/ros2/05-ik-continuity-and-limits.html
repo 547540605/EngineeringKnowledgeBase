@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ROS 2 工程实战 05：IK 连续选支与关节限位</title>
+  <style>
+    :root{--bg:#070b15;--card:#10192b;--card2:#080e1b;--line:#293954;--fg:#eef5ff;--muted:#9baec8;--blue:#38bdf8;--green:#34d399;--amber:#fbbf24;--red:#fb7185;--violet:#a78bfa}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1080px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.28}h1{margin:.25rem 0 .6rem;font-size:clamp(1.65rem,4vw,2.3rem)}h2{margin-top:2.5rem;border-bottom:1px solid var(--line);padding-bottom:.45rem}h3{margin:0 0 .55rem}.crumb,.small{color:var(--muted);font-size:.9rem}.crumb a{color:var(--blue);text-decoration:none}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--blue);background:linear-gradient(110deg,#0c2943,#10192b)}.warn{border-left:5px solid var(--amber)}.good{border-left:5px solid var(--green)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.steps{display:grid;gap:10px}.step{border-left:3px solid var(--violet);padding:2px 0 2px 13px}.step b{color:#ded3ff}.formula{display:block;text-align:center;padding:8px;overflow:auto;color:#dbeafe}.lab{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:16px}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.field{display:grid;gap:3px;color:var(--muted);font-size:.86rem}.field input{width:100%;background:#060b15;color:var(--fg);border:1px solid #3a4f70;border-radius:7px;padding:7px;font:inherit}.button{width:100%;margin-top:13px;padding:10px;border:0;border-radius:8px;background:var(--blue);color:#062033;font:700 1rem inherit;cursor:pointer}.out{min-height:270px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:13px}.candidate{margin:9px 0;padding:10px;border:1px solid var(--line);border-radius:8px}.candidate.pick{border-color:#16805d;background:rgba(52,211,153,.09)}.candidate.drop{border-color:#853649;background:rgba(251,113,133,.08)}.tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:.8rem;font-weight:700}.tag.ok{background:#123d31;color:#a8f6d3}.tag.bad{background:#4d1d2c;color:#ffbdc7}.tag.pick{background:#153d55;color:#a8e5ff}.code{overflow:auto;background:#050914;border:1px solid var(--line);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.58 ui-monospace,Consolas,monospace;white-space:pre}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}.table th{color:var(--blue);white-space:nowrap}.end{background:linear-gradient(110deg,#102b27,#10192b);border-color:#216d5d}@media(max-width:760px){main{padding:22px 14px}.grid,.lab{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.table{font-size:.9rem}}
+  </style>
+</head>
+<body><main>
+  <p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="04-3r-analytic-ik.html">ROS2-04：单点解析 IK</a> · <a href="04-13-engineering-roadmap.md">04–13 路线</a></p>
+  <h1>ROS 2 工程实战 05：IK 连续选支与关节限位</h1>
+  <p class="small">单点 IK 已经能给出两支候选解。本篇解决真正开始走路径时最危险的现象：目标只挪了一点，肘部却突然翻到另一侧。</p>
+
+  <section class="card guide"><h2 style="margin-top:0;border:0;padding:0">工程痛点：数学上都对，运动上却可能很糟</h2><p>同一个目标位置通常对应两组合法关节角。若每一帧都“随便取第一组”，当候选排列、角度跨越 ±π 或限位状态改变时，控制输出就可能突然跳变。设备并不关心哪组解在纸上优雅；它只会执行你给它的关节目标。</p><p><strong>本篇原则：</strong>先留下所有合法候选，再在其中选择离上一帧关节姿态最近的一支。</p></section>
+
+  <h2>1. 连续选支的输入与输出</h2>
+  <div class="grid"><section class="card"><h3>输入</h3><ul><li>当前目标点 <code>P(k)</code>；</li><li>ROS2-04 返回的两支 IK 候选；</li><li>上一帧真正已选用的 <code>q_prev</code>；</li><li>URDF 关节限位。</li></ul></section><section class="card"><h3>输出</h3><ul><li>几何候选是否存在；</li><li>每一支是否满足限位；</li><li>每一支距 <code>q_prev</code> 的代价；</li><li>唯一选中的 <code>q_selected</code>，或明确失败原因。</li></ul></section></div>
+  <section class="card warn"><strong>顺序不能反：</strong>先做几何可达性，再筛关节限位，最后才比较“离上一帧近不近”。超过限位的候选不允许因为距离更近而被选中。</section>
+
+  <h2>2. 为什么直接相减会在 ±π 附近出错？</h2>
+  <p>旋转关节的 <code>+179°</code> 和 <code>-179°</code> 实际只差 2°，但普通相减会得到 358°。比较两个转动角前，必须把差值折回 <code>[-π,π]</code>：</p>
+  <span class="formula">Δθ=atan2(sin(θ_candidate-θ_prev), cos(θ_candidate-θ_prev))</span>
+  <div class="card good"><strong>这条式子不是改目标角，也不是替机械臂多转一圈。</strong>它只用于计算“两个角在圆周上最短相隔多少”，从而避免选择器把临近姿态误判成远离姿态。</div>
+
+  <h2>3. 选择规则：所有关节一起比较，而不是只看肘角</h2>
+  <span class="formula">cost(q)=\sum_i w_i\,[wrap(q_i-q_{prev,i})]^2</span>
+  <p>默认可令所有权重 <code>w_i=1</code>。若某关节体积大、限位紧或运动代价高，后续可以提高它的权重；但第一版必须先把规则保持透明。</p>
+
+  <h2>4. 交互观察：上一帧会怎样改变本帧选择？</h2>
+  <div class="lab">
+    <section class="card"><h3>上一帧关节角（度）</h3><div class="fields"><label class="field">q1 prev<input id="p1" type="number" value="0"></label><label class="field">q2 prev<input id="p2" type="number" value="12"></label><label class="field">q3 prev<input id="p3" type="number" value="90"></label></div><h3 style="margin-top:16px">本帧目标（m）</h3><div class="fields"><label class="field">x<input id="x" type="number" step=".01" value="0.50"></label><label class="field">y<input id="y" type="number" step=".01" value="0.00"></label><label class="field">z<input id="z" type="number" step=".01" value="0.65"></label></div><button class="button" id="run" type="button">筛选并选择候选</button><p class="small">试着把 q3 prev 改成 -90°，再比较被选中的分支。目标没变，连续性偏好变了。</p></section>
+    <section id="out" class="out" aria-live="polite"></section>
+  </div>
+
+  <h2>5. 放进求解器：返回“为什么选它”，而不只返回角度</h2>
+  <pre class="code">def wrap_angle(delta):
+    return math.atan2(math.sin(delta), math.cos(delta))
+
+def select_continuous_solution(candidates, q_prev, weights=(1.0, 1.0, 1.0)):
+    # candidates 已完成几何求解；每一项有 q 与 within_limits
+    executable = [c for c in candidates if c["within_limits"]]
+    if not executable:
+        return {"selected": None, "reason": "no candidate within joint limits"}
+
+    def cost(candidate):
+        return sum(w * wrap_angle(q - q_last) ** 2
+                   for w, q, q_last in zip(weights, candidate["q"], q_prev))
+
+    scored = [{**c, "cost": cost(c)} for c in executable]
+    selected = min(scored, key=lambda c: c["cost"])
+    return {"selected": selected, "candidates": scored, "reason": None}</pre>
+  <p class="small">这段函数只做“选择”，不重复推导 IK。几何、限位和连续性拆开，后续排错才能知道是哪一层出问题。</p>
+
+  <h2>6. 工作空间边界要分成三层看</h2>
+  <table class="table"><thead><tr><th>边界</th><th>由什么决定</th><th>失败时的含义</th></tr></thead><tbody><tr><td>几何工作空间</td><td>杆长 L1、L2 与肩部平面距离</td><td>两根杆根本拼不出目标三角形。</td></tr><tr><td>受限工作空间</td><td>joint2、joint3 的上下限</td><td>几何上够得着，但当前设备不允许转到那个姿态。</td></tr><tr><td>连续可达工作空间</td><td>上一帧构型、限位、路径连续性</td><td>单个点有解，不代表从当前姿态能平滑到达。</td></tr></tbody></table>
+
+  <section class="card end"><h2 style="margin-top:0;border:0;padding:0">本篇完成后，下一步才能谈“走线”</h2><ul><li><strong>你已经不是从双解里随机挑一个，而是有明确的筛选顺序。</strong></li><li>下一篇将给 A→B 生成一列连续的笛卡尔目标点，每个点都调用本篇选择器。</li><li>如果某一帧没有可执行候选，路径生成器必须停止并报告，而不是跳过点或硬裁剪关节角。</li></ul></section>
+</main>
+<script>
+(() => {
+  const D=.25,L1=.5,L2=.4,q2Lim=[-1.57,1.57],q3Lim=[-2,2];
+  const rad=d=>d*Math.PI/180, deg=r=>(r*180/Math.PI).toFixed(2)+'°';
+  const wrap=d=>Math.atan2(Math.sin(d),Math.cos(d));
+  const n=v=>v.toFixed(4);
+  const within=(q2,q3)=>q2>=q2Lim[0]&&q2<=q2Lim[1]&&q3>=q3Lim[0]&&q3<=q3Lim[1];
+  function solve(){
+    const get=id=>Number(document.querySelector(id).value); const x=get('#x'),y=get('#y'),z=get('#z');
+    const prev=[rad(get('#p1')),rad(get('#p2')),rad(get('#p3'))], out=document.querySelector('#out');
+    const r=Math.hypot(x,y),h=z-D,dis=Math.hypot(r,h);
+    if(![...prev,x,y,z].every(Number.isFinite)){out.innerHTML='<h3>请输入有限数字</h3>';return}
+    if(r<1e-9){out.innerHTML='<h3>无法自动选支</h3><p>目标位于 base Z 轴，腰部方位不唯一；应由上层保持上一帧 q1。</p>';return}
+    if(dis<Math.abs(L1-L2)-1e-9||dis>L1+L2+1e-9){out.innerHTML=`<h3>几何不可达</h3><p>肩部距离 ${n(dis)} m，不在 [${n(Math.abs(L1-L2))}, ${n(L1+L2)}] m 内。</p>`;return}
+    const q1=Math.atan2(y,x),c=Math.max(-1,Math.min(1,(r*r+h*h-L1*L1-L2*L2)/(2*L1*L2))),a=Math.acos(c);
+    const candidates=[a,-a].map(q3=>{const q2=Math.atan2(r,h)-Math.atan2(L2*Math.sin(q3),L1+L2*Math.cos(q3));const ok=within(q2,q3);const cost=[q1,q2,q3].reduce((s,q,i)=>s+wrap(q-prev[i])**2,0);return{q1,q2,q3,ok,cost}});
+    const valid=candidates.filter(c=>c.ok); const picked=valid.length?valid.reduce((a,b)=>a.cost<b.cost?a:b):null;
+    let html=`<h3>筛选顺序</h3><p class="small">r=${n(r)}，h=${n(h)}，几何距离=${n(dis)} m。先看限位，后比连续性代价。</p>`;
+    candidates.forEach((c,i)=>{const selected=c===picked;html+=`<div class="candidate ${selected?'pick':c.ok?'':'drop'}"><b>候选 ${i+1}</b> ${selected?'<span class="tag pick">已选：离上一帧最近</span>':c.ok?'<span class="tag ok">限位合法</span>':'<span class="tag bad">淘汰：超限</span>'}<br><span class="small">q=[${deg(c.q1)}, ${deg(c.q2)}, ${deg(c.q3)}]；cost=${c.cost.toFixed(4)}</span></div>`});
+    html+=picked?'<p><span class="tag ok">可以发布 selected q</span> 本帧存在连续且受限合法的候选。</p>':'<p><span class="tag bad">禁止发布新目标</span> 没有满足关节限位的候选。</p>';out.innerHTML=html;
+  }
+  document.querySelector('#run').addEventListener('click',solve);solve();
+})();
+</script></body></html>

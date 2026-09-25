@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ROS 2 工程实战 04：3R 单点解析逆运动学</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root{--bg:#070b15;--panel:#10192b;--panel2:#0b1222;--line:#26354d;--fg:#eef5ff;--muted:#9aaac0;--blue:#38bdf8;--green:#34d399;--amber:#fbbf24;--pink:#f472b6;--red:#fb7185;--violet:#a78bfa}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif} main{max-width:1120px;margin:auto;padding:28px 20px 72px} h1,h2,h3{line-height:1.28} h1{margin:.25rem 0 .6rem;font-size:clamp(1.65rem,4vw,2.35rem)} h2{margin-top:2.6rem;border-bottom:1px solid var(--line);padding-bottom:.45rem} h3{margin:0 0 .55rem}.muted,.small{color:var(--muted)}.small{font-size:.9rem}.crumb{font-size:.9rem;color:var(--muted)}.crumb a{color:var(--blue);text-decoration:none}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--blue);background:linear-gradient(110deg,#0d2944,#10192b)}.warn{border-left:5px solid var(--amber)}.ok{border-left:5px solid var(--green)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.route{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}.route div{padding:9px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.88rem}.route b{display:block;color:var(--fg);margin-bottom:3px}.formula{display:block;text-align:center;overflow:auto;margin:1rem 0}.math-note{font-size:.93rem;color:var(--muted)}.diagram{background:#060b15;border:1px solid var(--line);border-radius:10px;overflow:hidden}.diagram svg{display:block;width:100%;height:auto}.solve-grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr);gap:16px;align-items:start}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field{display:grid;gap:4px;color:var(--muted);font-size:.88rem}.field input{width:100%;border:1px solid #3a4d6d;border-radius:7px;padding:8px;color:var(--fg);background:#070d19;font:inherit}.button{margin-top:13px;width:100%;padding:10px 13px;border:0;border-radius:8px;background:var(--blue);color:#062033;font:700 1rem inherit;cursor:pointer}.button:hover{filter:brightness(1.08)}.result{min-height:260px;background:#060b15;border:1px solid var(--line);border-radius:10px;padding:13px}.result h3{color:var(--blue)}.candidate{margin:9px 0;padding:10px;border:1px solid var(--line);border-radius:8px}.candidate.valid{border-color:#167c5c;background:rgba(16,185,129,.08)}.candidate.invalid{border-color:#843547;background:rgba(251,113,133,.08)}.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.82rem;font-weight:700}.badge.ok{color:#9cf4cf;background:#113d30;border:0}.badge.bad{color:#ffb5c1;background:#4b1c2a;border:0}.code{overflow:auto;background:#050914;border:1px solid var(--line);border-radius:9px;padding:14px;color:#d8e8ff;font:13px/1.58 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.table th{color:var(--blue);white-space:nowrap}.stack{display:grid;gap:10px}.step{border-left:3px solid var(--violet);padding:2px 0 2px 13px}.step b{color:#d9ccff}.end{background:linear-gradient(110deg,#102b27,#10192b);border-color:#216d5d}.end strong{color:#84f0c5}@media(max-width:780px){main{padding:22px 14px}.grid,.solve-grid{grid-template-columns:1fr}.route{grid-template-columns:1fr 1fr}.fields{grid-template-columns:1fr}.table{font-size:.9rem}}
+  </style>
+</head>
+<body>
+<main>
+  <p class="crumb"><a href="00-progress.html">ROS 2 全景看板</a> · <a href="03-python-trajectory-control.html">ROS2-03：关节正弦波数字孪生</a> · <a href="04-13-engineering-roadmap.md">04–13 路线</a></p>
+  <h1>ROS 2 工程实战 04：3R 单点解析逆运动学</h1>
+  <p class="muted">把“末端想去哪里”翻译成“每个关节该转多少”。本篇只完成一个单点的闭环，不抢跑去讲轨迹、MoveIt 或真实设备控制。</p>
+
+  <section class="card guide">
+    <h2 style="margin-top:0;border:0;padding:0">先说工程痛点：为什么不能继续给三个关节写正弦波？</h2>
+    <p>ROS2-03 中，我们能直接写 <code>q1,q2,q3</code>，机械臂就会在 RViz 中活动。但工位任务给出的从来不是“第 2 关节转 0.42 rad”，而是“让末端到这个工位坐标”。若不能把目标位置反解为关节角，后续的直线、视觉定位和路径规划都无从谈起。</p>
+    <div class="route"><div><b>① 读模型</b>d、L1、L2 与零位</div><div><b>② 压平面</b>(x,y,z) → (r,h)</div><div><b>③ 求双解</b>肘上 / 肘下</div><div><b>④ 过限位</b>筛出可执行解</div><div><b>⑤ FK 回代</b>确认算对</div></div>
+  </section>
+
+  <section class="card warn">
+    <strong>本篇边界：</strong>当前 3R 只有三个自由度，因此仅规定 <code>tool0</code> 的<strong>位置</strong> <code>(x,y,z)</code>。它不能同时规定工具完整姿态；六轴的 Pose 目标与姿态约束会在 ROS2-11、12 处理。
+  </section>
+
+  <h2>1. 先以 URDF 为准：这台 3R 到底是什么结构？</h2>
+  <div class="grid">
+    <section class="card"><h3>关节与连杆真值</h3><ul><li><code>joint1</code>：绕 <code>+Z</code> 回转，范围 <code>[-3.14, 3.14]</code> rad；</li><li><code>joint2</code>：绕局部 <code>+Y</code> 俯仰，范围 <code>[-1.57, 1.57]</code> rad；</li><li><code>joint3</code>：绕局部 <code>+Y</code> 俯仰，范围 <code>[-2.00, 2.00]</code> rad；</li><li>肩关节高度 <code>d=0.05+0.20=0.25 m</code>；</li><li>大臂 <code>L1=0.50 m</code>，小臂 <code>L2=0.40 m</code>。</li></ul></section>
+    <section class="card"><h3>零位的关键直觉</h3><p>当 <code>q2=q3=0</code> 时，两根杆都沿当前坐标系的 <code>+Z</code> 指向上方，而不是教材中常见的 <code>+X</code> 向右。因此我们稍后把二维平面坐标写作横向距离 <code>r</code> 与竖直高度 <code>h</code>。</p><p class="small">这只是坐标约定不同；余弦定理本身没有变。</p></section>
+  </div>
+  <div class="diagram">
+    <svg viewBox="0 0 900 380" role="img" aria-label="3R 机械臂把三维目标压到 r-h 平面的示意图">
+      <rect width="900" height="380" fill="#060b15"/><line x1="430" y1="30" x2="430" y2="340" stroke="#334155" stroke-dasharray="6 7"/>
+      <text x="75" y="46" fill="#9aaac0" font-size="18">三维底座视角：q1 先决定方位</text><circle cx="190" cy="265" r="14" fill="#38bdf8"/><path d="M190 265 L350 170" stroke="#fbbf24" stroke-width="13" stroke-linecap="round"/><path d="M350 170 L440 110" stroke="#34d399" stroke-width="11" stroke-linecap="round"/><line x1="190" y1="265" x2="350" y2="265" stroke="#50627f"/><text x="176" y="300" fill="#9aaac0" font-size="17">base</text><text x="245" y="252" fill="#fbbf24" font-size="18">q1 决定 XY 方位</text><line x1="440" y1="55" x2="440" y2="325" stroke="#334155"/><text x="498" y="46" fill="#9aaac0" font-size="18">肩部平面：只解 r 与 h</text><line x1="515" y1="282" x2="790" y2="282" stroke="#667895" stroke-width="2"/><line x1="515" y1="282" x2="515" y2="95" stroke="#667895" stroke-width="2"/><circle cx="515" cy="222" r="7" fill="#38bdf8"/><path d="M515 222 L640 150" stroke="#fbbf24" stroke-width="13" stroke-linecap="round"/><path d="M640 150 L762 122" stroke="#34d399" stroke-width="11" stroke-linecap="round"/><circle cx="762" cy="122" r="7" fill="#f472b6"/><line x1="515" y1="222" x2="762" y2="222" stroke="#a78bfa" stroke-dasharray="5 5"/><line x1="762" y1="222" x2="762" y2="122" stroke="#a78bfa" stroke-dasharray="5 5"/><text x="620" y="244" fill="#c4b5fd" font-size="18">r</text><text x="777" y="176" fill="#c4b5fd" font-size="18">h</text><text x="531" y="213" fill="#38bdf8" font-size="16">肩</text><text x="648" y="139" fill="#fbbf24" font-size="16">肘</text><text x="772" y="112" fill="#f472b6" font-size="16">目标</text><text x="467" y="253" fill="#9aaac0" font-size="15">d</text>
+    </svg>
+  </div>
+
+  <h2>2. 从三维目标压到已经学过的二维两连杆问题</h2>
+  <p>给定的目标始终在 <code>base_link</code> 下：<code>P=(x,y,z)</code>。腰部先转向目标的 XY 方位，肩和肘只需要在包含目标的竖直平面里解决两连杆问题。</p>
+  <span class="formula">\[r=\sqrt{x^2+y^2},\qquad h=z-d,\qquad q_1=\operatorname{atan2}(y,x)\]</span>
+  <div class="card"><strong>这里的两个“高度”别混：</strong><code>z</code> 是目标相对 <code>base_link</code> 的绝对高度；<code>h</code> 是目标相对<strong>肩关节</strong>的高度。只有减去 <code>d</code> 后，才能直接把 <code>(r,h)</code> 交给两连杆几何。</div>
+
+  <h2>3. 先判可达，再碰反三角函数</h2>
+  <div class="grid"><section class="card"><h3>几何可达环</h3><span class="formula">\[|L_1-L_2|\le \sqrt{r^2+h^2}\le L_1+L_2\]</span><p>这是两根固定长度连杆能否拼出目标三角形的条件。条件不成立时，IK 没有解；不是调参数可以补救的。</p></section><section class="card"><h3>几何可达 ≠ 可执行</h3><p>即使三角形能拼出来，得到的 <code>q2,q3</code> 仍可能超过 URDF 的关节限位。因此我们会依次经过：<strong>几何可达 → 两支候选解 → 限位筛选 → 连续选择</strong>。连续选择放到 ROS2-05，本篇只列出候选。</p></section></div>
+
+  <h2>4. 用余弦定理求肘角，再求肩角</h2>
+  <p>在 <code>(r,h)</code> 平面，零位沿竖直 <code>+Z</code>。因此角度表达为：</p>
+  <span class="formula">\[c_3=\frac{r^2+h^2-L_1^2-L_2^2}{2L_1L_2},\qquad q_3=\pm\arccos(c_3)\]</span>
+  <span class="formula">\[q_2=\operatorname{atan2}(r,h)-\operatorname{atan2}(L_2\sin q_3,\ L_1+L_2\cos q_3)\]</span>
+  <p class="math-note">正、负两支 <code>q3</code> 分别对应两种肘部构型。别急着给它们固定叫“肘上/肘下”；在不同坐标约定和观察视角下名称容易反。代码只需可靠地区分 <code>q3&gt;0</code> 与 <code>q3&lt;0</code>。</p>
+
+  <h2>5. 动手算一个点：先看两支候选，再看限位</h2>
+  <div class="solve-grid">
+    <section class="card"><h3>目标点（单位：m）</h3><p class="small">默认点 <code>(0.50,0.00,0.65)</code> 位于安全工作区，用于展示一支候选可能被限位筛掉。</p><div class="fields"><label class="field">x<input id="x" type="number" step="0.01" value="0.50"></label><label class="field">y<input id="y" type="number" step="0.01" value="0.00"></label><label class="field">z<input id="z" type="number" step="0.01" value="0.65"></label></div><button id="solve" class="button" type="button">计算两支 IK 候选</button><p class="small">若目标在腰部 Z 轴上，方位角本来就不唯一；本篇会明确报告，而不是编造 q1。</p></section>
+    <section id="result" class="result" aria-live="polite"></section>
+  </div>
+
+  <h2>6. FK 回代：不是多余步骤，而是你的闭环证明</h2>
+  <p>任何候选角都必须重新带回当前 URDF 的正运动学。当前模型的 <code>tool0</code> 位置为：</p>
+  <span class="formula">\[\rho=L_1\sin q_2+L_2\sin(q_2+q_3)\]</span>
+  <span class="formula">\[x=\rho\cos q_1,\quad y=\rho\sin q_1,\quad z=d+L_1\cos q_2+L_2\cos(q_2+q_3)\]</span>
+  <div class="card ok"><strong>读法：</strong>先在肩部平面算出横向伸出量 <code>ρ</code> 和高度 <code>z</code>，再由 <code>q1</code> 将 <code>ρ</code> 旋转到全局 X-Y 平面。若回代位置与目标不同，不要继续做轨迹；先查零位方向、关节轴、连杆长度和角度单位。</div>
+
+  <h2>7. 将公式放进 ROS 包：先保持它是纯函数</h2>
+  <p>第一版求解器不继承 Node、不发布话题、不读取 RViz。纯函数让输入、输出和错误边界都可看清；ROS 节点只负责在下一步调用它。</p>
+  <pre class="code"># my_arm_motion/kinematics_3r.py
+import math
+
+D, L1, L2 = 0.25, 0.50, 0.40
+Q2_LIMIT = (-1.57, 1.57)
+Q3_LIMIT = (-2.00, 2.00)
+
+def forward_position(q1, q2, q3):
+    rho = L1 * math.sin(q2) + L2 * math.sin(q2 + q3)
+    return (
+        rho * math.cos(q1),
+        rho * math.sin(q1),
+        D + L1 * math.cos(q2) + L2 * math.cos(q2 + q3),
+    )
+
+def solve_position_ik(x, y, z, eps=1e-9):
+    r = math.hypot(x, y)
+    h = z - D
+    distance = math.hypot(r, h)
+    if distance &lt; abs(L1 - L2) - eps or distance &gt; L1 + L2 + eps:
+        return {"reachable": False, "reason": "geometrically unreachable", "candidates": []}
+    if r &lt; eps:
+        return {"reachable": False, "reason": "base yaw is undefined at r=0", "candidates": []}
+
+    q1 = math.atan2(y, x)
+    c3 = max(-1.0, min(1.0, (r*r + h*h - L1*L1 - L2*L2) / (2*L1*L2)))
+    candidates = []
+    for q3 in (math.acos(c3), -math.acos(c3)):
+        q2 = math.atan2(r, h) - math.atan2(L2*math.sin(q3), L1 + L2*math.cos(q3))
+        within_limits = Q2_LIMIT[0] &lt;= q2 &lt;= Q2_LIMIT[1] and Q3_LIMIT[0] &lt;= q3 &lt;= Q3_LIMIT[1]
+        candidates.append({"q": (q1, q2, q3), "within_limits": within_limits})
+    return {"reachable": True, "reason": None, "candidates": candidates}</pre>
+  <p class="small">ROS2-05 才会为候选加上“离上一帧最近”的连续选择规则。当前函数故意不替你偷偷选支。</p>
+
+  <h2>8. 常见失败，不要靠猜</h2>
+  <table class="table"><thead><tr><th>你看到的现象</th><th>最可能的原因</th><th>先做什么</th></tr></thead><tbody><tr><td><code>acos</code> 报 domain error</td><td>目标超工作空间；或浮点误差使边界值略大于 1</td><td>先打印距离与可达范围；只允许对极小数值误差 clamp。</td></tr><tr><td>两支几何解都存在，但 RViz 姿态不对</td><td>将杆长、关节轴或零位方向按教材模型写错</td><td>给定一组已知 q，先用 FK 对照 <code>tf2_echo base_link tool0</code>。</td></tr><tr><td>几何解存在却被全部淘汰</td><td>目标需超过 <code>joint2/joint3</code> 限位</td><td>报告“受限不可达”，不将角度硬裁剪到边界。</td></tr><tr><td>目标正好在 base Z 轴上</td><td><code>atan2(0,0)</code> 没有物理方位</td><td>保持上一帧腰部角，或要求调用者给定偏好角；不要当普通点处理。</td></tr></tbody></table>
+
+  <section class="card end"><h2 style="margin-top:0;border:0;padding:0">这一讲结束时，你应该带走什么？</h2><ul><li><strong>IK 的输入是目标位置，输出是候选关节角，不是唯一答案。</strong></li><li><strong>先压到 r-h 平面，才复用你已经学过的二维两连杆几何。</strong></li><li><strong>几何可达、关节限位合法、FK 回代正确，是三道不同的门。</strong></li><li>下一讲只解决一个新增问题：连续多个目标点经过双解区时，怎样不让机械臂突然翻肘。</li></ul></section>
+</main>
+<script>
+(() => {
+  const D = 0.25, L1 = 0.50, L2 = 0.40;
+  const q2Limit = [-1.57, 1.57], q3Limit = [-2.00, 2.00];
+  const deg = value => `${(value * 180 / Math.PI).toFixed(2)}°`;
+  const near = value => value.toFixed(4);
+  function forward(q1, q2, q3) {
+    const rho = L1 * Math.sin(q2) + L2 * Math.sin(q2 + q3);
+    return [rho * Math.cos(q1), rho * Math.sin(q1), D + L1 * Math.cos(q2) + L2 * Math.cos(q2 + q3)];
+  }
+  function candidateHtml(index, q1, q2, q3, target) {
+    const valid = q2 >= q2Limit[0] && q2 <= q2Limit[1] && q3 >= q3Limit[0] && q3 <= q3Limit[1];
+    const p = forward(q1, q2, q3);
+    const error = Math.hypot(p[0] - target[0], p[1] - target[1], p[2] - target[2]);
+    return `<div class="candidate ${valid ? 'valid' : 'invalid'}"><b>候选 ${index}：q3 ${q3 >= 0 ? '正支' : '负支'}</b> <span class="badge ${valid ? 'ok' : 'bad'}">${valid ? '限位合法' : '超出限位'}</span><br><span class="small">q1=${deg(q1)}，q2=${deg(q2)}，q3=${deg(q3)}<br>FK 回代 = (${near(p[0])}, ${near(p[1])}, ${near(p[2])}) m；误差 ${error.toExponential(2)} m</span></div>`;
+  }
+  function solve() {
+    const x = Number(document.querySelector('#x').value), y = Number(document.querySelector('#y').value), z = Number(document.querySelector('#z').value);
+    const out = document.querySelector('#result');
+    if (![x, y, z].every(Number.isFinite)) { out.innerHTML = '<h3>请输入三个有限数字</h3>'; return; }
+    const r = Math.hypot(x, y), h = z - D, distance = Math.hypot(r, h);
+    if (r < 1e-9) { out.innerHTML = `<h3>腰部方位不唯一</h3><p>r≈0。目标在 base Z 轴上，q1 没有唯一物理值；本篇不擅自选角。</p>`; return; }
+    if (distance < Math.abs(L1 - L2) - 1e-9 || distance > L1 + L2 + 1e-9) { out.innerHTML = `<h3>几何不可达</h3><p>肩部平面距离 = ${near(distance)} m；允许范围 = [${near(Math.abs(L1-L2))}, ${near(L1+L2)}] m。</p>`; return; }
+    const q1 = Math.atan2(y, x);
+    const c3 = Math.max(-1, Math.min(1, (r*r + h*h - L1*L1 - L2*L2) / (2*L1*L2)));
+    const a = Math.acos(c3);
+    const q2a = Math.atan2(r, h) - Math.atan2(L2*Math.sin(a), L1 + L2*Math.cos(a));
+    const q2b = Math.atan2(r, h) - Math.atan2(L2*Math.sin(-a), L1 + L2*Math.cos(-a));
+    out.innerHTML = `<h3>先读中间量</h3><p class="small">r=${near(r)} m，h=${near(h)} m，肩部距离=${near(distance)} m，q1=${deg(q1)}，c3=${near(c3)}</p>${candidateHtml(1,q1,q2a,a,[x,y,z])}${candidateHtml(2,q1,q2b,-a,[x,y,z])}`;
+  }
+  document.querySelector('#solve').addEventListener('click', solve);
+  solve();
+  window.addEventListener('load', () => { if (window.renderMathInElement) renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false}],throwOnError:false}); });
+})();
+</script>
+</body>
+</html>

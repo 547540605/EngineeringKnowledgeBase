@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>笔记 04：二维两连杆逆运动学</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-sub: #172033;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+      --line: #334155;
+      --primary: #38bdf8;
+      --accent: #0284c7;
+      --warn: rgba(245, 158, 11, 0.12);
+      --soft: rgba(56, 189, 248, 0.12);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --rail: #0f172a;
+    }*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.28}h2{margin-top:2.5rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}.muted,.small{color:var(--muted)}.card{border:1px solid var(--line);border-radius:12px;padding:17px;margin:14px 0}.key{background:var(--soft)}.warn{background:var(--warn)}.workspace{display:grid;grid-template-columns:minmax(0,1.34fr) minmax(305px,.86fr);gap:20px;align-items:start}.plot{background:#20242b;border:1px solid var(--line);border-radius:11px;overflow:hidden}.plot canvas{display:block;width:100%;aspect-ratio:1.18;touch-action:none}.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:.91rem}.legend span{display:flex;align-items:center;gap:6px}.dot{width:11px;height:11px;display:inline-block;border-radius:50%}.control{display:grid;grid-template-columns:98px minmax(0,1fr) 75px;gap:10px;align-items:center;margin:12px 0}.control input{width:100%}.control input[type=number]{font:inherit;padding:4px 6px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:5px}.choice{display:flex;gap:9px;align-items:center;margin:.6rem 0}.math{display:block;text-align:center;overflow:auto;margin:.85rem 0}.formula{min-height:2.5rem}.steps{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.step{border:1px solid var(--line);border-radius:7px;padding:7px 10px;background:var(--bg);color:var(--fg);font:inherit;cursor:pointer}.step.active{background:#dbeef5;color:#0b1f2c;border-color:#5ca0bc;font-weight:700}.step-panel{display:none}.step-panel.active{display:block}.solution{border-left:5px solid #23a6d5;padding:9px 12px;margin:13px 0;background:color-mix(in srgb,#23a6d5 8%,Canvas)}.solution.down{border-color:#e59300;background:color-mix(in srgb,#e59300 10%,Canvas)}.solution strong{display:block}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.status{font-weight:700;border-radius:8px;padding:9px 11px;margin:12px 0}.status.ok{background:color-mix(in srgb,#198754 14%,Canvas)}.status.bad{background:color-mix(in srgb,#dc3545 14%,Canvas)}.tip{border-left:4px solid #d946ef;padding-left:12px}.hide{display:none}@media(max-width:780px){main{padding:22px 14px}.workspace,.grid{grid-template-columns:1fr}.control{grid-template-columns:1fr 76px}.control span{grid-column:1/-1}}
+  
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+  <style>.elbow-figure,.shoulder-figure,.beta-figure{background:#20242b;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:12px 0}.elbow-figure canvas{display:block;width:100%;aspect-ratio:1.48;touch-action:none}.shoulder-figure canvas{display:block;width:100%;aspect-ratio:1.58;touch-action:none}.beta-figure canvas{display:block;width:100%;aspect-ratio:1.72}.elbow-legend{font-size:.9rem;color:var(--muted);margin:.4rem 0}.shoulder-steps{display:flex;flex-wrap:wrap;gap:7px;margin:.55rem 0}.shoulder-step{font:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer}.shoulder-step.active{background:#dbeef5;color:#0b1f2c;border-color:#5ca0bc;font-weight:700}.derive{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}.sign-plot{background:#20242b;border:1px solid var(--line);border-radius:9px;overflow:hidden}.sign-plot canvas{display:block;width:100%;aspect-ratio:1.7}
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .warn { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .derive { background: var(--card-sub); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin: 14px 0; }
+        
+  </style>
+</head>
+<body>
+<main>
+  <p class="muted"><a href="00-progress.html">学习进度</a> · <a href="04-planar-two-link-forward-kinematics.html">笔记 04：二维两连杆正运动学</a> · <a href="10-dh-table-to-forward-kinematics.html">笔记 04：DH 正运动学</a></p>
+  <h1>笔记 04：二维两连杆的逆运动学</h1>
+  <div class="card key"><strong>正运动学：</strong>给 <span data-tex="q_1,q_2"></span>，求末端 <span data-tex="(x,y)"></span>。<br><strong>逆运动学：</strong>给希望到达的点 <span data-tex="P=(x,y)"></span>，反过来求哪两组关节角 <span data-tex="(q_1,q_2)"></span> 能让末端到那里。</div>
+  <div class="card"><strong>本页只解决平面两转动关节。</strong>这不是为了回避三维，而是先把“目标点 → 关节角”这件事讲透。三维机械臂的逆解会更复杂，但同样先要问：目标是否可达、可能有几组解、每一组的关节角分别是多少。</div>
+
+  <h2>先定一条全程使用的规则：角度正负</h2>
+  <div class="workspace"><section><div class="sign-plot"><canvas id="sign-canvas" aria-label="二维转动关节正负角约定"></canvas></div><p class="small">把纸面看成 <span data-tex="x"></span> 向右、<span data-tex="y"></span> 向上；从纸面外的 <span data-tex="+z"></span> 方向看向原点，逆时针为正，顺时针为负。</p></section><section class="card"><strong>这条规则怎样用到机械臂</strong><ol><li><span data-tex="q_1"></span>：从固定基座 <span data-tex="x_0"></span> 轴，转到第一根连杆的方向。</li><li><span data-tex="q_2"></span>：从第一根连杆当前的正向（也就是局部 <span data-tex="x_1"></span> 轴），转到第二根连杆的方向。</li></ol><span class="math" data-tex="\text{逆时针}\Rightarrow q_i>0,\qquad \text{顺时针}\Rightarrow q_i<0"></span><p>所以“肘上”在本页的约定下是 <span data-tex="q_2>0"></span>；“肘下”是 <span data-tex="q_2<0"></span>。注意：<span data-tex="q_2"></span> 总是<strong>相对第一根连杆</strong>量，不是相对基座 x 轴量。</p></section></div>
+
+  <h2>先拖动一个目标点：逆运动学究竟在做什么</h2>
+  <div class="workspace">
+    <section>
+      <div class="plot"><canvas id="plot" aria-label="二维两连杆逆运动学交互图"></canvas></div>
+      <div class="legend"><span><i class="dot" style="background:#f59e0b"></i>连杆与基座</span><span><i class="dot" style="background:#23a6d5"></i>肘上解</span><span><i class="dot" style="background:#e59300"></i>肘下解</span><span><i class="dot" style="background:#ec4899"></i>目标点 P</span><span><i class="dot" style="background:#8491a7"></i>可达边界</span></div>
+      <p class="small">在画布任意位置点击或拖动，即可移动粉色目标点；滚轮可缩放视图。环带内的点可达，环带外的点无解。图中实线为当前选择的解，另一组解用虚线提示。</p>
+    </section>
+    <section class="card">
+      <strong>先给末端一个目标，而不是给关节角</strong>
+      <label class="control"><span>目标 <span data-tex="x"></span></span><input id="xr" type="range" min="-5" max="5" step=".05" value="3.20"><input id="xn" type="number" min="-5" max="5" step=".05" value="3.20"></label>
+      <label class="control"><span>目标 <span data-tex="y"></span></span><input id="yr" type="range" min="-5" max="5" step=".05" value="1.20"><input id="yn" type="number" min="-5" max="5" step=".05" value="1.20"></label>
+      <div id="status" class="status"></div>
+      <label class="choice"><input name="branch" type="radio" value="up" checked>当前看肘上解（第二根相对第一根逆时针弯）</label>
+      <label class="choice"><input name="branch" type="radio" value="down">当前看肘下解（第二根相对第一根顺时针弯）</label>
+      <p class="small">固定长度：<span data-tex="L_1=2.60, L_2=2.00"></span>。本题的输入是粉色点的位置；输出才是下面的两组 <span data-tex="q_1,q_2"></span>。</p>
+    </section>
+  </div>
+
+  <h2>按 1 → 2 → 3 → 4 看，不要直接背最后两条反三角函数</h2>
+  <div class="steps" id="steps"><button class="step active" data-step="0">1. 先检查能否到达</button><button class="step" data-step="1">2. 先求肘角 q₂</button><button class="step" data-step="2">3. 再求肩角 q₁</button><button class="step" data-step="3">4. 检验结果</button></div>
+  <section class="step-panel active" data-panel="0">
+    <div class="workspace"><div class="card"><h3>第 1 步：目标距离必须落在两条边界之间</h3><p>先从基座原点 <span data-tex="O_0"></span> 连到目标点 <span data-tex="P"></span>。它的长度记作 <span data-tex="r"></span>：</p><span class="math" data-tex="r=\sqrt{x^2+y^2}"></span><p>机械臂完全伸直时最远能到 <span data-tex="L_1+L_2"></span>；完全折叠时最近只能到 <span data-tex="|L_1-L_2|"></span>。因此有解的条件是：</p><span class="math" data-tex="|L_1-L_2|\le r\le L_1+L_2"></span></div><div class="card"><h3>把当前目标代进去</h3><span id="reach-calc" class="math formula"></span><p id="reach-copy"></p><p class="tip">这是逆运动学的第一道门槛。不可达时，不是公式算错，而是固定长度的两根连杆组成不了那个三角形。</p></div></div>
+  </section>
+  <section class="step-panel" data-panel="1">
+    <div class="workspace"><div class="card"><h3>第 2 步：把机械臂和目标连成一个三角形</h3><p><strong>先只看肘点 <span data-tex="O_1"></span>：</strong>图中的紫色 <span data-tex="\gamma"></span> 是三角形内角，它夹在“从肘回指基座”的射线 <span data-tex="O_1\to O_0"></span> 与第二根连杆 <span data-tex="O_1\to P"></span> 之间。青色 <span data-tex="q_2"></span> 是关节角，它夹在“第一根向前的延长方向”与第二根连杆之间。</p><div class="elbow-figure"><canvas id="elbow-canvas" aria-label="肘部内角与关节角关系图"></canvas></div><p class="elbow-legend">紫色：三角形内角 <span data-tex="\gamma"></span>；青色：关节转角 <span data-tex="q_2"></span>；灰虚线：第一根连杆向前的延长线。</p><p>“回指基座”与“向前延长”是同一条直线的反方向，所以：</p><span class="math" data-tex="\gamma=\pi-|q_2|,\qquad \cos\gamma=-\cos q_2"></span><div class="derive"><strong><span data-tex="c_2"></span> 到底是什么？</strong>它只是 <span data-tex="\cos q_2"></span> 的临时短名；<span data-tex="c"></span> 取自 cosine，角标 2 指第 2 个关节。它不是新的长度、坐标或 DH 参数。<p>现在从余弦定理一步一步来。对三边 <span data-tex="L_1,L_2,r"></span> 与紫色内角 <span data-tex="\gamma"></span>：</p><span class="math" data-tex="r^2=L_1^2+L_2^2-2L_1L_2\cos\gamma"></span><p>先把 <span data-tex="\cos\gamma"></span> 单独留下：</p><span class="math" data-tex="\cos\gamma=\frac{L_1^2+L_2^2-r^2}{2L_1L_2}"></span><p>再使用上面的关系 <span data-tex="\cos q_2=-\cos\gamma"></span>：</p><span class="math" data-tex="\cos q_2=-\frac{L_1^2+L_2^2-r^2}{2L_1L_2}=\frac{r^2-L_1^2-L_2^2}{2L_1L_2}"></span><p>最后为了少重复写一长串，才定义：</p><span class="math" data-tex="c_2:=\cos q_2=\frac{r^2-L_1^2-L_2^2}{2L_1L_2}"></span></div><p>又因为 <span data-tex="r^2=x^2+y^2"></span>，才把上式写成目标坐标的形式：</p><span class="math" data-tex="c_2=\cos q_2=\frac{x^2+y^2-L_1^2-L_2^2}{2L_1L_2}"></span><p>同一个余弦值有正、负两种关节角：</p><span class="math" data-tex="q_2^{\mathrm{up}}=+\arccos(c_2),\qquad q_2^{\mathrm{down}}=-\arccos(c_2)"></span></div><div class="card"><h3>当前数值</h3><span id="q2-calc" class="math formula"></span><p id="q2-copy"></p><p class="small">“肘上 / 肘下”不是两套公式；它们只是在这一步选择了同一个 <span data-tex="\cos q_2"></span> 对应的正角或负角。</p></div></div>
+  </section>
+  <section class="step-panel" data-panel="2">
+    <div class="workspace"><div class="card"><h3>第 3 步：用目标方向减去偏角，得到 q₁</h3><p>图中三根射线的顶点都是基座 <span data-tex="O_0"></span>：基座轴 <span data-tex="x_0"></span>、第一根连杆、目标向量 <span data-tex="\overrightarrow{O_0P}"></span>。<span data-tex="\phi"></span> 是 <span data-tex="x_0\to\overrightarrow{O_0P}"></span>；<span data-tex="q_1"></span> 是 <span data-tex="x_0\to\text{第一根连杆}"></span>；<span data-tex="\beta"></span> 是 <span data-tex="\text{第一根连杆}\to\overrightarrow{O_0P}"></span>。</p><div class="derive"><h4>先算目标方向 φ：它不是关节角</h4><p>目标点给的是基座坐标 <span data-tex="P=(x,y)"></span>。从 <span data-tex="O_0"></span> 指向该点的向量就是 <span data-tex="[x,\ y]^T"></span>；因此从正 <span data-tex="x_0"></span> 轴转到它的有向角为：</p><span class="math" data-tex="\phi=\operatorname{atan2}(y,x)"></span><p><span data-tex="\operatorname{atan2}(y,x)"></span> 的两个输入依次是<strong>纵坐标、横坐标</strong>。它会根据 <span data-tex="x,y"></span> 的正负自动判断目标在四个象限中的哪一边，所以比只写 <span data-tex="\arctan(y/x)"></span> 更可靠。<span data-tex="\phi"></span> 只由目标点的位置决定，不是任何一个关节转角，也不是 DH 里的 <span data-tex="\theta"></span>。</p></div><p>所以从 <span data-tex="x_0"></span> 到目标方向，可以先转 <span data-tex="q_1"></span>，再转 <span data-tex="\beta"></span>：</p><span class="math" data-tex="\phi=q_1+\beta\qquad\Rightarrow\qquad q_1=\phi-\beta"></span><div class="shoulder-steps" id="shoulder-steps"><button class="shoulder-step" data-shoulder-stage="0">1. 目标方向 φ</button><button class="shoulder-step" data-shoulder-stage="1">2. 已知 q₂，得到 β</button><button class="shoulder-step active" data-shoulder-stage="2">3. 相减得到 q₁</button><button class="shoulder-step" id="shoulder-play">播放推导</button></div><div class="shoulder-figure"><canvas id="shoulder-canvas" aria-label="由目标方向、偏角和肩角求 q1 的动画图"></canvas></div><p class="elbow-legend">灰：基座 <span data-tex="x_0"></span> 与目标向量；橙：第一根连杆；青：第二根连杆；粉：<span data-tex="\phi"></span>；紫：<span data-tex="q_1"></span>；绿：<span data-tex="\beta"></span>。默认同时显示三角，方便和右侧数值一一对应。</p><p id="shoulder-copy" class="tip"></p><div class="derive"><h4>β 的公式：先在第一根自己的坐标纸上看</h4><p>把观察坐标系跟着第一根连杆一起转：令局部 <span data-tex="x_1"></span> 轴沿第一根向前，<span data-tex="y_1"></span> 轴垂直于它。这<strong>不是让机械臂再转一次</strong>，只是换一个更好算的观察方向。</p><div class="beta-figure"><canvas id="beta-canvas" aria-label="在第一根局部坐标系中分解末端向量"></canvas></div><p class="elbow-legend">橙：第一段 <span data-tex="L_1"></span>；青：第二段 <span data-tex="L_2"></span>；粉虚线：从基座指向末端的合向量；绿：它相对局部 <span data-tex="x_1"></span> 的偏角 <span data-tex="\beta"></span>。</p><ol><li>从基座 <span data-tex="O_0"></span> 到肘 <span data-tex="O_1"></span>，沿 <span data-tex="x_1"></span> 走 <span data-tex="L_1"></span>，分量是 <span data-tex="[L_1,\ 0]^T"></span>。</li><li>第二根与 <span data-tex="x_1"></span> 的夹角就是已经求出的 <span data-tex="q_2"></span>，所以它的分量是 <span data-tex="[L_2\cos q_2,\ L_2\sin q_2]^T"></span>。</li><li>相加后，基座到末端的合向量在这张局部坐标纸上的分量就是：</li></ol><span class="math" data-tex="\overrightarrow{O_0P}\ \widehat{=}\ \begin{bmatrix}L_1+L_2\cos q_2\\L_2\sin q_2\end{bmatrix}_{(x_1,y_1)}"></span><p>现在 <span data-tex="\beta"></span> 只是这个二维向量“从局部 <span data-tex="x_1"></span> 轴转到自身”的方向角。<span data-tex="\operatorname{atan2}(\text{纵分量},\text{横分量})"></span> 因而直接得到：</p><span class="math" data-tex="\beta=\operatorname{atan2}(\underbrace{L_2\sin q_2}_{\text{纵分量}},\ \underbrace{L_1+L_2\cos q_2}_{\text{横分量}})"></span><p>重点：<span data-tex="\beta"></span> 不是第二根的关节角；第二根的关节角是 <span data-tex="q_2"></span>。<span data-tex="\beta"></span> 是“两段相加以后”的合向量方向。</p></div></div><div class="card"><h3>当前数值</h3><span id="q1-calc" class="math formula"></span><p id="q1-copy"></p><p class="small">把本步骤的 <span data-tex="q_2"></span> 换成另一支的值，就会得到另一组 <span data-tex="q_1"></span>；这就是为什么两组解成对出现。</p></div></div>
+    <div class="derive"><h4><span data-tex="\operatorname{atan2}"></span> 到底在做什么？</h4><p>它是一个常用的“由向量求方向角”的函数。输入向量的横、纵分量 <span data-tex="[x,\ y]^T"></span>，输出从正 <span data-tex="x_0"></span> 轴逆时针量到该向量的角 <span data-tex="\phi"></span>。也就是说，输出的角同时满足：</p><span class="math" data-tex="\cos\phi=\frac{x}{\sqrt{x^2+y^2}},\qquad \sin\phi=\frac{y}{\sqrt{x^2+y^2}}"></span><p>普通反正切只看比值 <span data-tex="y/x"></span>：例如 <span data-tex="(3,4)"></span> 和 <span data-tex="(-3,-4)"></span> 的比值都等于 <span data-tex="4/3"></span>，但它们实际指向第一、第三象限，方向相差 <span data-tex="180^\circ"></span>。<span data-tex="\operatorname{atan2}"></span> 同时看 <span data-tex="x"></span> 和 <span data-tex="y"></span> 的符号，所以不会把这两种方向混为一谈。</p><ul><li><span data-tex="(3,4)\Rightarrow\operatorname{atan2}(4,3)=53.13^\circ"></span>：第一象限。</li><li><span data-tex="(-3,4)\Rightarrow\operatorname{atan2}(4,-3)=126.87^\circ"></span>：第二象限。</li><li><span data-tex="(-3,-4)\Rightarrow\operatorname{atan2}(-4,-3)=-126.87^\circ"></span>：第三象限。</li><li><span data-tex="(3,-4)\Rightarrow\operatorname{atan2}(-4,3)=-53.13^\circ"></span>：第四象限。</li></ul><p>在 JavaScript 里写作 <code>Math.atan2(y, x)</code>，返回单位是弧度；本页再换算成角度显示。这里的顺序必须记住：<strong>先 <span data-tex="y"></span>，后 <span data-tex="x"></span></strong>。</p></div>
+    <p class="tip"><strong>先定位它：</strong><span data-tex="\operatorname{atan2}"></span> 不是另一条需要重新学的三角函数。它是工程、计算器和编程中常用的“两参数反正切”记法：底层仍然用你熟悉的 <span data-tex="\arctan"></span>，只是额外根据 <span data-tex="x,y"></span> 的正负把角放回正确象限。名称里的 <span data-tex="2"></span> 指“有两个输入”，不是平方，也不是 <span data-tex="\arctan(2)"></span>。</p>
+  </section>
+  <section class="step-panel" data-panel="3">
+    <div class="workspace"><div class="card"><h3>第 4 步：代回正运动学，而不是只相信反三角函数</h3><p>每一组逆解都必须代回已经学过的正运动学：</p><span class="math" data-tex="\begin{bmatrix}x_{\mathrm{check}}\\y_{\mathrm{check}}\end{bmatrix}=\begin{bmatrix}L_1\cos q_1+L_2\cos(q_1+q_2)\\L_1\sin q_1+L_2\sin(q_1+q_2)\end{bmatrix}"></span><p>如果得到原目标 <span data-tex="[x,y]^T"></span>，说明这组角是有效逆解。</p></div><div class="card"><h3>当前支的回代结果</h3><span id="check-calc" class="math formula"></span><p id="check-copy"></p><p class="tip">逆运动学没有把前面的正运动学丢掉；它恰恰需要用正运动学做最终验算。</p></div></div>
+  </section>
+
+  <h2>两组解到底是什么</h2>
+  <div class="grid"><section class="card"><h3>肘上解</h3><p>第二根相对第一根逆时针弯，因此 <span data-tex="q_2>0"></span>。它是一条从基座到目标的可行姿态，不是“更正确”的答案。</p><div class="solution"><strong id="up-solution">等待计算</strong></div></section><section class="card"><h3>肘下解</h3><p>第二根相对第一根顺时针弯，因此 <span data-tex="q_2<0"></span>。它也到达同一个粉色点，但中间关节在另一侧。</p><div class="solution down"><strong id="down-solution">等待计算</strong></div></section></div>
+  <div class="card warn"><strong>“两组”不是永远成立。</strong>目标恰好在最远或最近边界上时，两条姿态合并成一条；目标在环带外时是 0 组；更复杂的机械臂还可能有更多离散分支或连续多解。</div>
+
+  <h2>把这页与前面连起来</h2>
+  <div class="card"><ol><li><strong>笔记 04 / 11：</strong>已知 <span data-tex="q_1,q_2"></span>，用正运动学得到末端 <span data-tex="(x,y)"></span>。</li><li><strong>本页：</strong>目标点反过来给定；先用长度关系求 <span data-tex="q_2"></span>，再用目标方向扣掉局部偏角求 <span data-tex="q_1"></span>。</li><li><strong>下一步：</strong>把这套两连杆逆解拿来做手算和 Python 验证；之后再进入雅可比矩阵，理解末端微小移动与关节微小转动的关系。</li></ol></div>
+</main>
+<script>
+const L1=2.6,L2=2.0,plot=document.getElementById('plot');let x=3.2,y=1.2,branch='up',zoom=1,dragging=false;
+const el=id=>document.getElementById(id),rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI,fmt=n=>(Math.abs(n)<.005?0:n).toFixed(2),tex=(id,s)=>{const e=el(id);if(e&&window.katex)katex.render(s,e,{displayMode:true,throwOnError:false})};
+function readNum(id,fallback){const n=Number(el(id).value);return Number.isFinite(n)?n:fallback}function sync(key,value){el(key+'r').value=value;el(key+'n').value=value}
+function solve(){const r=Math.hypot(x,y),min=Math.abs(L1-L2),max=L1+L2,reachable=r>=min-1e-8&&r<=max+1e-8;if(!reachable)return {r,min,max,reachable};const c=Math.max(-1,Math.min(1,(r*r-L1*L1-L2*L2)/(2*L1*L2))),q=Math.acos(c),phi=Math.atan2(y,x);const make=q2=>{const beta=Math.atan2(L2*Math.sin(q2),L1+L2*Math.cos(q2)),q1=phi-beta,ex=L1*Math.cos(q1)+L2*Math.cos(q1+q2),ey=L1*Math.sin(q1)+L2*Math.sin(q1+q2);return {q1,q2,beta,ex,ey}};return {r,min,max,reachable,c,phi,up:make(q),down:make(-q)}}
+function canvasSetup(){const dpr=devicePixelRatio||1,w=plot.clientWidth,h=plot.clientHeight;if(plot.width!==Math.round(w*dpr)||plot.height!==Math.round(h*dpr)){plot.width=Math.round(w*dpr);plot.height=Math.round(h*dpr)}const c=plot.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return {c,w,h}}
+function draw(){const {c,w,h}=canvasSetup(),s=solve(),scale=Math.min(w,h)/12*zoom,ox=w*.5,oy=h*.55,toP=(a,b)=>[ox+a*scale,oy-b*scale];c.clearRect(0,0,w,h);c.fillStyle='#20242b';c.fillRect(0,0,w,h);c.lineWidth=1;c.strokeStyle='#374151';for(let i=-8;i<=8;i++){let a=toP(i,-8),b=toP(i,8);c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();a=toP(-8,i);b=toP(8,i);c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke()}c.strokeStyle='#95a0b2';c.lineWidth=1.5;c.beginPath();c.moveTo(...toP(-8,0));c.lineTo(...toP(8,0));c.moveTo(...toP(0,-8));c.lineTo(...toP(0,8));c.stroke();c.fillStyle='#cbd5e1';c.font='14px system-ui';c.fillText('x₀',...toP(5.6,-.32));c.fillText('y₀',...toP(.16,5.5));c.save();c.setLineDash([6,6]);c.lineWidth=1.3;c.strokeStyle='#8491a7';for(const rr of [s.min,s.max]){c.beginPath();c.arc(ox,oy,rr*scale,0,Math.PI*2);c.stroke()}c.restore();c.fillStyle='#aeb9c9';c.font='12px system-ui';c.fillText('最近边界 |L₁−L₂|',...toP(.15,s.min+.18));c.fillText('最远边界 L₁+L₂',...toP(.15,s.max-.15));const pt=toP(x,y);if(s.reachable){const other=branch==='up'?s.down:s.up,cur=branch==='up'?s.up:s.down;drawArm(other,'#8491a7',true,'另一组解');drawArm(cur,branch==='up'?'#23a6d5':'#e59300',false,branch==='up'?'肘上解':'肘下解')}c.setLineDash([]);c.fillStyle='#ec4899';c.beginPath();c.arc(...pt,7,0,Math.PI*2);c.fill();c.fillStyle='#f9a8d4';c.font='bold 15px system-ui';c.fillText('目标 P = ('+fmt(x)+', '+fmt(y)+')',pt[0]+10,pt[1]-10);function drawArm(a,color,dashed,label){const p0=toP(0,0),p1=toP(L1*Math.cos(a.q1),L1*Math.sin(a.q1));c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=dashed?4:8;c.setLineDash(dashed?[8,7]:[]);c.beginPath();c.moveTo(...p0);c.lineTo(...p1);c.lineTo(...pt);c.stroke();c.setLineDash([]);for(const p of [p0,p1]){c.beginPath();c.arc(...p,dashed?4:6,0,Math.PI*2);c.fill()}c.font='bold 14px system-ui';c.fillText(label,p1[0]+8,p1[1]-10);if(!dashed){c.font='13px system-ui';c.fillText('q₁='+fmt(deg(a.q1))+'°',p0[0]+18,p0[1]-22);c.fillText('q₂='+fmt(deg(a.q2))+'°',p1[0]+14,p1[1]+20)}c.restore()}}
+function update(){x=readNum('xn',x);y=readNum('yn',y);sync('x',x);sync('y',y);const s=solve(),st=el('status');if(s.reachable){st.className='status ok';st.textContent='可达：当前目标距离 r='+fmt(s.r)+'，位于 ['+fmt(s.min)+', '+fmt(s.max)+'] 的可达环带内。'}else{st.className='status bad';st.textContent='不可达：r='+fmt(s.r)+'，但两连杆只能到 ['+fmt(s.min)+', '+fmt(s.max)+']。没有实数关节角解。'}tex('reach-calc','r=\\sqrt{('+fmt(x)+')^2+('+fmt(y)+')^2}='+fmt(s.r));el('reach-copy').textContent='当前范围是 ['+fmt(s.min)+', '+fmt(s.max)+']，所以'+(s.reachable?'该点可达。':'该点不可达。');if(s.reachable){tex('q2-calc','c_2=\\frac{r^2-L_1^2-L_2^2}{2L_1L_2}='+fmt(s.c)+',\\quad q_2=\\pm '+fmt(deg(s.up.q2))+'^\\circ');el('q2-copy').textContent='余弦值固定，但 q₂ 取正或负，便得到肘上与肘下两支。';const a=s[branch];tex('q1-calc','\\phi=\\operatorname{atan2}('+fmt(y)+','+fmt(x)+')='+fmt(deg(s.phi))+'^\\circ,\\quad\\beta='+fmt(deg(a.beta))+'^\\circ,\\quad q_1=\\phi-\\beta='+fmt(deg(a.q1))+'^\\circ');el('q1-copy').textContent='φ 由当前目标坐标 (x, y) 算出；这里显示的是当前选择的'+(branch==='up'?'肘上':'肘下')+'支。';tex('check-calc','\\begin{bmatrix}x_{\\mathrm{check}}\\\\y_{\\mathrm{check}}\\end{bmatrix}=\\begin{bmatrix}'+fmt(a.ex)+'\\\\'+fmt(a.ey)+'\\end{bmatrix}\\approx\\begin{bmatrix}'+fmt(x)+'\\\\'+fmt(y)+'\\end{bmatrix}');el('check-copy').textContent='代回正运动学后回到了目标点；微小差异只来自显示时的小数取舍。';el('up-solution').textContent='q₁ = '+fmt(deg(s.up.q1))+'°，q₂ = '+fmt(deg(s.up.q2))+'°';el('down-solution').textContent='q₁ = '+fmt(deg(s.down.q1))+'°，q₂ = '+fmt(deg(s.down.q2))+'°'}else{['q2-calc','q1-calc','check-calc'].forEach(id=>tex(id,'\\text{目标不可达，当前没有实数解}'));el('q2-copy').textContent='先把目标拖回可达环带，再继续后两步。';el('q1-copy').textContent='没有 q₂，就没有可计算的 q₁。';el('check-copy').textContent='没有可代回检验的姿态。';el('up-solution').textContent='无肘上解';el('down-solution').textContent='无肘下解'}draw()}
+for(const key of ['x','y']){el(key+'r').addEventListener('input',e=>{el(key+'n').value=e.target.value;update()});el(key+'n').addEventListener('input',e=>{el(key+'r').value=e.target.value;update()})}document.querySelectorAll('input[name=branch]').forEach(e=>e.addEventListener('change',e=>{branch=e.target.value;update()}));el('steps').addEventListener('click',e=>{const b=e.target.closest('[data-step]');if(!b)return;document.querySelectorAll('.step').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.step-panel').forEach((x,i)=>x.classList.toggle('active',i===Number(b.dataset.step)))});function pointer(e){const r=plot.getBoundingClientRect();const s=Math.min(r.width,r.height)/12*zoom;return [(e.clientX-r.left-r.width*.5)/s,(r.height*.55-(e.clientY-r.top))/s]}plot.addEventListener('pointerdown',e=>{const p=pointer(e);if(Math.hypot(p[0]-x,p[1]-y)<.5){dragging=true;plot.setPointerCapture(e.pointerId)}});plot.addEventListener('pointermove',e=>{if(!dragging)return;[x,y]=pointer(e);x=Math.max(-5,Math.min(5,x));y=Math.max(-5,Math.min(5,y));update()});plot.addEventListener('pointerup',()=>dragging=false);plot.addEventListener('pointerdown',e=>{[x,y]=pointer(e);x=Math.max(-5,Math.min(5,x));y=Math.max(-5,Math.min(5,y));dragging=true;plot.setPointerCapture(e.pointerId);update()});plot.addEventListener('pointercancel',()=>dragging=false);plot.addEventListener('lostpointercapture',()=>dragging=false);plot.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.55,Math.min(2.2,zoom*(e.deltaY>0?.9:1.1)));draw()},{passive:false});addEventListener('resize',draw);addEventListener('load',()=>{const wait=()=>window.katex?update():setTimeout(wait,80);wait()});addEventListener('load',()=>{const renderStatic=()=>{if(!window.katex){setTimeout(renderStatic,80);return}document.querySelectorAll('[data-tex]').forEach(e=>{katex.render(e.dataset.tex,e,{displayMode:e.classList.contains('math'),throwOnError:false})})};renderStatic()});
+</script>
+<script>
+  /* Mouse/touch fallback: some embedded file viewers do not forward Pointer Events to canvas reliably. */
+  (function(){
+    let mouseDragging=false;
+    const moveTarget=e=>{
+      const p=pointer(e);
+      x=Math.max(-5,Math.min(5,p[0]));
+      y=Math.max(-5,Math.min(5,p[1]));
+      sync('x',x);
+      sync('y',y);
+      update();
+    };
+    plot.addEventListener('click',moveTarget);
+    plot.addEventListener('mousedown',e=>{mouseDragging=true;moveTarget(e)});
+    window.addEventListener('mousemove',e=>{if(mouseDragging)moveTarget(e)});
+    window.addEventListener('mouseup',()=>{mouseDragging=false});
+    plot.addEventListener('touchstart',e=>{const t=e.touches[0];if(t){mouseDragging=true;moveTarget(t);e.preventDefault()}},{passive:false});
+    plot.addEventListener('touchmove',e=>{const t=e.touches[0];if(mouseDragging&&t){moveTarget(t);e.preventDefault()}},{passive:false});
+    plot.addEventListener('touchend',()=>{mouseDragging=false});
+  })();
+</script>
+<script>
+  function drawElbowAngles(){
+    const cv=document.getElementById('elbow-canvas');if(!cv)return;
+    const s=solve(),a=s[branch];if(!s.reachable||!a)return;
+    const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+    if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#20242b';c.fillRect(0,0,w,h);
+    const scale=Math.min(w,h)/7.4,ex=w*.43,ey=h*.62,pt=t=>[ex+Math.cos(t)*scale,ey-Math.sin(t)*scale],q1=a.q1,q2=a.q2;
+    const base=[ex-Math.cos(q1)*L1*scale,ey+Math.sin(q1)*L1*scale],tip=[ex+Math.cos(q1+q2)*L2*scale,ey-Math.sin(q1+q2)*L2*scale],forward=[ex+Math.cos(q1)*L2*scale*.9,ey-Math.sin(q1)*L2*scale*.9];
+    const line=(from,to,color,width,dash=[])=>{c.save();c.strokeStyle=color;c.lineWidth=width;c.setLineDash(dash);c.beginPath();c.moveTo(...from);c.lineTo(...to);c.stroke();c.restore()};
+    line(base,tip,'#aab3c2',2,[6,6]);line(base,[ex,ey],'#f59e0b',8);line([ex,ey],tip,'#23a6d5',8);line([ex,ey],forward,'#96a2b7',2,[6,6]);
+    const arc=(start,end,r,color,label)=>{let delta=((end-start+Math.PI)%(2*Math.PI))-Math.PI;if(delta<=-Math.PI)delta+=2*Math.PI;c.save();c.strokeStyle=color;c.lineWidth=3;c.beginPath();for(let i=0;i<=28;i++){const t=start+delta*i/28,p=[ex+Math.cos(t)*r,ey-Math.sin(t)*r];if(i)c.lineTo(...p);else c.moveTo(...p)}c.stroke();const m=start+delta/2,lp=[ex+Math.cos(m)*(r+17),ey-Math.sin(m)*(r+17)];c.fillStyle=color;c.font='bold 15px system-ui';c.fillText(label,...lp);c.restore()};
+    arc(q1,q1+q2,34,'#35c6f4','q₂（关节角）');arc(q1+Math.PI,q1+q2,58,'#d946ef','γ（三角形内角）');
+    c.fillStyle='#f8fafc';c.font='bold 15px system-ui';c.fillText('O₁（肘）',ex+10,ey-9);c.fillStyle='#f59e0b';c.fillText('第一根 L₁',base[0]-8,base[1]+24);c.fillStyle='#23a6d5';c.fillText('第二根 L₂',tip[0]+8,tip[1]-7);c.fillStyle='#cbd5e1';c.font='13px system-ui';c.fillText('回指基座 O₀',base[0]-36,base[1]-9);c.fillText('第一根向前延长',forward[0]-50,forward[1]-9);c.fillText('r = |O₀P|',(base[0]+tip[0])/2-18,(base[1]+tip[1])/2-12);c.fillStyle='#ec4899';c.beginPath();c.arc(...tip,6,0,Math.PI*2);c.fill();c.font='bold 15px system-ui';c.fillText('P（目标 / 末端）',tip[0]+9,tip[1]+22);
+  }
+  addEventListener('load',drawElbowAngles);
+  document.getElementById('steps').addEventListener('click',()=>setTimeout(drawElbowAngles,0));
+  document.querySelectorAll('#xr,#xn,#yr,#yn,input[name=branch]').forEach(e=>e.addEventListener('input',()=>setTimeout(drawElbowAngles,0)));
+  document.querySelectorAll('input[name=branch]').forEach(e=>e.addEventListener('change',()=>setTimeout(drawElbowAngles,0)));
+  ['click','mousedown','pointerdown','touchstart'].forEach(name=>plot.addEventListener(name,()=>setTimeout(drawElbowAngles,0)));
+</script>
+<script>
+  let shoulderStage=2,shoulderPlayTimer=0;
+  function drawShoulderAngles(){
+    const cv=document.getElementById('shoulder-canvas'),copy=document.getElementById('shoulder-copy');if(!cv||!copy)return;
+    const s=solve(),a=s[branch];if(!s.reachable||!a){copy.textContent='目标不可达时，先把目标拖回可达环带；这时才有可以分解的 φ、β 与 q₁。';return}
+    const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+    if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#20242b';c.fillRect(0,0,w,h);
+    const elbow=[L1*Math.cos(a.q1),L1*Math.sin(a.q1)],tip=[x,y],points=[[0,0],elbow,tip];
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),minX=Math.min(-.85,...xs),maxX=Math.max(.85,...xs),minY=Math.min(-.85,...ys),maxY=Math.max(.85,...ys);
+    const pad=58,scale=Math.min((w-pad*2)/(maxX-minX),(h-pad*2)/(maxY-minY));
+    const p=v=>[pad+(v[0]-minX)*scale,h-pad-(v[1]-minY)*scale],base=p([0,0]),pElbow=p(elbow),pTip=p(tip),axisEnd=p([Math.max(maxX,.9),0]);
+    const line=(from,to,color,width,dash=[])=>{c.save();c.strokeStyle=color;c.lineWidth=width;c.setLineDash(dash);c.lineCap='round';c.beginPath();c.moveTo(...from);c.lineTo(...to);c.stroke();c.restore()};
+    const dot=(point,color,r=5)=>{c.fillStyle=color;c.beginPath();c.arc(...point,r,0,Math.PI*2);c.fill()};
+    const direction=(angle,r)=>[base[0]+Math.cos(angle)*r,base[1]-Math.sin(angle)*r];
+    const arc=(start,end,r,color,label)=>{let delta=((end-start+Math.PI)%(2*Math.PI))-Math.PI;if(delta<=-Math.PI)delta+=2*Math.PI;c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=3;c.beginPath();for(let i=0;i<=30;i++){const t=start+delta*i/30,pt=direction(t,r);if(i)c.lineTo(...pt);else c.moveTo(...pt)}c.stroke();const mid=start+delta/2,lp=direction(mid,r+19);c.font='bold 19px KaTeX_Math,\"Cambria Math\",serif';c.fillText(label,lp[0]-10,lp[1]-4);c.restore()};
+    line(base,axisEnd,'#aab3c2',3);c.fillStyle='#d6deea';c.font='bold 14px system-ui';c.fillText('基座 x₀',axisEnd[0]-45,axisEnd[1]-10);
+    line(base,pTip,'#9aa7ba',2,[7,6]);dot(base,'#f8fafc',5);dot(pTip,'#ec4899',6);c.fillStyle='#f9a8d4';c.font='bold 15px system-ui';c.fillText('P（目标）',pTip[0]+8,pTip[1]-10);
+    arc(0,s.phi,34,'#ec4899','ϕ');
+    line(base,pElbow,'#465569',6);line(pElbow,pTip,'#465569',6);dot(pElbow,'#718096',5);
+    if(shoulderStage>=1){line(base,pElbow,'#f59e0b',9);line(pElbow,pTip,'#23a6d5',9);dot(pElbow,'#f8fafc',6);arc(a.q1,s.phi,79,'#49d890','β');c.fillStyle='#fbbf24';c.font='bold 14px system-ui';c.fillText('第一根 L₁',(base[0]+pElbow[0])/2-20,(base[1]+pElbow[1])/2-11);c.fillStyle='#4fd1c5';c.fillText('第二根 L₂',(pElbow[0]+pTip[0])/2+6,(pElbow[1]+pTip[1])/2-10)}
+    if(shoulderStage>=2){arc(0,a.q1,56,'#b26df5','q₁')}
+    c.fillStyle='#d6deea';c.font='13px system-ui';c.fillText('目标向量 O₀→P',((base[0]+pTip[0])/2)-43,((base[1]+pTip[1])/2)+25);
+    const phi=fmt(deg(s.phi)),q1=fmt(deg(a.q1)),beta=fmt(deg(a.beta));
+    const messages=[
+      '① 先只看灰色目标向量：从基座 x₀ 转到 O₀→P，就是全局方向 ϕ='+phi+'°。暗色连杆只是在保留机械臂的上下文。',
+      '② q₂ 是第 2 步的输出；β 是本第 3 步新引入、现在才计算的辅助角。把已求出的 q₂ 和两段长度代入横、纵分量后，得到绿色偏角 β='+beta+'°：它从第一根连杆的方向指向目标方向。这里还没有把 q₁ 写出来。',
+      '③ 现在三根射线和三个角同时可见：从 x₀ 到目标的 ϕ='+phi+'°，等于先转紫色 q₁='+q1+'°，再转绿色 β='+beta+'°；所以 q₁=ϕ−β='+q1+'°。'
+    ];
+    copy.textContent=messages[shoulderStage];
+  }
+  function setShoulderStage(stage){clearTimeout(shoulderPlayTimer);shoulderStage=stage;document.querySelectorAll('[data-shoulder-stage]').forEach(button=>button.classList.toggle('active',Number(button.dataset.shoulderStage)===stage));drawShoulderAngles()}
+  document.getElementById('shoulder-steps').addEventListener('click',event=>{const button=event.target.closest('[data-shoulder-stage]');if(button){setShoulderStage(Number(button.dataset.shoulderStage));return}if(event.target.closest('#shoulder-play')){clearTimeout(shoulderPlayTimer);setShoulderStage(0);shoulderPlayTimer=setTimeout(()=>{shoulderStage=1;drawShoulderAngles();shoulderPlayTimer=setTimeout(()=>{shoulderStage=2;drawShoulderAngles()},1150)},1150)}});
+  const oldIKUpdate=window.update;window.update=function(){oldIKUpdate();setTimeout(drawShoulderAngles,0)};
+  addEventListener('load',drawShoulderAngles);addEventListener('resize',drawShoulderAngles);
+  document.getElementById('steps').addEventListener('click',()=>setTimeout(drawShoulderAngles,0));
+</script>
+<script>
+  function drawBetaComponents(){
+    const cv=document.getElementById('beta-canvas');if(!cv)return;
+    const s=solve(),a=s[branch];if(!s.reachable||!a)return;
+    const q2=a.q2,vx=L1+L2*Math.cos(q2),vy=L2*Math.sin(q2),dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+    if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#20242b';c.fillRect(0,0,w,h);
+    const minX=Math.min(-.6,vx,L1)-.35,maxX=Math.max(.8,vx,L1)+.55,minY=Math.min(-.7,vy)-.55,maxY=Math.max(.7,vy)+.55,pad=52,scale=Math.min((w-pad*2)/(maxX-minX),(h-pad*2)/(maxY-minY));
+    const p=v=>[pad+(v[0]-minX)*scale,h-pad-(v[1]-minY)*scale],o=p([0,0]),elbow=p([L1,0]),tip=p([vx,vy]),proj=p([vx,0]);
+    const line=(from,to,color,width,dash=[])=>{c.save();c.strokeStyle=color;c.lineWidth=width;c.setLineDash(dash);c.lineCap='round';c.beginPath();c.moveTo(...from);c.lineTo(...to);c.stroke();c.restore()};
+    const dot=(point,color,r=5)=>{c.fillStyle=color;c.beginPath();c.arc(...point,r,0,Math.PI*2);c.fill()};
+    const arcAt=(center,start,end,r,color,label)=>{let delta=((end-start+Math.PI)%(2*Math.PI))-Math.PI;if(delta<=-Math.PI)delta+=2*Math.PI;c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=3;c.beginPath();for(let i=0;i<=28;i++){const t=start+delta*i/28,pt=[center[0]+Math.cos(t)*r,center[1]-Math.sin(t)*r];if(i)c.lineTo(...pt);else c.moveTo(...pt)}c.stroke();const m=start+delta/2;c.font='bold 17px KaTeX_Math,\"Cambria Math\",serif';c.fillText(label,center[0]+Math.cos(m)*(r+18)-8,center[1]-Math.sin(m)*(r+18)+4);c.restore()};
+    line(p([minX,0]),p([maxX,0]),'#aab3c2',2);line(p([0,minY]),p([0,maxY]),'#aab3c2',2);
+    c.fillStyle='#d6deea';c.font='bold 14px system-ui';c.fillText('局部 x₁',p([maxX,0])[0]-55,p([maxX,0])[1]-10);c.fillText('局部 y₁',p([0,maxY])[0]+9,p([0,maxY])[1]+18);
+    line(o,tip,'#ec4899',2,[7,6]);line(o,elbow,'#f59e0b',9);line(elbow,tip,'#23a6d5',9);line(elbow,proj,'#88a0b8',2,[6,5]);line(proj,tip,'#49d890',3,[6,5]);
+    dot(o,'#f8fafc',6);dot(elbow,'#f8fafc',6);dot(tip,'#ec4899',6);
+    arcAt(elbow,0,q2,30,'#35c6f4','q₂');arcAt(o,0,Math.atan2(vy,vx),48,'#49d890','β');
+    c.font='bold 14px system-ui';c.fillStyle='#f8fafc';c.fillText('O₀',o[0]-20,o[1]+22);c.fillText('O₁',elbow[0]-12,elbow[1]+22);c.fillStyle='#f9a8d4';c.fillText('P',tip[0]+9,tip[1]-9);
+    c.fillStyle='#fbbf24';c.fillText('L₁',(o[0]+elbow[0])/2-14,(o[1]+elbow[1])/2-11);c.fillStyle='#35c6f4';c.fillText('L₂',(elbow[0]+tip[0])/2+7,(elbow[1]+tip[1])/2-8);
+    c.fillStyle='#cbd5e1';c.font='13px system-ui';c.fillText('横向：L₁ + L₂ cos q₂',(o[0]+proj[0])/2-55,o[1]+25);c.fillStyle='#6ee7b7';c.fillText('纵向：L₂ sin q₂',proj[0]+8,(proj[1]+tip[1])/2);
+    c.fillStyle='#f9a8d4';c.fillText('合向量 O₀→P',(o[0]+tip[0])/2-38,(o[1]+tip[1])/2-15);
+  }
+  const updateWithBeta=window.update;window.update=function(){updateWithBeta();setTimeout(drawBetaComponents,0)};
+  addEventListener('load',drawBetaComponents);addEventListener('resize',drawBetaComponents);
+  document.getElementById('steps').addEventListener('click',()=>setTimeout(drawBetaComponents,0));
+</script>
+<script>
+  function drawAngleSign(){
+    const cv=document.getElementById('sign-canvas');if(!cv)return;
+    const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+    if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#20242b';c.fillRect(0,0,w,h);
+    const ox=w*.34,oy=h*.64,len=Math.min(w,h)*.34,pt=a=>[ox+len*Math.cos(a),oy-len*Math.sin(a)];
+    const arrow=(a,color,width)=>{const p=pt(a),head=.19,cx=p[0]-Math.cos(a)*head*len,cy=p[1]+Math.sin(a)*head*len;c.strokeStyle=color;c.fillStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(ox,oy);c.lineTo(...p);c.stroke();c.beginPath();c.moveTo(...p);c.lineTo(cx+Math.cos(a+2.55)*head*len,cy-Math.sin(a+2.55)*head*len);c.lineTo(cx+Math.cos(a-2.55)*head*len,cy-Math.sin(a-2.55)*head*len);c.closePath();c.fill();return p};
+    const arc=(a,b,r,color,label)=>{c.strokeStyle=color;c.fillStyle=color;c.lineWidth=3;c.beginPath();for(let i=0;i<=24;i++){const t=a+(b-a)*i/24,p=[ox+r*Math.cos(t),oy-r*Math.sin(t)];if(i)c.lineTo(...p);else c.moveTo(...p)}c.stroke();const m=(a+b)/2;c.font='bold 15px system-ui';c.fillText(label,ox+(r+22)*Math.cos(m),oy-(r+22)*Math.sin(m))};
+    const base=arrow(0,'#b7c1d1',5),plus=arrow(Math.PI/3,'#23a6d5',6),minus=arrow(-Math.PI/3,'#e59300',6);arc(0,Math.PI/3,43,'#23a6d5','+q（逆时针）');arc(0,-Math.PI/3,43,'#e59300','−q（顺时针）');
+    c.fillStyle='#f8fafc';c.font='bold 15px system-ui';c.fillText('起始方向：局部 x 轴',base[0]+8,base[1]+22);c.fillStyle='#cbd5e1';c.font='13px system-ui';c.fillText('从 +z 方向看纸面',w*.61,h*.18);c.fillText('（右手拇指指向你）',w*.61,h*.18+22);c.beginPath();c.arc(ox,oy,6,0,Math.PI*2);c.fill();
+  }
+  addEventListener('load',drawAngleSign);addEventListener('resize',drawAngleSign);
+</script>
+</body>
+</html>

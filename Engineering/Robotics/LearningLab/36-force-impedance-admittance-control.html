@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>笔记 36：力控制、阻抗与导纳</title><style>
+:root{--bg:#070b15;--p:#10192b;--p2:#0b1222;--l:#26354d;--fg:#eef5ff;--m:#9aaac0;--b:#38bdf8;--g:#34d399;--a:#fbbf24;--v:#a78bfa;--r:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.72 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1120px;margin:auto;padding:28px 20px 72px}h1,h2,h3{line-height:1.3}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:.25rem 0 .6rem}h2{margin-top:2.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--l)}h3{margin:.1rem 0 .55rem}.crumb,.muted,.small{color:var(--m)}a{color:var(--b)}.card{background:var(--p);border:1px solid var(--l);border-radius:12px;padding:17px 18px;margin:15px 0}.guide{border-left:5px solid var(--v)}.warn{border-left:5px solid var(--a)}.ok{border-left:5px solid var(--g)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.formula{display:block;text-align:center;background:#080e1b;border:1px solid var(--l);border-radius:10px;padding:13px;margin:13px 0;overflow:auto;font:16px/1.7 ui-monospace,Consolas,monospace}.table{border-collapse:collapse;width:100%}.table th,.table td{padding:10px;border-bottom:1px solid var(--l);text-align:left;vertical-align:top}.table th{color:var(--b);white-space:nowrap}.lab{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px}.controls{display:grid;gap:10px}.control{background:var(--p2);border:1px solid var(--l);border-radius:8px;padding:10px}.row{display:grid;grid-template-columns:1fr 74px;gap:8px;align-items:center;margin:6px 0}.row input{grid-column:1/-1;width:100%;accent-color:var(--b)}output{background:#050914;border-radius:5px;padding:3px 6px;text-align:right;font:700 .9rem ui-monospace,Consolas,monospace}.stage{background:#060b15;border:1px solid var(--l);border-radius:10px;overflow:hidden}.stage canvas{display:block;width:100%;height:auto}.legend{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--l);font-size:.85rem;color:var(--m)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{background:#081222;border:1px solid var(--l);border-radius:8px;padding:10px}.metric b{display:block;color:var(--m);font-size:.8rem}.metric output{display:block;background:none;padding:2px 0;text-align:left;font-size:1.03rem}.term{border-left:4px solid var(--color);padding:10px 12px;background:var(--p2);border-radius:7px;margin:8px 0}.term b{color:var(--color)}details{background:#0b1425;border:1px solid var(--l);border-radius:8px;padding:10px 13px;margin:10px 0}summary{cursor:pointer;font-weight:700;color:#dceaff}@media(max-width:800px){main{padding:22px 14px}.grid,.lab{grid-template-columns:1fr}.table{font-size:.9rem}}@media(max-width:450px){.numbers{grid-template-columns:1fr}}
+</style></head><body><main>
+<p class="crumb"><a href="00-progress.html">动力学与控制进度</a> · <a href="34-pid-position-control.html">34：PID</a> · <a href="35-computed-torque-control.html">35：CTC</a> · 36：力控制、阻抗与导纳</p>
+<h1>笔记 36：接触后，目标不再只是“到这个位置”</h1>
+<p class="muted">自由空间里，末端偏 1 mm 往往只是几何误差；插接、打磨、装配或沿表面移动时，同样的 1 mm 可能意味着很大的接触力。接触控制要回答的不是单纯“末端在哪”，而是“受力后允许怎样让位、以什么方向让位、力是否仍在允许边界内”。</p>
+
+<section class="card guide"><h2 style="margin-top:0;border:0;padding:0">先用一维推墙，固定三个概念</h2><p>取末端正向为向右。目标点在墙右侧，墙会对末端施加向左的反作用力 <code>F_ext&lt;0</code>。纯位置控制会继续追逐目标点；柔顺控制则允许末端根据测得的外力后退。</p><span class="formula">自由空间：位置误差主要是几何问题   →   接触空间：位置误差与接触力必须一起被约束</span></section>
+
+<h2>1. 三种控制目标，先不要混为一个词</h2>
+<table class="table"><thead><tr><th>方式</th><th>优先规定什么</th><th>典型问题/适用面</th></tr></thead><tbody>
+<tr><td>位置控制</td><td>末端严格追踪 <code>x_d</code></td><td>自由空间搬运、点到点；未知刚性接触时可能硬顶。</td></tr>
+<tr><td>力控制</td><td>受约束方向的 <code>F_d</code></td><td>如法向恒力打磨；通常与切向位置控制组合，不是“全方向只控力”。</td></tr>
+<tr><td>阻抗/导纳</td><td>力与位移/速度之间的动态关系</td><td>允许受力后按指定刚度、阻尼、惯性让位；常用于接触过渡和人机协作。</td></tr>
+</tbody></table>
+
+<h2>2. 阻抗：规定“受力后应怎样像弹簧—阻尼—质量那样反应”</h2>
+<p>令 <code>e=x-x_d</code>。一种常见的期望关系是：</p>
+<span class="formula">M_d ë + B_d ė + K_d e = F_ext</span>
+<div class="grid"><section class="card"><h3>正向直觉</h3><p>若墙把末端向左推，<code>F_ext&lt;0</code>，那么在稳态近似下 <code>e≈F_ext/K_d&lt;0</code>：末端会向左让位。<code>K_d</code> 越大越“硬”，<code>B_d</code> 越大越不容易弹跳，<code>M_d</code> 影响瞬态的迟钝/灵敏程度。</p></section><section class="card"><h3>它的实现含义</h3><p>阻抗控制通常要能在关节力矩或笛卡尔力层输出努力量，再经 <code>τ=JᵀF</code> 映射到关节。它不是“给位置控制器多加一个弹簧名字”就自动成立。</p></section></div>
+
+<h2>3. 导纳：测到力后，先生成一个“该让到哪”的新位置命令</h2>
+<span class="formula">M_a ë + B_a ė + K_a e = F_ext,   x_cmd=x_nom+e</span>
+<p>数学形式像阻抗，但<strong>信号方向不同</strong>：导纳控制把力作为输入，积分出位移/速度命令，再交给内部稳定的位置环。因此它特别适合“设备主要暴露位置接口，但能可靠测得外力”的系统。</p>
+<div class="term" style="--color:#a78bfa"><b>一条必须记住的区分：</b>阻抗：<strong>运动偏差 → 需要输出的力/力矩</strong>；导纳：<strong>测得的力 → 修正后的运动命令</strong>。两者都在塑造力—运动关系，不能只看同一条二阶方程就说它们相同。</div>
+
+<h2>4. 交互对照：纯位置硬顶 vs 导纳外环先让位</h2>
+<section class="lab card"><div class="controls"><div class="control"><h3>环境与导纳参数</h3><div class="row"><label for="wall">墙刚度 k_env (N/m)</label><output id="wallo"></output><input id="wall" type="range" min="300" max="3000" step="100" value="1500"></div><div class="row"><label for="ka">虚拟刚度 K_a (N/m)</label><output id="kao"></output><input id="ka" type="range" min="30" max="800" step="10" value="160"></div><div class="row"><label for="ba">虚拟阻尼 B_a (N·s/m)</label><output id="bao"></output><input id="ba" type="range" min="5" max="100" step="1" value="30"></div></div><div class="control"><h3>内层位置环（两种方式共用）</h3><div class="row"><label for="kp">Kp</label><output id="kpo"></output><input id="kp" type="range" min="300" max="3000" step="100" value="1600"></div><div class="row"><label for="kd">Kd</label><output id="kdo"></output><input id="kd" type="range" min="30" max="300" step="10" value="120"></div></div><p class="small">墙位于 0.40 m；名义目标从 0 平滑推进到 0.65 m。蓝=纯位置控制，绿=带导纳外环的位置控制。示例只说明控制关系，未建模真实传感器噪声、碰撞检测或硬件安全链。</p></div><div class="stage"><canvas id="plot" width="800" height="610" aria-label="一维接触中位置控制与导纳控制对照"></canvas><div class="legend"><span><i class="dot" style="background:#a78bfa"></i>名义目标 x_nom</span><span><i class="dot" style="background:#94a3b8"></i>墙位置</span><span><i class="dot" style="background:#38bdf8"></i>纯位置</span><span><i class="dot" style="background:#34d399"></i>导纳</span><span>上：位置；下：接触力大小。</span></div></div></section>
+<section class="card"><div class="numbers"><div class="metric"><b>纯位置最大接触力</b><output id="posForce">—</output></div><div class="metric"><b>导纳最大接触力</b><output id="admForce">—</output></div><div class="metric"><b>导纳最终让位 e</b><output id="offset">—</output></div><div class="metric"><b>当前判断</b><output id="hint">—</output></div><div class="metric"><b>墙的位置</b><output>0.40 m</output></div><div class="metric"><b>仿真窗口</b><output>3.0 s</output></div></div></section>
+
+<h2>5. 从末端力到关节力矩：中间必须经过坐标与 Jacobian</h2>
+<span class="formula">τ_ext = J(q)ᵀ F_ext</span>
+<p>六维情况下 <code>F_ext</code> 是力/力矩组成的 wrench，<code>Jᵀ</code> 将它映射为各关节力矩。实际使用力传感器数据前还需要至少确认：传感器零偏、重力补偿、TCP 位姿、表达坐标系、时间戳和滤波延迟。把“传感器显示 20 N”直接代进控制律是危险的简化。</p>
+
+<h2>6. 接触控制的工程边界</h2>
+<ol><li><strong>先设硬边界：</strong>关节行程、速度、力矩、电流、笛卡尔速度/力、超时与急停，均应在控制算法之外有独立约束。</li><li><strong>先低速接近：</strong>接触前的动能决定第一下撞击有多重；柔顺参数不能替代受控接近速度。</li><li><strong>分方向设计：</strong>法向可能控力/柔顺，切向仍要控位置或速度；不要用全空间同一刚度蒙混工艺需求。</li><li><strong>传感器不等于安全认证：</strong>软件检测接触、Servo 碰撞缩放、导纳让位都不能取代安全 PLC、保护区、急停和设备厂家规定的安全功能。</li></ol>
+
+<details><summary>导纳中的 K_a 越小是否越安全？</summary><p>不是。K_a 很小会更容易让位，但也可能使工艺位置漂移、接触建立过慢或与内层位置环/环境耦合产生振荡。安全来自明确的速度、力和工作区限制；柔顺参数只定义其中一部分动态行为。</p></details>
+<details><summary>没有六维力传感器还能做柔顺吗？</summary><p>有些系统会用关节力矩估计、驱动电流或碰撞检测构造粗略外力估计，但精度、带宽和可观测方向都不同。能否支持力控必须看设备硬件、驱动接口和标定条件，不能默认可用。</p></details>
+<details><summary>为什么这页不把导纳命令直接接到真机？</summary><p>真机接入前需要明确厂商接口、频率、速度/加速度/力矩限幅、碰撞与急停行为、力传感器安装和标定，并在受控环境逐级验收。本页只建立控制结构和一维趋势，不是现场运行程序。</p></details>
+<p class="small">下一主线：37 两连杆“轨迹 → CTC → 动力学积分”的完整数值闭环，把 33–35 从分别成立的页面变成一次可追溯的端到端验证。</p>
+</main><script defer src="36-force-impedance-admittance-control.js"></script></body></html>
