@@ -21,6 +21,11 @@
 
 ### 维护
 
+- **阶段 4：教材素材权利界限核准与离线归档**：
+  - 全面核查并确认第三方商业教材素材（318 张 Craig 影印页 PNG 与 1 份完整扫描版 PDF）版权属性，确立“严禁公开、不入知识库、不上云端”的红线；
+  - 确认目标知识库已通过纯原生 KaTeX 数学推导与自主 Canvas/SVG 交互仿真实现理论自洽，全库无任何悬挂指向第三方教材扫描页的断链或静态资产依赖；
+  - 在独立目录 `D:\Repository\DevVault\reference\` 建立脱离源项目 `robotics` 文件夹的完整离线参考库（含全量 319 个素材文件及独立压缩包 `craig_book_pages.zip`），出具包含 322 项记录的 SHA256 清单 (`MANIFEST_SHA256.txt`) 并完成抽样还原哈希比对校验；
+  - 导出并验证原项目 227 次提交的完整 Git 历史封包 `robotics-notes-history-227commits.bundle`（通过 `git bundle verify` 与临时克隆提交树完全复现），确立原 GitHub 仓库只读归档策略。
 - 升级 `scripts/sync_docs.py`，支持 `.js`、`.css` 及静态媒体资源同步，同时设立 `EXCLUDED_DIR_NAMES` 排除边界，严格隔离未授权第三方教材扫描页与私有归档文件。
 - 初始化机器人学板块体系骨架：建立 `Engineering/Robotics/` 领域总览，创建 `Kinematics/`、`Dynamics/`、`Control/`、`ROS2/` 体系与 `LearningLab/` 交互实验区入口，全站通过 MkDocs 严格构建校验（`mkdocs build --strict`）。
 - 完成阶段 2 交互资产全量迁入：将 75 篇原生 HTML 学习页、11 个独立 JS 物理仿真台与题库引擎完整迁入 [LearningLab](Engineering/Robotics/LearningLab/index.md)。
