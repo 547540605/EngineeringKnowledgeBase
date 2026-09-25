@@ -15,7 +15,7 @@
   }
   function series() {
     const kp=value('kp'), kd=value('kd'), ki=value('ki'), limit=value('limit');
-    const target=value('target'), disturbance=value('disturb'), inertia=value('inertia');
+    const target=value('target'), disturb=value('disturb'), inertia=value('inertia');
     const dt=.002, steps=2500, damping=.8, integralLimit=3;
     let q=0, v=0, integral=0, saturated=false;
     const out=[];

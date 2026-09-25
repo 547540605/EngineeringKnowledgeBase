@@ -316,9 +316,9 @@
       先用当前 3R 数字孪生把“目标点 → 合法关节角 → 平滑直线”亲手跑通。这里仅处理末端位置，不伪装成六维位姿控制。
     </p>
     <div style="margin:0 0 12px 0; padding:11px 13px; border:1px solid rgba(251,191,36,.55); border-left:4px solid var(--warn); border-radius:8px; background:rgba(251,191,36,.06); font-size:.88rem;">
-      <strong style="color:var(--warn);">现在从这里继续：</strong>理论 32–37 已把轨迹、PID、CTC、柔顺与数值闭环走完；工程上先做 <strong>04 单点 IK</strong>，再按 05→06→07→08→09→10 逐一增加能力。当前资料仓库没有 ROS 源码工作区，因此实现者应按 <a href="implementation-handoff.md" style="color:var(--primary);">实施交接规格的 S2→S5</a> 创建包和验证证据，不能跳过纯函数与 FK 回代直接做 RViz 演示。
+      <strong style="color:var(--warn);">现在从这里继续：</strong>理论 32–37 已把轨迹、PID、CTC、柔顺与数值闭环走完；工程上先做 <strong>04 单点 IK</strong>，再按 05→06→07→08→09→10 逐一增加能力。当前资料仓库没有 ROS 源码工作区，因此实现者应按 <a href="implementation-handoff/index.html" style="color:var(--primary);">实施交接规格的 S2→S5</a> 创建包和验证证据，不能跳过纯函数与 FK 回代直接做 RViz 演示。
     </div>
-    <p style="margin:0 0 12px 0; font-size:0.86rem; display:flex; gap:14px; flex-wrap:wrap;"><a href="04-13-engineering-roadmap.md" style="color:var(--primary);">📋 打开 ROS2-04～13 可跟做执行路线</a><a href="04-10-review-matrix.md" style="color:var(--primary);">🔎 打开 04～10 实施 Review 矩阵</a></p>
+    <p style="margin:0 0 12px 0; font-size:0.86rem; display:flex; gap:14px; flex-wrap:wrap;"><a href="04-13-engineering-roadmap/index.html" style="color:var(--primary);">📋 打开 ROS2-04～13 可跟做执行路线</a><a href="04-10-review-matrix/index.html" style="color:var(--primary);">🔎 打开 04～10 实施 Review 矩阵</a></p>
 
     <div class="note-list">
       <!-- 04 -->
@@ -446,7 +446,7 @@
     <p style="color:var(--muted); font-size:0.88rem; margin:0 0 10px 0;">
       从手写 3R 原理迁移到六轴工业框架：描述、规划配置、碰撞场景、轨迹控制器与执行反馈各自独立。
     </p>
-    <p style="margin:0 0 12px 0; font-size:0.88rem;"><a href="implementation-handoff.md" style="color:var(--primary);">查看实施交接规格：包职责、接口契约、验收与 review 红线 →</a></p>
+    <p style="margin:0 0 12px 0; font-size:0.88rem;"><a href="implementation-handoff/index.html" style="color:var(--primary);">查看实施交接规格：包职责、接口契约、验收与 review 红线 →</a></p>
     <div class="note-list">
       <a class="note-item" href="11-six-axis-moveit-config.html" style="border-style:dashed;">
         <div class="note-info"><div class="note-title"><span style="color:var(--muted); margin-right:6px;">11</span>六轴 URDF/SRDF 与 MoveIt 配置</div><div class="note-desc">TCP、关节限制、自碰撞矩阵、planning group 与运动学/控制器配置的职责边界。</div></div>

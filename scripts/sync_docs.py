@@ -38,10 +38,8 @@ def main() -> None:
         if root_doc.exists():
             shutil.copy2(root_doc, DOCS / root_doc.name)
 
-    # Allowed extensions to sync into docs/
-    # Supports Markdown, interactive HTML, standalone simulation JS, stylesheets, and vector/raster graphics
     ALLOWED_EXTENSIONS = {".md", ".svg", ".html", ".js", ".css", ".png", ".jpg", ".jpeg"}
-    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", ".git", ".agents", ".codex", "archive"}
+    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", ".git", ".agents", ".codex"}
 
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
         if not source_dir.exists():
