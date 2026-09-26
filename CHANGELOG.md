@@ -2,6 +2,20 @@
 
 本页记录对读者有影响的知识新增、内容更新和结构调整，便于快速了解近期变化。它不是完整的 Git 提交历史；具体改动仍以链接的知识条目和仓库提交记录为准。
 
+## 2026-09-26
+
+### 维护 (阶段 5：全站回归与单一维护入口)
+
+- **确立机器人学单一维护入口**：在知识库总架构 [首页指南](index.md) 中正式纳入 `Engineering/Robotics/` 领域版图，制定《机器人学维护规范与事实边界》，明确本仓库为所有机器人理论知识图谱与交互实验的**唯一长期演进与维护入口**；
+- **固化工业工程事实边界与安全红线**：
+  - 在 [MoveIt 2 运动规划架构](Engineering/Robotics/ROS2/MoveIt2-Motion-Planning-Architecture.md) 中强化事实边界说明，明确规划成功（`plan() == SUCCESS`）绝不等于物理硬件执行成功，必须对 Controller 状态与返回码进行严格错误闭环；
+  - 在 [ros2_control 硬件接口抽象](Engineering/Robotics/ROS2/ROS2-Control-Hardware-Interface-Abstraction.md) 中建立工业通信红线，强调 `/joint_states` 纯属只读传感器反馈（Sensor Feedback），严禁误作真机控制指令，控制必须通过受控的 Command Interface 下发；
+  - 在 [ROS 2 学习实验区](Engineering/Robotics/LearningLab/ros2/00-progress.html) 与 [Python 轨迹控制](Engineering/Robotics/LearningLab/ros2/03-python-trajectory-control.html) 中明确标定事实边界，澄清教学仿真与代码级顺应性绝不能替代物理功能安全（真机必须依赖硬件急停、安全 PLC 与安全认证硬件）；
+- **完成全站无依赖克隆与全量回归**：
+  - 在独立临时环境执行干净克隆测试，验证目标仓库在完全脱离旧仓库本地路径下能够 100% 独立构建成功；
+  - 运行全量质检门禁系统 `scripts/quality_gate_learning_lab.py` v2.0，全站 74 门 HTML 课程、11 个独立仿真引擎与题库脚本、61 个 Canvas 画布及 6,077 处网站编译资源链接 100% 零死链、零缺陷通过（GREEN）；
+  - 确认源项目 `robotics` 中全部自有资产在阶段 0 清单中均有确切目标去向，且未跟踪私有素材已在 `D:\Repository\DevVault\reference\` 妥善备份。
+
 ## 2026-09-25
 
 ### 新增 (阶段 3：可复用内容纳入知识图谱)

@@ -260,6 +260,11 @@
     <code>[你写的 Python 节点]</code> ──(50Hz 广播 /joint_states)──▶ <code>[robot_state_publisher]</code> (URDF 矩阵正解) ──(/tf)──▶ <code>[RViz2]</code> (3D渲染)
   </div>
 
+  <div style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 0.85rem; color: #fbbf24; line-height: 1.6;">
+    <strong>⚠️ 工业事实边界说明：</strong>
+    教学实战中通过自定义 Python 节点向 <code>/joint_states</code> 广播关节状态，仅用于驱动 <code>robot_state_publisher</code> 与 RViz 进行正向运动学 3D 渲染可视化。在工业真机中，<code>/joint_states</code> 是只读传感器反馈通道；对物理机器人的控制必须通过 <code>ros2_control</code> 硬件抽象层与受控的 Command Interface（如 <code>FollowJointTrajectory</code> Action）下发，切勿将 <code>/joint_states</code> 误作真机执行命令。同时，规划成功（Planning SUCCESS）不代表物理执行成功，教学代码亦不构成工业功能安全证明。
+  </div>
+
   <!-- Phase 1: 已完成模块 -->
   <div class="chapter-card" style="border-left: 4px solid var(--success);">
     <div class="chapter-head">

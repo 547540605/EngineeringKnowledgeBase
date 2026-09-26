@@ -241,6 +241,13 @@ Engineering
 ├── DotNet
 │   ├── CSharp
 │   └── ASPNETCore
+├── Robotics
+│   ├── Kinematics (空间几何与运动学)
+│   ├── Dynamics (牛顿-欧拉动力学与参数辨识)
+│   ├── Control (轨迹规划与先进控制)
+│   ├── Force-Control-and-Compliant-Assembly (力控与柔顺装配)
+│   ├── ROS2 (现代工业级架构与接口)
+│   └── LearningLab (交互式实验区与智能题库)
 ├── Python
 ├── Android
 ├── Linux
@@ -467,6 +474,26 @@ AI应优先维护知识结构。
 
 ---
 
+## Robotics Maintenance & Engineering Boundaries
+
+机器人学与工业机器人运控板块（[Engineering/Robotics/](Engineering/Robotics/index.md)）作为工程实践的重要支柱，遵守以下单一维护入口与工程事实边界准则：
+
+### 1. 单一维护入口 (Single Source of Truth)
+* **唯一演进入口**：本仓库 `EngineeringKnowledgeBase` 为所有机器人学理论专题、算法推导、ROS 2 架构与交互式教学实验的**唯一长期演进与维护入口**；
+* **历史归档解耦**：历史独立项目 `robotics`（原仓库 `robotics-notes`）已完成历史使命并被全量并入；其全部 227 次提交的完整 Git Bundle 历史封包与第三方教材离线参考库均已在 `D:\Repository\DevVault\reference\` 完成物理校验归档，原项目不作为日常维护入口。
+
+### 2. 内容层级与分工维护
+* **理论核心与工程规范**：维护于 `Engineering/Robotics/{Kinematics,Dynamics,Control,Force-Control-and-Compliant-Assembly,ROS2}/`，恪守“一主题一知识点”，提供严密推导、单位定义与代码级验证；
+* **交互实验与仿真演练**：维护于 `Engineering/Robotics/LearningLab/`，包含 74 门 HTML 课程、11 个独立数值物理引擎与题库中心；
+* **双向导航铁律**：所有新增知识条目必须链接到对应的 LearningLab 实验页；所有实验页必须在顶部导航提供回到权威知识条目的回链。
+
+### 3. 工程事实边界与安全红线（三不原则）
+* **不把 `/joint_states` 当真机控制命令**：`/joint_states` 仅是关节状态只读反馈（Sensor Feedback），严禁将其作为向底层下发的运动控制命令；
+* **不把规划成功当执行成功**：MoveIt 2 等工具“规划成功”（Planning SUCCESS）仅代表在静态模型中找到无碰撞路径，绝不等于控制器或硬件执行成功（必须对 Action 执行状态与底层返回码进行工业级错误闭环）；
+* **不把教学软件当安全功能证明**：仿真环境、开环顺应性与教学代码绝不能替代真实工业机器人的功能安全，真机必须依赖物理急停、安全 PLC 与安全认证硬件。
+
+---
+
 # Future RAG Compatibility
 
 本仓库未来可能作为：
@@ -501,9 +528,16 @@ EngineeringKnowledgeBase
 ├── ComputerScience/
 │   └── 跨语言、跨技术栈的基础知识
 └── Engineering/
-    └── DotNet/
-        ├── CSharp/
-        └── ASPNETCore/
+    ├── DotNet/
+    │   ├── CSharp/
+    │   └── ASPNETCore/
+    └── Robotics/
+        ├── Kinematics/ (空间变换、齐次矩阵、DH 与微分运动学)
+        ├── Dynamics/ (拉格朗日闭式、牛顿-欧拉递推与动力学辨识)
+        ├── Control/ (时间律规划、PID 位置闭环、计算力矩与伺服三环)
+        ├── Force-Control-and-Compliant-Assembly/ (NISTIR 7901 标准与柔顺装配)
+        ├── ROS2/ (URDF 建模、TF2 坐标链、MoveIt 2 与硬件抽象)
+        └── LearningLab/ (74 篇交互课程、11 门独立仿真与题库中心)
 ```
 
 具体目录以仓库现状为准；新增知识优先归入已有领域，避免按项目或时间线堆放。

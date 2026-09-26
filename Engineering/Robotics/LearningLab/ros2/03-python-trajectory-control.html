@@ -484,6 +484,12 @@ if __name__ == '__main__':
       </tbody>
     </table>
 
+    <div class="tip" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
+      <strong>⚠️ 工业事实边界与安全警示（极其重要）：</strong><br>
+      ① <strong>/joint_states 不是通用真机控制命令</strong>：在 ROS 2 工业标准中，<code>/joint_states</code> 属于只读传感器反馈通道（Sensor Feedback），由底层硬件编码器驱动或 <code>joint_state_broadcaster</code> 高频广播。本篇实战通过自定义 Python 节点发布 <code>/joint_states</code> 仅用于驱动 <code>robot_state_publisher</code> 进行 RViz 纯视觉数字孪生演示；在控制真实物理机械臂时，绝不能直接往 <code>/joint_states</code> 强灌指令，必须经由 <code>ros2_control</code> 硬件抽象层与受控的 Command Interface（如 <code>FollowJointTrajectory</code> Action）下发！<br>
+      ② <strong>教学软件不是安全功能证明</strong>：代码层面的数学轨迹即使在仿真中表现完美，也绝不代表具备物理防撞、急停或超限保护，真机部署必须依赖硬件安全回路与认证的安全控制器。
+    </div>
+
     <!-- 正文 4 -->
     <h2>四、实操全流程：编译、单节点测试与 Launch 一键起飞</h2>
     <p>

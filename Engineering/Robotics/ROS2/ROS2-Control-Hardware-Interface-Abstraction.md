@@ -138,3 +138,17 @@ private:
     std::vector<double> hw_commands_;
 };
 ```
+
+---
+
+## 6. 工业工程事实边界与通信红线
+
+> [!WARNING]
+> **两大工业事实边界**：
+> 1. **/joint_states 绝非真机控制接口**：
+>    - `/joint_states` 是由 `joint_state_broadcaster` 从底层硬件 `StateInterface` 高频读取并对外发布的**只读状态反馈（Sensor Feedback）**；
+>    - 严禁试图通过向 `/joint_states` 发布数据来驱动物理电机；任何运动控制命令必须通过受控的 Command Interface（如 `JointTrajectoryController` 的 Action 或 `ForwardCommandController` 订阅的话题）由 `controller_manager` 严格调度执行；
+> 2. **教学仿真不是安全功能证明**：
+>    - `fake_hardware` 或教学仿真用于验证逻辑与上层流水线，不具备真实的惯量冲击、重力倾覆或驱动故障响应；
+>    - 软件层面的平滑轨迹绝不能代替真实的硬件急停断电、抱闸时序控制与安全 PLC。
+
