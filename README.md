@@ -471,7 +471,7 @@ AI应优先维护知识结构。
 
 ## Robotics
 
-知识库原有的[机器人力控制与柔顺装配](Engineering/Robotics/Force-Control-and-Compliant-Assembly/index.md)专题继续保留。其余机器人学课程、交互演示和 ROS 2 学习内容由[独立机器人学项目](https://github.com/547540605/robotics-notes)维护；知识库不再复制。该仓库链接不是在线交互阅读器地址，待原项目实际发布地址确认后再更新入口。
+知识库原有的[机器人力控制与柔顺装配](Engineering/Robotics/Force-Control-and-Compliant-Assembly/index.md)专题继续保留。其余机器人学课程、交互演示和 ROS 2 学习内容由独立机器人学项目维护；点击[机器人学入口](Engineering/Robotics/index.md)即可跳转到[原版交互学习目录](https://547540605.github.io/robotics-notes-site/)。知识库不再复制课程文件。
 
 ---
 

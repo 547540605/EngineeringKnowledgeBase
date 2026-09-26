@@ -6,9 +6,9 @@
 
 ### 结构调整
 
-- 撤销 9 月 25–26 日将独立机器人学课程并入知识库的改动。机器人学课程、交互页与 ROS 2 学习资料继续由[原项目](https://github.com/547540605/robotics-notes)维护；知识库只提供项目入口。
+- 撤销 9 月 25–26 日将独立机器人学课程并入知识库的改动。机器人学课程、交互页与 ROS 2 学习资料继续由原项目维护；知识库的[机器人学入口](Engineering/Robotics/index.md)直接跳转到[原版课程站点](https://547540605.github.io/robotics-notes-site/)。
 - 保留知识库原有的[机器人力控制与柔顺装配](Engineering/Robotics/Force-Control-and-Compliant-Assembly/index.md)专题；先前误公开的简历仍保持移除。
-- 原项目的在线交互阅读器地址尚未确认；仓库链接不等同于可直接浏览的学习站点。
+- 课程站点只发布原版学习页及其交互脚本，不包含简历、教材扫描页或 PDF。
 
 ## 2026-09-24
 

@@ -1,10 +1,12 @@
+<meta http-equiv="refresh" content="0; url=https://547540605.github.io/robotics-notes-site/">
+
+<script>window.location.replace('https://547540605.github.io/robotics-notes-site/');</script>
+
 # 机器人学
 
-机器人学课程、交互演示和 ROS 2 学习内容继续由独立项目维护：
+正在前往[原版机器人学交互学习目录](https://547540605.github.io/robotics-notes-site/)。如果浏览器没有自动跳转，请点击该链接。
 
-**[前往原机器人学项目](https://github.com/547540605/robotics-notes)**
-
-知识库不再复制这些课程。原项目目前没有经确认可访问的在线交互阅读器地址；上方是项目仓库入口，不等同于直接打开 HTML 阅读器。待原站发布地址确认后，将此链接改为阅读器入口。
+课程仍由独立的机器人学项目维护；知识库不再复制课程文件。
 
 知识库原有的独立专题仍保留在此：
 
