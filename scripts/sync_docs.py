@@ -38,24 +38,16 @@ def main() -> None:
         if root_doc.exists():
             shutil.copy2(root_doc, DOCS / root_doc.name)
 
-    ALLOWED_EXTENSIONS = {".md", ".svg", ".html", ".js", ".css", ".png", ".jpg", ".jpeg"}
-    EXCLUDED_DIR_NAMES = {"craig_book_pages", "resume_related", "Career", ".git", ".agents", ".codex"}
-
     for source_dir in (ROOT / "ComputerScience", ROOT / "Engineering"):
-        if not source_dir.exists():
-            continue
         target_dir = DOCS / source_dir.name
-        for source_file in source_dir.rglob("*"):
-            if not source_file.is_file():
-                continue
-            if source_file.suffix.lower() not in ALLOWED_EXTENSIONS:
-                continue
-            # Security / Copyright / Privacy boundary check: prevent copying excluded assets or personal resumes
-            if any(part in EXCLUDED_DIR_NAMES for part in source_file.parts) or source_file.name.lower().startswith("resume."):
-                continue
-            target_file = target_dir / source_file.relative_to(source_dir)
-            target_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_file, target_file)
+        for suffix in ("*.md", "*.svg", "*.html"):
+            for source_file in source_dir.rglob(suffix):
+                # Preserve the privacy fix while removing LearningLab-only asset syncing.
+                if "Career" in source_file.relative_to(source_dir).parts or source_file.name.lower().startswith("resume."):
+                    continue
+                target_file = target_dir / source_file.relative_to(source_dir)
+                target_file.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source_file, target_file)
 
 
 if __name__ == "__main__":
