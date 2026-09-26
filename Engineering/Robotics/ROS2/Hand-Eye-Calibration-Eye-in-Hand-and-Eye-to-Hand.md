@@ -43,17 +43,23 @@
 ### 3.1 眼在手上 (Eye-in-Hand)：经典方程 $\boldsymbol{A} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}$
 - **待求解未知量**：法兰盘到相机的固定变换矩阵 $\boldsymbol{X} = {^F_C\boldsymbol{T}}$；
 - 考察从标定板 $\{M\}$ 到基座 $\{B\}$ 的闭合运动链回路：
-  $$
-  {^B_{F1}\boldsymbol{T}} \, {^F_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^B_{F2}\boldsymbol{T}} \, {^F_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}}
-  $$
+
+$$
+{^B_{F1}\boldsymbol{T}} \, {^F_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^B_{F2}\boldsymbol{T}} \, {^F_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}}
+$$
+
 - 整理得标准矩阵方程：
-  $$
-  \boldsymbol{A} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}
-  $$
+
+$$
+\boldsymbol{A} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}
+$$
+
   其中：
-  $$
-  \boldsymbol{A} = ({^B_{F2}\boldsymbol{T}})^{-1} {^B_{F1}\boldsymbol{T}}, \quad \boldsymbol{B} = {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
-  $$
+
+$$
+\boldsymbol{A} = ({^B_{F2}\boldsymbol{T}})^{-1} {^B_{F1}\boldsymbol{T}}, \quad \boldsymbol{B} = {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
+$$
+
   - $\boldsymbol{A}$ 为机械臂法兰两次运动的相对位姿变化（由机械臂正运动学与编码器精确测量）；
   - $\boldsymbol{B}$ 为标定板在相机视野中两次观察到的相对位姿变化（由相机 PnP 视觉算法解算）。
 
@@ -61,25 +67,34 @@
 - **待求解未知量**：机器人基座到外部固定相机的相对变换矩阵 $\boldsymbol{X} = {^B_C\boldsymbol{T}}$；
 - 此时标定板刚性固连在机械臂末端法兰盘上（相对变换为固定常数矩阵 $\boldsymbol{Y} = {^F_M\boldsymbol{T}}$）；
 - 考察从标定板 $\{M\}$ 经由相机 $\{C\}$ 到基座 $\{B\}$ 的闭合几何回路：
-  $$
-  {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^B_{F1}\boldsymbol{T}} \, {^F_M\boldsymbol{T}} \implies ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^F_M\boldsymbol{T}}
-  $$
+
+$$
+{^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^B_{F1}\boldsymbol{T}} \, {^F_M\boldsymbol{T}} \implies ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}} = {^F_M\boldsymbol{T}}
+$$
+
 - 针对任意两组机械臂位姿 1 与 2，由于 ${^F_M\boldsymbol{T}}$ 恒定保持不变，必有：
-  $$
-  ({^B_{F2}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} = ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}}
-  $$
+
+$$
+({^B_{F2}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} = ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} \, {^{C1}_M\boldsymbol{T}}
+$$
+
 - 等式左乘 ${^B_{F2}\boldsymbol{T}}$，右乘 $({^{C1}_M\boldsymbol{T}})^{-1}$，整理得：
-  $$
-  {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} = {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
-  $$
+
+$$
+{^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1} {^B_C\boldsymbol{T}} = {^B_C\boldsymbol{T}} \, {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
+$$
+
   定义眼在手外相对运动矩阵：
-  $$
-  \boldsymbol{A}_{eth} = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}, \quad \boldsymbol{B}_{eth} = {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
-  $$
+
+$$
+\boldsymbol{A}_{eth} = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}, \quad \boldsymbol{B}_{eth} = {^{C2}_M\boldsymbol{T}} ({^{C1}_M\boldsymbol{T}})^{-1}
+$$
+
   得到与经典结构完全同构的标准矩阵方程：
-  $$
-  \boldsymbol{A}_{eth} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}_{eth}
-  $$
+
+$$
+\boldsymbol{A}_{eth} \boldsymbol{X} = \boldsymbol{X} \boldsymbol{B}_{eth}
+$$
 
 ---
 
@@ -90,16 +105,20 @@ Tsai 和 Lenz（1989）提出了极其优雅的旋转与平移解耦解法：
 
 ### 4.1 第一步：姿态旋转解算
 利用轴角表示法（Rodrigues 旋转向量），方程 $\boldsymbol{R}_A \boldsymbol{R}_X = \boldsymbol{R}_X \boldsymbol{R}_B$ 可以转化为：
+
 $$
 \operatorname{skew}(\boldsymbol{P}_A + \boldsymbol{P}_B) \cdot \boldsymbol{P}_X^\prime = \boldsymbol{P}_B - \boldsymbol{P}_A
 $$
+
 通过至少两组不共轴的机械臂运动构型，堆叠最小二乘方程求解出修正向量 $\boldsymbol{P}_X^\prime$，进而完全解析恢复出严格正交的旋转矩阵 $\boldsymbol{R}_X$。
 
 ### 4.2 第二步：平移向量回代解算
 将已精确解出的 $\boldsymbol{R}_X$ 代入平移约束方程：
+
 $$
 (\boldsymbol{R}_A - \boldsymbol{I}_3) \boldsymbol{t}_X = \boldsymbol{R}_X \boldsymbol{t}_B - \boldsymbol{t}_A
 $$
+
 这是标准超定线性代数方程，直接通过 SVD 或 QR 分解求得唯一最优平移向量 $\boldsymbol{t}_X$。
 
 ---
@@ -126,9 +145,11 @@ OpenCV 提供了函数 `cv2.calibrateHandEye`，其底层求解标准方程 $\bo
 - **Eye-to-Hand (眼在手外)**：
   - 相机固定在环境基座中，标定板随法兰运动。对比数学推导可知，运动矩阵 $\boldsymbol{A}_{eth} = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}$；
   - 而 OpenCV 内部对第一组输入计算的是 $T_2^{-1} T_1$。若要满足 $T_2^{-1} T_1 = {^B_{F2}\boldsymbol{T}} ({^B_{F1}\boldsymbol{T}})^{-1}$，**必须将输入的机械臂末端位姿序列逐一求逆为 Base-to-Gripper**（即基座在法兰中的位姿 ${^F_B\boldsymbol{T}}$）：
-    $$
-    \boldsymbol{R}_{b2g} = \boldsymbol{R}_{g2b}^T, \quad \boldsymbol{t}_{b2g} = -\boldsymbol{R}_{g2b}^T \boldsymbol{t}_{g2b}
-    $$
+
+$$
+\boldsymbol{R}_{b2g} = \boldsymbol{R}_{g2b}^T, \quad \boldsymbol{t}_{b2g} = -\boldsymbol{R}_{g2b}^T \boldsymbol{t}_{g2b}
+$$
+
   - 将求逆后的 `R_base2gripper`, `t_base2gripper` 传入 `cv2.calibrateHandEye`；
   - 函数输出的矩阵即为 **${^B_C\boldsymbol{T}}$（外部固定相机在机器人基座坐标系下的位姿 `R_cam2base`, `t_cam2base`）**。若下游点云拼接算法需要基座在相机坐标系下的位姿 ${^C_B\boldsymbol{T}}$，只需再求一次逆即可。
 

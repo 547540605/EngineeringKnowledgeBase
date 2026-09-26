@@ -20,9 +20,11 @@ $$
 
 ### 速度映射的核心几何含义：
 - 若关节空间约束在一个单位超球体（Unit Hyper-Sphere）内，即满足：
-  $$
-  \|\dot{\boldsymbol{q}}\|^2 = \dot{\boldsymbol{q}}^T \dot{\boldsymbol{q}} \le 1
-  $$
+
+$$
+\|\dot{\boldsymbol{q}}\|^2 = \dot{\boldsymbol{q}}^T \dot{\boldsymbol{q}} \le 1
+$$
+
 - 经过雅可比矩阵映射后，末端执行器所有可达的笛卡尔线速度集合构成一个**速度可操作度椭球 (Velocity Manipulability Ellipsoid)**。
 
 ---
@@ -39,9 +41,11 @@ $$
 
 ### 奇异值分解 (Singular Value Decomposition)
 对 $\boldsymbol{J}$ 作 SVD 分解：
+
 $$
 \boldsymbol{J} = \boldsymbol{U} \boldsymbol{\Sigma} \boldsymbol{V}^T = \sum_{i=1}^m \sigma_i \boldsymbol{u}_i \boldsymbol{v}_i^T
 $$
+
 其中：
 - $\boldsymbol{U} = [\boldsymbol{u}_1, \cdots, \boldsymbol{u}_m]$ 为笛卡尔空间的特征正交基，指示**椭球主轴的方向**；
 - $\sigma_1 \ge \sigma_2 \ge \cdots \ge \sigma_m \ge 0$ 为奇异值，指示**椭球各主轴的半长轴长度**；
@@ -56,16 +60,20 @@ $$
 ## 3. 速度与静力学的对偶性 (Velocity-Force Duality)
 
 根据虚功原理（Principle of Virtual Work），在无摩擦理想机械机构中，关节做功等于末端外力做功：
+
 $$
 \boldsymbol{\tau}^T \dot{\boldsymbol{q}} = \boldsymbol{F}^T \boldsymbol{v} = \boldsymbol{F}^T (\boldsymbol{J}\dot{\boldsymbol{q}}) = (\boldsymbol{J}^T \boldsymbol{F})^T \dot{\boldsymbol{q}}
 $$
+
 对任意非零 $\dot{\boldsymbol{q}}$ 恒成立，因此获得**机器人静力学映射方程**：
+
 $$
 \boldsymbol{\tau} = \boldsymbol{J}(\boldsymbol{q})^T \boldsymbol{F}
 $$
 
 ### 力可操作度椭球 (Force Manipulability Ellipsoid)
 若关节驱动器输出扭矩约束在单位球 $\|\boldsymbol{\tau}\|^2 = \boldsymbol{\tau}^T \boldsymbol{\tau} \le 1$，则末端力满足：
+
 $$
 (\boldsymbol{J}^T \boldsymbol{F})^T (\boldsymbol{J}^T \boldsymbol{F}) \le 1 \implies \boldsymbol{F}^T (\boldsymbol{J}\boldsymbol{J}^T) \boldsymbol{F} \le 1
 $$

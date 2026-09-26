@@ -38,6 +38,7 @@
 为了保证级联多环系统的稳定性，避免内外环之间产生相位交叠与剧烈共振，**内环的闭环截止频率必须显著高于外环的闭环截止频率**。
 
 ### 工业黄金经验法则（$5 \sim 10$ 倍递增准则）：
+
 $$
 f_{\text{bw, current}} \ge (5 \sim 10) \cdot f_{\text{bw, velocity}} \ge (25 \sim 100) \cdot f_{\text{bw, position}}
 $$
@@ -53,15 +54,19 @@ $$
 ## 3. 速度前馈与加速度前馈 (Velocity & Acceleration Feedforward)
 
 若仅使用纯位置 P 环控制，根据稳态误差定理，在机械臂匀速运动段（速度为 $v$）必定存在固定的**滞后跟踪误差**：
+
 $$
 e_{ss} = \frac{v}{K_{vp}}
 $$
+
 其中 $K_{vp}$ 为位置环比例增益。
 
 ### 消除滞后的工程法宝：前馈通道 (Feedforward Channel)
+
 $$
 v_{\text{cmd}} = K_{vp} (q_d - q) + \boldsymbol{FF_v} \cdot \dot{q}_d
 $$
+
 $$
 I_{\text{cmd}} = \operatorname{PI}_{\text{vel}}(v_{\text{cmd}} - \dot{q}) + \boldsymbol{FF_a} \cdot \ddot{q}_d
 $$

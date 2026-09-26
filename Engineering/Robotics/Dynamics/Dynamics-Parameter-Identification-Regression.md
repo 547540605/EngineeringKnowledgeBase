@@ -35,9 +35,11 @@ $$
 ## 3. 标准惯量参数与最小基参数集 (Base Parameters)
 
 对于具有 $n$ 个运动连杆的空间机械臂，每个刚体连杆在传统力学上有 10 个标准惯量参数：
+
 $$
 \boldsymbol{\pi}_i = \left[ m_i, \; m_i x_{ci}, \; m_i y_{ci}, \; m_i z_{ci}, \; I_{xxi}, \; I_{xyi}, \; I_{xzi}, \; I_{yyi}, \; I_{yzi}, \; I_{zzi} \right]^T \in \mathbb{R}^{10}
 $$
+
 加上关节粘性摩擦 $b_i$ 与库仑摩擦 $f_{ci}$，总参数量达 $12n$ 个。
 
 ### 冗余性与参数重组（基参数集 Base Parameter Set）：
@@ -46,9 +48,11 @@ $$
 2. **线性相关参数 (Linearly Dependent)**：两相邻连杆的质量和惯量往往以代数和的形式耦合在一起（例如 $m_1 l_{c1}^2 + m_2 L_1^2$）。
 
 通过对庞大的全量回归矩阵 $\boldsymbol{Y}$ 进行 **QR 分解或奇异值分解 (SVD)**，可精确提取出极小线性无关基：
+
 $$
 \boldsymbol{\tau} = \boldsymbol{Y}_b(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}) \boldsymbol{\pi}_b
 $$
+
 其中 $\boldsymbol{\pi}_b \in \mathbb{R}^{p_{\text{base}}}$（对于经典 6 轴机械臂，标准基参数通常只有 36~40 个左右）。
 
 ---
@@ -58,15 +62,18 @@ $$
 为了保证回归矩阵 $\boldsymbol{Y}_b$ 具有良好的可逆性（抗测量噪声干扰），机械臂在辨识采集过程中必须运行一段**充分激励轨迹 (Persistently Exciting Trajectory)**。
 
 工程上通常采用**有限项截断傅里叶级数 (Finite Fourier Series)** 作为激励轨迹：
+
 $$
 q_i(t) = q_{i,0} + \sum_{k=1}^N \left[ \frac{a_{i,k}}{\omega_0 k} \sin(\omega_0 k t) - \frac{b_{i,k}}{\omega_0 k} \cos(\omega_0 k t) \right]
 $$
 
 ### 轨迹优化目标：
 在满足关节位置、速度、加速度边界的前提下，通过非线性优化算法（如 SQP）最小化回归矩阵的**条件数 (Condition Number)**：
+
 $$
 \min_{a, b} \operatorname{cond}(\boldsymbol{Y}_b) = \frac{\sigma_{\max}(\boldsymbol{Y}_b)}{\sigma_{\min}(\boldsymbol{Y}_b)}
 $$
+
 条件数越小，测量力矩中的白噪声被矩阵逆放大的倍数越低，辨识结果的置信度与方差越优。
 
 ---
@@ -74,11 +81,13 @@ $$
 ## 5. 最小二乘求解法 (Ordinary & Weighted Least Squares)
 
 在时间序列 $t_1, t_2, \dots, t_N$ 上同步采集多点数据，纵向堆叠构建超定方程组：
+
 $$
 \begin{bmatrix} \boldsymbol{\tau}(t_1) \\ \boldsymbol{\tau}(t_2) \\ \vdots \\ \boldsymbol{\tau}(t_N) \end{bmatrix} = \begin{bmatrix} \boldsymbol{Y}_b(t_1) \\ \boldsymbol{Y}_b(t_2) \\ \vdots \\ \boldsymbol{Y}_b(t_N) \end{bmatrix} \boldsymbol{\pi}_b + \boldsymbol{\epsilon} \quad \Longrightarrow \quad \boldsymbol{\Gamma} = \boldsymbol{\Phi} \boldsymbol{\pi}_b + \boldsymbol{\epsilon}
 $$
 
 ### 5.1 普通最小二乘解 (OLS)
+
 $$
 \hat{\boldsymbol{\pi}}_b = (\boldsymbol{\Phi}^T \boldsymbol{\Phi})^{-1} \boldsymbol{\Phi}^T \boldsymbol{\Gamma}
 $$

@@ -18,20 +18,26 @@
 空间笛卡尔正交坐标系 $\{A\}$ 由两部分组成：
 1. **坐标原点** $O_A$：空间中的基准参考位置点；
 2. **正交规范化基底** $(\hat{X}_A, \hat{Y}_A, \hat{Z}_A)$：满足右手定则的三个两两正交且模长为 1 的方向单位向量：
-   $$
-   \hat{X}_A \cdot \hat{Y}_A = 0, \quad \hat{Y}_A \cdot \hat{Z}_A = 0, \quad \hat{Z}_A \cdot \hat{X}_A = 0, \quad \hat{X}_A \times \hat{Y}_A = \hat{Z}_A
-   $$
+
+$$
+\hat{X}_A \cdot \hat{Y}_A = 0, \quad \hat{Y}_A \cdot \hat{Z}_A = 0, \quad \hat{Z}_A \cdot \hat{X}_A = 0, \quad \hat{X}_A \times \hat{Y}_A = \hat{Z}_A
+$$
 
 ### 1.2 点在坐标系下的向量表示
 对于空间中任一点 $P$，其在坐标系 $\{A\}$ 中的位置矢量表示为列向量 ${}^A P$：
+
 $$
 {}^A P = \begin{bmatrix} p_x \\ p_y \\ p_z \end{bmatrix}
 $$
+
 其物理几何意义为：从原点 $O_A$ 指向点 $P$ 的空间几何向量，投影到三个基底方向上的标量坐标：
+
 $$
 \vec{P} = p_x \hat{X}_A + p_y \hat{Y}_A + p_z \hat{Z}_A
 $$
+
 其中各分量可通过内积求得：
+
 $$
 p_x = \vec{P} \cdot \hat{X}_A, \quad p_y = \vec{P} \cdot \hat{Y}_A, \quad p_z = \vec{P} \cdot \hat{Z}_A
 $$
@@ -43,16 +49,19 @@ $$
 设有两个方向严格平行的坐标系 $\{A\}$ 与 $\{B\}$（即 $\hat{X}_A \parallel \hat{X}_B, \hat{Y}_A \parallel \hat{Y}_B, \hat{Z}_A \parallel \hat{Z}_B$），但两者的原点不重合。
 
 定义 $\{B\}$ 的原点 $O_B$ 在 $\{A\}$ 中的位置向量为：
+
 $$
 {}^A P_{B\,ORG} = \begin{bmatrix} x_{B\,org} \\ y_{B\,org} \\ z_{B\,org} \end{bmatrix}
 $$
 
 若已知某目标工件点 $P$ 在 $\{B\}$ 坐标系下的坐标为 ${}^B P$，则其在参考系 $\{A\}$ 下的坐标由向量三角形法则决定：
+
 $$
 {}^A P = {}^B P + {}^A P_{B\,ORG}
 $$
 
 展开为分量形式：
+
 $$
 \begin{bmatrix} {}^A p_x \\ {}^A p_y \\ {}^A p_z \end{bmatrix} = \begin{bmatrix} {}^B p_x \\ {}^B p_y \\ {}^B p_z \end{bmatrix} + \begin{bmatrix} x_{B\,org} \\ y_{B\,org} \\ z_{B\,org} \end{bmatrix}
 $$

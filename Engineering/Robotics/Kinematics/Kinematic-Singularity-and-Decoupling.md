@@ -19,6 +19,7 @@ $$
 $$
 
 对于方阵雅可比矩阵（如 6 自由度空间机械臂或 2 自由度平面机械臂），奇异判据为行列式归零：
+
 $$
 \det(\boldsymbol{J}(\boldsymbol{q})) = 0
 $$
@@ -49,11 +50,13 @@ $$
 ## 3. 平面两连杆 (2R) 奇异性代数推导
 
 回顾平面 2R 雅可比矩阵：
+
 $$
 \boldsymbol{J}_{2R}(\boldsymbol{q}) = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}
 $$
 
 计算行列式：
+
 $$
 \begin{aligned}
 \det(\boldsymbol{J}_{2R}) &= (-L_1 s_1 - L_2 s_{12})(L_2 c_{12}) - (-L_2 s_{12})(L_1 c_1 + L_2 c_{12}) \\
@@ -66,9 +69,11 @@ $$
 
 ### 结论分析：
 - **奇异条件**：当 $\sin(q_2) = 0$ 时，$\det(\boldsymbol{J}) = 0$。即：
-  $$
-  q_2 = 0 \quad (\text{完全伸展}) \quad \text{或} \quad q_2 = \pi \quad (\text{完全折叠})
-  $$
+
+$$
+q_2 = 0 \quad (\text{完全伸展}) \quad \text{或} \quad q_2 = \pi \quad (\text{完全折叠})
+$$
+
 - **物理意义**：与基座角度 $q_1$ 完全无关！只要肘关节伸直或折返，连杆 1 与连杆 2 共线，沿连杆方向的瞬时径向速度便无法产生。
 
 ---
@@ -82,6 +87,7 @@ $$
 $$
 
 其行列式可直接分解为位置与姿态的乘积：
+
 $$
 \det(\boldsymbol{J}) = \det(\boldsymbol{J}_{11}) \cdot \det(\boldsymbol{J}_{22})
 $$
@@ -95,9 +101,11 @@ $$
 ## 5. 可操作度与椭球度量 (Manipulability Measure)
 
 吉川恒夫（Tsuneo Yoshikawa）定义的可操作度指标为：
+
 $$
 w = \sqrt{\det(\boldsymbol{J}\boldsymbol{J}^T)}
 $$
+
 - 对于非奇异方阵：$w = |\det(\boldsymbol{J})|$；
 - 在奇异点处：$w = 0$；
 - 在远离奇异点的舒适构型下：$w$ 达到局部极大值。在轨迹规划与梯度投影优化中，常以 $\nabla w$ 作为优化目标，驱动机械臂主动远离奇异点。

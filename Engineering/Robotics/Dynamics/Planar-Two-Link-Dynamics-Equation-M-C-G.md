@@ -31,16 +31,21 @@ $$
 考虑质量为 $m_1, m_2$，全长为 $L_1, L_2$，转动惯量为 $I_1, I_2$，质心距为 $l_{c1}, l_{c2}$ 的水平/垂直平面 2R 臂。
 
 ### 2.1 质量矩阵 $\boldsymbol{M}(\boldsymbol{q})$
+
 $$
 \boldsymbol{M}(\boldsymbol{q}) = \begin{bmatrix} M_{11} & M_{12} \\ M_{21} & M_{22} \end{bmatrix}
 $$
+
 各矩阵元素展开式如下：
+
 $$
 M_{11} = m_1 l_{c1}^2 + I_1 + m_2 \left( L_1^2 + l_{c2}^2 + 2 L_1 l_{c2} \cos q_2 \right) + I_2
 $$
+
 $$
 M_{12} = M_{21} = m_2 \left( l_{c2}^2 + L_1 l_{c2} \cos q_2 \right) + I_2
 $$
+
 $$
 M_{22} = m_2 l_{c2}^2 + I_2
 $$
@@ -54,17 +59,23 @@ $$
 
 ### 2.2 科里奥利与向心力矩阵 $\boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}})$
 定义几何耦合标量：
+
 $$
 h = -m_2 L_1 l_{c2} \sin q_2
 $$
+
 则通过克里斯托弗符号（Christoffel Symbols）定义的标准 $\boldsymbol{C}$ 矩阵为：
+
 $$
 \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}}) = \begin{bmatrix} h \dot{q}_2 & h (\dot{q}_1 + \dot{q}_2) \\ -h \dot{q}_1 & 0 \end{bmatrix}
 $$
+
 其与速度向量的乘积产生关节力和矩：
+
 $$
 \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}})\dot{\boldsymbol{q}} = \begin{bmatrix} 2 h \dot{q}_1 \dot{q}_2 + h \dot{q}_2^2 \\ -h \dot{q}_1^2 \end{bmatrix}
 $$
+
 - 第一关节承受来自第二关节的向心力矩 $h \dot{q}_2^2$ 和强烈的科氏耦合力矩 $2 h \dot{q}_1 \dot{q}_2$；
 - 第二关节承受由于第一关节基底旋转产生的向心力矩 $-h \dot{q}_1^2$。
 
@@ -72,6 +83,7 @@ $$
 
 ### 2.3 重力向量 $\boldsymbol{G}(\boldsymbol{q})$
 设重力加速度沿 $-Y$ 方向（垂直铅垂工作平面）：
+
 $$
 \boldsymbol{G}(\boldsymbol{q}) = \begin{bmatrix} G_1 \\ G_2 \end{bmatrix} = \begin{bmatrix} (m_1 l_{c1} + m_2 L_1) g \cos q_1 + m_2 l_{c2} g \cos(q_1 + q_2) \\ m_2 l_{c2} g \cos(q_1 + q_2) \end{bmatrix}
 $$
@@ -87,6 +99,7 @@ $$
 $$
 
 即满足：
+
 $$
 \boldsymbol{x}^T \left[ \dot{\boldsymbol{M}}(\boldsymbol{q}) - 2 \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}}) \right] \boldsymbol{x} = 0 \quad (\forall \boldsymbol{x} \in \mathbb{R}^n)
 $$
@@ -94,17 +107,23 @@ $$
 ### 物理本质证明：
 机械臂系统总机械能为 $E = T + V = \frac{1}{2}\dot{\boldsymbol{q}}^T \boldsymbol{M}(\boldsymbol{q}) \dot{\boldsymbol{q}} + V(\boldsymbol{q})$。
 对时间求导：
+
 $$
 \frac{dE}{dt} = \dot{\boldsymbol{q}}^T \boldsymbol{M}\ddot{\boldsymbol{q}} + \frac{1}{2}\dot{\boldsymbol{q}}^T \dot{\boldsymbol{M}}\dot{\boldsymbol{q}} + \dot{\boldsymbol{q}}^T \boldsymbol{G}(\boldsymbol{q}) = \dot{\boldsymbol{q}}^T \left[ \boldsymbol{\tau} - \boldsymbol{C}\dot{\boldsymbol{q}} - \boldsymbol{G} \right] + \frac{1}{2}\dot{\boldsymbol{q}}^T \dot{\boldsymbol{M}}\dot{\boldsymbol{q}} + \dot{\boldsymbol{q}}^T \boldsymbol{G}
 $$
+
 化简得：
+
 $$
 \frac{dE}{dt} = \dot{\boldsymbol{q}}^T \boldsymbol{\tau} + \frac{1}{2} \dot{\boldsymbol{q}}^T (\dot{\boldsymbol{M}} - 2\boldsymbol{C}) \dot{\boldsymbol{q}}
 $$
+
 由于外力矩输入功率在无摩擦下必须严格等于机械能变化率（$\frac{dE}{dt} = \dot{\boldsymbol{q}}^T \boldsymbol{\tau}$），因此必有：
+
 $$
 \dot{\boldsymbol{q}}^T (\dot{\boldsymbol{M}} - 2\boldsymbol{C}) \dot{\boldsymbol{q}} \equiv 0
 $$
+
 该性质不仅用于证明自适应控制器的全局稳定性，还在数值仿真中作为**校验动力学求解器是否存在能量泄露/数值发散的最高黄金准则**。
 
 ---

@@ -29,6 +29,7 @@ $$
 ## 2. 原子齐次矩阵与逐步乘积
 
 ### 2.1 四个原子变换矩阵
+
 $$
 \mathrm{Rot}(X, \alpha_{i-1}) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
@@ -61,6 +62,7 @@ $$
 
 ### 2.2 两两乘积展开
 首先计算连杆自身结构参数的乘积（关于 $X$ 轴）：
+
 $$
 T_X = \mathrm{Rot}(X, \alpha_{i-1}) \cdot \mathrm{Trans}(X, a_{i-1}) = \begin{bmatrix}
 1 & 0 & 0 & a_{i-1} \\
@@ -71,6 +73,7 @@ T_X = \mathrm{Rot}(X, \alpha_{i-1}) \cdot \mathrm{Trans}(X, a_{i-1}) = \begin{bm
 $$
 
 接着计算关节运动参数的乘积（关于 $Z$ 轴）：
+
 $$
 T_Z = \mathrm{Rot}(Z, \theta_i) \cdot \mathrm{Trans}(Z, d_i) = \begin{bmatrix}
 \cos\theta_i & -\sin\theta_i & 0 & 0 \\
@@ -114,26 +117,29 @@ $$
 
 1. **当 $\alpha_{i-1} = 0^\circ$（两关节轴严格平行）时**：
    $\cos\alpha_{i-1} = 1, \sin\alpha_{i-1} = 0$：
-   $$
-   {}^{i-1}_i T = \begin{bmatrix}
-   \cos\theta_i & -\sin\theta_i & 0 & a_{i-1} \\
-   \sin\theta_i & \cos\theta_i & 0 & 0 \\
-   0 & 0 & 1 & d_i \\
-   0 & 0 & 0 & 1
-   \end{bmatrix}
-   $$
+
+$$
+{}^{i-1}_i T = \begin{bmatrix}
+\cos\theta_i & -\sin\theta_i & 0 & a_{i-1} \\
+\sin\theta_i & \cos\theta_i & 0 & 0 \\
+0 & 0 & 1 & d_i \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
    此时退化为纯平面的二维运动学扩展型。
 
 2. **当 $\alpha_{i-1} = 90^\circ$（两关节轴空间正交垂直）时**：
    $\cos\alpha_{i-1} = 0, \sin\alpha_{i-1} = 1$：
-   $$
-   {}^{i-1}_i T = \begin{bmatrix}
-   \cos\theta_i & -\sin\theta_i & 0 & a_{i-1} \\
-   0 & 0 & -1 & -d_i \\
-   \sin\theta_i & \cos\theta_i & 0 & 0 \\
-   0 & 0 & 0 & 1
-   \end{bmatrix}
-   $$
+
+$$
+{}^{i-1}_i T = \begin{bmatrix}
+\cos\theta_i & -\sin\theta_i & 0 & a_{i-1} \\
+0 & 0 & -1 & -d_i \\
+\sin\theta_i & \cos\theta_i & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 ---
 

@@ -36,21 +36,26 @@ $$
 ### 2.1 旋转关节 (Revolute Joint) 的列向量
 设关节 $i$ 的转轴方向单位向量在基坐标系下表示为 $\boldsymbol{z}_{i-1}$，转轴上任一点（通常取关节 $i$ 坐标系原点）的位置向量为 $\boldsymbol{p}_{i-1}$，末端执行器位置为 $\boldsymbol{p}_e$。
 - **角速度贡献**：关节转动直接产生绕转轴的角速度：
-  $$
-  \boldsymbol{J}_{\omega i} = \boldsymbol{z}_{i-1}
-  $$
+
+$$
+\boldsymbol{J}_{\omega i} = \boldsymbol{z}_{i-1}
+$$
+
 - **线速度贡献**：绕轴转动通过杠杆臂 $(\boldsymbol{p}_e - \boldsymbol{p}_{i-1})$ 产生线速度（叉乘公式 $\boldsymbol{v} = \boldsymbol{\omega} \times \boldsymbol{r}$）：
-  $$
-  \boldsymbol{J}_{vi} = \boldsymbol{z}_{i-1} \times (\boldsymbol{p}_e - \boldsymbol{p}_{i-1})
-  $$
+
+$$
+\boldsymbol{J}_{vi} = \boldsymbol{z}_{i-1} \times (\boldsymbol{p}_e - \boldsymbol{p}_{i-1})
+$$
 
 因此旋转关节的列向量为：
+
 $$
 \boldsymbol{J}_i = \begin{bmatrix} \boldsymbol{z}_{i-1} \times (\boldsymbol{p}_e - \boldsymbol{p}_{i-1}) \\ \boldsymbol{z}_{i-1} \end{bmatrix}
 $$
 
 ### 2.2 移动关节 (Prismatic Joint) 的列向量
 移动关节沿轴线方向平动，不产生末端角速度：
+
 $$
 \boldsymbol{J}_i = \begin{bmatrix} \boldsymbol{z}_{i-1} \\ \boldsymbol{0}_{3 \times 1} \end{bmatrix}
 $$
@@ -61,6 +66,7 @@ $$
 
 考虑经典的水平平面 2R 机械臂（连杆长 $L_1, L_2$，关节角 $q_1, q_2$）：
 末端位置方程为：
+
 $$
 \begin{cases}
 x = L_1 \cos q_1 + L_2 \cos(q_1 + q_2) \\
@@ -70,14 +76,17 @@ $$
 
 ### 3.1 对时间求全微分法 (Analytical Differentiation)
 对时间 $t$ 求偏导：
+
 $$
 \dot{x} = \frac{\partial x}{\partial q_1} \dot{q}_1 + \frac{\partial x}{\partial q_2} \dot{q}_2 = -[L_1 \sin q_1 + L_2 \sin(q_1 + q_2)] \dot{q}_1 - L_2 \sin(q_1 + q_2) \dot{q}_2
 $$
+
 $$
 \dot{y} = \frac{\partial y}{\partial q_1} \dot{q}_1 + \frac{\partial y}{\partial q_2} \dot{q}_2 = [L_1 \cos q_1 + L_2 \cos(q_1 + q_2)] \dot{q}_1 + L_2 \cos(q_1 + q_2) \dot{q}_2
 $$
 
 写成紧凑矩阵形式（使用简写 $s_1 = \sin q_1, c_1 = \cos q_1, s_{12} = \sin(q_1+q_2), c_{12} = \cos(q_1+q_2)$）：
+
 $$
 \begin{bmatrix} \dot{x} \\ \dot{y} \end{bmatrix} = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix} \begin{bmatrix} \dot{q}_1 \\ \dot{q}_2 \end{bmatrix} = \boldsymbol{J}_{2R}(\boldsymbol{q}) \begin{bmatrix} \dot{q}_1 \\ \dot{q}_2 \end{bmatrix}
 $$

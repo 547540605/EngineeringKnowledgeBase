@@ -23,11 +23,13 @@
 ## 2. 数学推导与控制律构建
 
 回顾标准多刚体动力学模型：
+
 $$
 \boldsymbol{M}(\boldsymbol{q})\ddot{\boldsymbol{q}} + \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}})\dot{\boldsymbol{q}} + \boldsymbol{G}(\boldsymbol{q}) = \boldsymbol{\tau}
 $$
 
 设计非线性计算力矩控制律：
+
 $$
 \boldsymbol{\tau} = \hat{\boldsymbol{M}}(\boldsymbol{q}) \boldsymbol{u} + \hat{\boldsymbol{C}}(\boldsymbol{q}, \dot{\boldsymbol{q}})\dot{\boldsymbol{q}} + \hat{\boldsymbol{G}}(\boldsymbol{q})
 $$
@@ -35,9 +37,11 @@ $$
 其中 $\boldsymbol{u} \in \mathbb{R}^n$ 为新引入的**虚拟辅助控制输入向量 (Auxiliary Control Input)**。
 
 ### 误差伺服环配置（前馈加速度 + 比例微分）：
+
 $$
 \boldsymbol{u} = \ddot{\boldsymbol{q}}_d(t) + \boldsymbol{K}_d (\dot{\boldsymbol{q}}_d(t) - \dot{\boldsymbol{q}}(t)) + \boldsymbol{K}_p (\boldsymbol{q}_d(t) - \boldsymbol{q}(t))
 $$
+
 其中 $\boldsymbol{K}_p = \operatorname{diag}(\omega_{n1}^2, \dots, \omega_{nn}^2)$，$\boldsymbol{K}_d = \operatorname{diag}(2\zeta_1\omega_{n1}, \dots, 2\zeta_n\omega_{nn})$。
 
 ---
@@ -46,28 +50,36 @@ $$
 
 假设机械臂的名义动力学模型完全精确（$\hat{\boldsymbol{M}} = \boldsymbol{M}, \hat{\boldsymbol{C}} = \boldsymbol{C}, \hat{\boldsymbol{G}} = \boldsymbol{G}$）。
 将控制律代入真实动力学系统：
+
 $$
 \boldsymbol{M}(\boldsymbol{q})\ddot{\boldsymbol{q}} + \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}})\dot{\boldsymbol{q}} + \boldsymbol{G}(\boldsymbol{q}) = \boldsymbol{M}(\boldsymbol{q}) \boldsymbol{u} + \boldsymbol{C}(\boldsymbol{q}, \dot{\boldsymbol{q}})\dot{\boldsymbol{q}} + \boldsymbol{G}(\boldsymbol{q})
 $$
+
 两边消去非线性的速度项与重力项：
+
 $$
 \boldsymbol{M}(\boldsymbol{q})\ddot{\boldsymbol{q}} = \boldsymbol{M}(\boldsymbol{q})\boldsymbol{u}
 $$
+
 由于惯性矩阵 $\boldsymbol{M}(\boldsymbol{q})$ 严格对称正定，恒可逆（$\det(\boldsymbol{M}) > 0$），两边左乘逆矩阵 $\boldsymbol{M}^{-1}$：
+
 $$
 \ddot{\boldsymbol{q}} = \boldsymbol{u}
 $$
 
 将 $\boldsymbol{u}$ 的定义式代入，定义跟踪误差向量 $\boldsymbol{e}(t) = \boldsymbol{q}_d(t) - \boldsymbol{q}(t)$：
+
 $$
 \ddot{\boldsymbol{e}} + \boldsymbol{K}_d \dot{\boldsymbol{e}} + \boldsymbol{K}_p \boldsymbol{e} = \boldsymbol{0}
 $$
 
 ### 核心控制结论：
 每一个关节的误差微分方程均满足独立的标量二阶线性齐次方程：
+
 $$
 \ddot{e}_i + 2 \zeta_i \omega_{ni} \dot{e}_i + \omega_{ni}^2 e_i = 0 \quad (i = 1, \dots, n)
 $$
+
 - 关节之间在动态上**彻底解耦，互不干扰**；
 - 只要选择 $\boldsymbol{K}_p > 0, \boldsymbol{K}_d > 0$，误差系统必在全局渐近稳定收敛至零（$\lim_{t\to\infty} \boldsymbol{e}(t) = \boldsymbol{0}$）。
 

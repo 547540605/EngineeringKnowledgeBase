@@ -19,6 +19,7 @@ $$
 $$
 
 对应标准二阶非线性刚体动力学矩阵方程：
+
 $$
 \boldsymbol{\tau} = \boldsymbol{M}(\boldsymbol{q})\ddot{\boldsymbol{q}} + \boldsymbol{C}_{\text{cent}}(\boldsymbol{q}) \dot{\boldsymbol{q}}^2 + \boldsymbol{C}_{\text{cori}}(\boldsymbol{q}) [\dot{q}_i \dot{q}_j] + \boldsymbol{G}(\boldsymbol{q})
 $$
@@ -61,11 +62,23 @@ $$
 在工业控制器中，如何不通过繁重的符号推导直接获得这四项的数值？巧妙调用 RNEA 算法 4 次：
 
 1. **重力项提取**：
-   $$\boldsymbol{\tau}_{\text{gravity}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}=\boldsymbol{0}, \ddot{\boldsymbol{q}}=\boldsymbol{0}, \boldsymbol{g})$$
+
+$$
+\boldsymbol{\tau}_{\text{gravity}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}=\boldsymbol{0}, \ddot{\boldsymbol{q}}=\boldsymbol{0}, \boldsymbol{g})
+$$
+
 2. **纯惯性项提取**：
-   $$\boldsymbol{\tau}_{\text{inertia}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}=\boldsymbol{0}, \ddot{\boldsymbol{q}}, \boldsymbol{g}=\boldsymbol{0})$$
+
+$$
+\boldsymbol{\tau}_{\text{inertia}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}=\boldsymbol{0}, \ddot{\boldsymbol{q}}, \boldsymbol{g}=\boldsymbol{0})
+$$
+
 3. **向心与科氏力总和提取**：
-   $$\boldsymbol{\tau}_{\text{velocity}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}=\boldsymbol{0}, \boldsymbol{g}=\boldsymbol{0})$$
+
+$$
+\boldsymbol{\tau}_{\text{velocity}} = \operatorname{RNEA}(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}=\boldsymbol{0}, \boldsymbol{g}=\boldsymbol{0})
+$$
+
 4. **向心力与科氏力单独隔离**：
    - 设仅有关节 $i$ 运动：$\dot{\boldsymbol{q}}_i = [0, \dots, \dot{q}_i, \dots, 0]$，则 $\operatorname{RNEA}$ 输出即为纯关节 $i$ 的向心力项；
    - 两者作差即可得到两轴之间的纯科氏耦合力矩。

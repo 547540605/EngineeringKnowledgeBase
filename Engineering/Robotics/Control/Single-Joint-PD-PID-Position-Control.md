@@ -15,11 +15,13 @@
 在单关节伺服控制中，目标是驱动实际关节位置 $q(t)$ 极其精准地跟踪给定的期望时间轨迹 $q_d(t)$。
 
 定义瞬时跟踪误差与速度误差：
+
 $$
 e(t) = q_d(t) - q(t), \quad \dot{e}(t) = \dot{q}_d(t) - \dot{q}(t)
 $$
 
 ### 基础 PD 控制律与重力前馈 (PD with Gravity Compensation)：
+
 $$
 \tau = K_p e(t) + K_d \dot{e}(t) + \hat{\tau}_g(q)
 $$
@@ -41,20 +43,24 @@ J \ddot{e} + (b + K_d) \dot{e} + K_p e = 0
 $$
 
 两边同除以转动惯量 $J$：
+
 $$
 \ddot{e} + 2 \zeta \omega_n \dot{e} + \omega_n^2 e = 0
 $$
 
 由此解得闭环无阻尼固有角频率 $\omega_n$ 与阻尼比 $\zeta$：
+
 $$
 \omega_n = \sqrt{\frac{K_p}{J}}, \quad \zeta = \frac{b + K_d}{2 \sqrt{J K_p}}
 $$
 
 ### 工业黄金参数整定准则：临界阻尼设计 ($\zeta = 1$)
 在工业机器人精密定位中，**绝对不允许机械臂发生末端过冲打靶**（过冲可能碰撞模具或工件）：
+
 $$
 \zeta = 1 \quad \Longrightarrow \quad K_d = 2 \sqrt{J K_p} - b
 $$
+
 在此参数配置下，误差以最快速度单调指数衰减，彻底杜绝振荡超调。
 
 ---

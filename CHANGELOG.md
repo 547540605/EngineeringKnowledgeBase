@@ -11,6 +11,11 @@
   - 在 [MoveIt 2 运动规划架构](Engineering/Robotics/ROS2/MoveIt2-Motion-Planning-Architecture.md) 中强化事实边界说明，明确规划成功（`plan() == SUCCESS`）绝不等于物理硬件执行成功，必须对 Controller 状态与返回码进行严格错误闭环；
   - 在 [ros2_control 硬件接口抽象](Engineering/Robotics/ROS2/ROS2-Control-Hardware-Interface-Abstraction.md) 中建立工业通信红线，强调 `/joint_states` 纯属只读传感器反馈（Sensor Feedback），严禁误作真机控制指令，控制必须通过受控的 Command Interface 下发；
   - 在 [ROS 2 学习实验区](Engineering/Robotics/LearningLab/ros2/00-progress.html) 与 [Python 轨迹控制](Engineering/Robotics/LearningLab/ros2/03-python-trajectory-control.html) 中明确标定事实边界，澄清教学仿真与代码级顺应性绝不能替代物理功能安全（真机必须依赖硬件急停、安全 PLC 与安全认证硬件）；
+- **全面修复全站数学公式排版与渲染**：
+  - 深度排查全库 105 篇 Markdown 文档，修复 27 篇专题条目中 `$$` 独立公式块因缺失前后空行或受缩进干扰导致 Python-Markdown 误判为普通文本段落、转义字符 `\\` 被吞噬的问题；
+  - 规范全量公式块为标准顶格并保证前后空行隔离，杜绝被误捕获为代码块，使 `pymdownx.arithmatex` 100% 正确输出 `<div class="arithmatex">\[ ... \]</div>`；
+  - 增强 `scripts/mathjax.js`，增加 `document$.subscribe()` 监听，支持 MkDocs Material 动态即时导航（Instant Loading）下的 MathJax 全局无缝重绘；
+  - 全站编译产物经自动化脚本全量核验，未解析原始 `$$` 数量从 300+ 处降为严格的 **0 处**。
 - **完成全站无依赖克隆与全量回归**：
   - 在独立临时环境执行干净克隆测试，验证目标仓库在完全脱离旧仓库本地路径下能够 100% 独立构建成功；
   - 运行全量质检门禁系统 `scripts/quality_gate_learning_lab.py` v2.0，全站 74 门 HTML 课程、11 个独立仿真引擎与题库脚本、61 个 Canvas 画布及 6,077 处网站编译资源链接 100% 零死链、零缺陷通过（GREEN）；

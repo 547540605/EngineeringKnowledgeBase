@@ -24,21 +24,25 @@
 ## 2. 速度前向递推公式 (Velocity Propagation)
 
 对于旋转关节（Revolute Joint），关节 $i+1$ 的转动轴定义在连杆 $\{i+1\}$ 坐标系的 $Z$ 轴方向，即：
+
 $$
 {^{i+1}\boldsymbol{z}}_{i+1} = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}
 $$
 
 ### 2.1 角速度递推 (Angular Velocity)
 连杆 $i+1$ 的绝对角速度等于连杆 $i$ 的角速度（经旋转矩阵 ${^{i+1}_i\boldsymbol{R}}$ 投影）叠加关节 $i+1$ 本身的旋转速度：
+
 $$
 {^{i+1}\boldsymbol{\omega}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i + \dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
 $$
 
 ### 2.2 坐标原点线速度递推 (Linear Velocity)
 连杆 $i+1$ 坐标系原点的线速度等于连杆 $i$ 原点速度加上由于转动产生的线速度（刚体旋转线速度公式 $\boldsymbol{v} = \boldsymbol{\omega} \times \boldsymbol{r}$）：
+
 $$
 {^{i+1}\boldsymbol{v}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \left( {^i\boldsymbol{v}}_i + {^i\boldsymbol{\omega}}_i \times {^i\boldsymbol{P}}_{i+1} \right)
 $$
+
 其中 ${^i\boldsymbol{P}}_{i+1}$ 为连杆 $\{i+1\}$ 原点在连杆 $\{i\}$ 坐标系下的位置矢量。
 
 ---
@@ -48,17 +52,21 @@ $$
 对上述速度公式关于时间求导，必须计入动坐标系自身转动产生的微分项（即科里奥利与向心效应）。
 
 ### 3.1 角加速度递推 (Angular Acceleration)
+
 $$
 {^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\dot{\boldsymbol{\omega}}}_i + {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i \times (\dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}) + \ddot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
 $$
+
 - 第一项：父连杆角加速度传递；
 - 第二项：**陀螺力矩耦合项 (Gyroscopic Cross-term)**，由于转轴随基底转动而进动产生；
 - 第三项：本关节电机的角加速度输出。
 
 ### 3.2 坐标原点线加速度递推 (Linear Acceleration)
+
 $$
 {^{i+1}\dot{\boldsymbol{v}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \left[ {^i\dot{\boldsymbol{v}}}_i + {^i\dot{\boldsymbol{\omega}}}_i \times {^i\boldsymbol{P}}_{i+1} + {^i\boldsymbol{\omega}}_i \times ({^i\boldsymbol{\omega}}_i \times {^i\boldsymbol{P}}_{i+1}) \right]
 $$
+
 - ${^i\dot{\boldsymbol{\omega}}}_i \times {^i\boldsymbol{P}}_{i+1}$：切向加速度（Tangential Acceleration）；
 - ${^i\boldsymbol{\omega}}_i \times ({^i\boldsymbol{\omega}}_i \times {^i\boldsymbol{P}}_{i+1})$：向心加速度（Centripetal Acceleration）。
 
@@ -67,6 +75,7 @@ $$
 ## 4. 连杆质心加速度与重力等效技巧 (Centroid Acceleration)
 
 在动力学计算中，牛顿第二定律 $\boldsymbol{F} = m \boldsymbol{a}_C$ 作用于连杆的**质心 (Center of Mass, COM)**，而非关节原点：
+
 $$
 {^{i+1}\dot{\boldsymbol{v}}_{C, i+1}} = {^{i+1}\dot{\boldsymbol{v}}}_{i+1} + {^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1} + {^{i+1}\boldsymbol{\omega}}_{i+1} \times ({^{i+1}\boldsymbol{\omega}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1})
 $$
@@ -75,9 +84,11 @@ $$
 机器人在真实环境中承受向下的重力加速度 $\boldsymbol{g} = [0, 0, -9.81]^T \, \text{m/s}^2$。
 若在算法中为每个连杆显式叠加重力项，计算冗余且繁琐。
 **规范工业解法**：在算法初始化时，**将静止的基座赋予一个向上的虚拟假想加速度**：
+
 $$
 {^0\dot{\boldsymbol{v}}}_0 = -\boldsymbol{g} = \begin{bmatrix} 0 \\ 0 \\ +9.81 \end{bmatrix} \, \text{m/s}^2, \quad {^0\boldsymbol{\omega}}_0 = \boldsymbol{0}, \quad {^0\dot{\boldsymbol{\omega}}}_0 = \boldsymbol{0}
 $$
+
 由于惯性力与重力的不可分辨性，这一虚拟底座加速度将通过向外递推公式自动且完全精确地作用到所有连杆的质心上，无需在后续动力学方程中单独添加任何一行重力补偿代码！
 
 ---

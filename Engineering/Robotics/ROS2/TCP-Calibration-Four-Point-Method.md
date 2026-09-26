@@ -43,24 +43,27 @@ $$
 ### 2.2 最小二乘线性代数求解
 
 由于固定尖点位置 $\boldsymbol{P}_{\text{fixed}}$ 未知，任选两个不同姿态方程作差以消除 $\boldsymbol{P}_{\text{fixed}}$：
+
 $$
 ({^0\boldsymbol{R}}_i - {^0\boldsymbol{R}}_j) \, {^F\boldsymbol{P}}_{\text{tcp}} = {^0\boldsymbol{P}}_j - {^0\boldsymbol{P}}_i
 $$
 
 选取姿态对 $(1, 2)$、$(1, 3)$ 与 $(1, 4)$，堆叠构建超定线性方程组：
+
 $$
-\begin{bmatrix} 
-{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_2 \\ 
-{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_3 \\ 
-{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_4 
-\end{bmatrix} {^F\boldsymbol{P}}_{\text{tcp}} = \begin{bmatrix} 
-{^0\boldsymbol{P}}_2 - {^0\boldsymbol{P}}_1 \\ 
-{^0\boldsymbol{P}}_3 - {^0\boldsymbol{P}}_1 \\ 
-{^0\boldsymbol{P}}_4 - {^0\boldsymbol{P}}_1 
+\begin{bmatrix}
+{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_2 \\
+{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_3 \\
+{^0\boldsymbol{R}}_1 - {^0\boldsymbol{R}}_4
+\end{bmatrix} {^F\boldsymbol{P}}_{\text{tcp}} = \begin{bmatrix}
+{^0\boldsymbol{P}}_2 - {^0\boldsymbol{P}}_1 \\
+{^0\boldsymbol{P}}_3 - {^0\boldsymbol{P}}_1 \\
+{^0\boldsymbol{P}}_4 - {^0\boldsymbol{P}}_1
 \end{bmatrix} \quad \Longrightarrow \quad \boldsymbol{A} {^F\boldsymbol{P}}_{\text{tcp}} = \boldsymbol{b}
 $$
 
 其中 $\boldsymbol{A} \in \mathbb{R}^{9 \times 3}, \boldsymbol{b} \in \mathbb{R}^9$。采用奇异值分解 (SVD) 最小二乘求解：
+
 $$
 {^F\boldsymbol{P}}_{\text{tcp}} = (\boldsymbol{A}^T \boldsymbol{A})^{-1} \boldsymbol{A}^T \boldsymbol{b}
 $$
@@ -81,9 +84,11 @@ $$
 ## 4. 精度评测与残差残差指标 (Residual Analysis)
 
 标定完成后，必须通过计算**拟合残差球半径**检验标定品质：
+
 $$
 \text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^N \| ({^0\boldsymbol{R}}_i {^F\boldsymbol{P}}_{\text{tcp}} + {^0\boldsymbol{P}}_i) - \hat{\boldsymbol{P}}_{\text{fixed}} \|^2}
 $$
+
 - **优质标准**：工业高精度协作臂在经过良好示教后，$\text{RMSE} \le 0.2 \, \text{mm}$；
 - **异常诊断**：若 $\text{RMSE} > 0.5 \, \text{mm}$，通常由四种姿态倾角太小（导致矩阵 $\boldsymbol{A}$ 接近病态奇异）、机械臂末端存在机械间隙或人工示教未精确贴合引起。
 

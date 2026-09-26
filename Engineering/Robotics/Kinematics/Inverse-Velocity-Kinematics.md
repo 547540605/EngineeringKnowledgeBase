@@ -25,12 +25,14 @@ $$
 ## 2. 满秩非冗余机械臂 ($m = n$)
 
 当关节数等于任务空间自由度且构型非奇异（$\det(\boldsymbol{J}) \neq 0$）时，存在唯一的逆速度解析解：
+
 $$
 \dot{\boldsymbol{q}} = \boldsymbol{J}(\boldsymbol{q})^{-1} \boldsymbol{v}_e
 $$
 
 ### 求解算法建议：
 在实时控制器（如 1kHz 控制循环）中，**严禁显式计算逆矩阵 $\boldsymbol{J}^{-1}$**。应使用数值线性代数的高效分解方法（如 LU 分解或带有列主元选取的 Gaussian 消元）：
+
 $$
 \boldsymbol{J}(\boldsymbol{q}) \dot{\boldsymbol{q}} = \boldsymbol{v}_e \quad \xrightarrow{\text{LU 分解}} \quad \boldsymbol{L}\boldsymbol{U}\dot{\boldsymbol{q}} = \boldsymbol{v}_e
 $$
@@ -43,10 +45,13 @@ $$
 
 ### 3.1 极小范数伪逆解 (Right Moore-Penrose Pseudoinverse)
 构建带拉格朗日乘子的凸优化问题：在满足末端速度约束的前提下，最小化**关节速度欧氏 2-范数平方**：
+
 $$
 \min_{\dot{\boldsymbol{q}}} \frac{1}{2} \|\dot{\boldsymbol{q}}\|^2 = \frac{1}{2} \dot{\boldsymbol{q}}^T \dot{\boldsymbol{q}} \quad \text{s.t.} \quad \boldsymbol{J} \dot{\boldsymbol{q}} = \boldsymbol{v}_e
 $$
+
 推导出右伪逆（Right Pseudoinverse）：
+
 $$
 \dot{\boldsymbol{q}} = \boldsymbol{J}^\dagger \boldsymbol{v}_e = \boldsymbol{J}^T (\boldsymbol{J} \boldsymbol{J}^T)^{-1} \boldsymbol{v}_e
 $$
@@ -59,20 +64,24 @@ $$
 ## 4. 零空间投影与多任务分级控制 (Null-Space Projection)
 
 这是冗余机械臂最核心的技术优势。雅可比矩阵的零空间（Null Space）正交投影算子为：
+
 $$
 \boldsymbol{P}_{\text{null}} = (\boldsymbol{I}_n - \boldsymbol{J}^\dagger \boldsymbol{J})
 $$
 
 ### 速度解的完全通解公式：
+
 $$
 \dot{\boldsymbol{q}} = \boldsymbol{J}^\dagger \boldsymbol{v}_e + (\boldsymbol{I}_n - \boldsymbol{J}^\dagger \boldsymbol{J}) \dot{\boldsymbol{q}}_0
 $$
 
 ### 核心数学性质：
 将 $\boldsymbol{J}$ 左乘到零空间速度项：
+
 $$
 \boldsymbol{J} \cdot \left[ (\boldsymbol{I}_n - \boldsymbol{J}^\dagger \boldsymbol{J}) \dot{\boldsymbol{q}}_0 \right] = (\boldsymbol{J} - \boldsymbol{J} \boldsymbol{J}^\dagger \boldsymbol{J}) \dot{\boldsymbol{q}}_0 = (\boldsymbol{J} - \boldsymbol{J}) \dot{\boldsymbol{q}}_0 = \boldsymbol{0}
 $$
+
 > **重要工程结论**：任意任意选择的自运动速度 $\dot{\boldsymbol{q}}_0$，经零空间投影后，**绝对不会对末端执行器的轨迹产生任何干扰（自运动 Self-Motion）**！
 
 ### 次级优化任务（$\dot{\boldsymbol{q}}_0$）的典型选择：

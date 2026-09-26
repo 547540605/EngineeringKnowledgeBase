@@ -23,10 +23,13 @@
 ## 2. 开环速度分解与数值漂移问题
 
 最基础的开环速度控制律为：
+
 $$
 \dot{\boldsymbol{q}}(t) = \boldsymbol{J}^\dagger(\boldsymbol{q}(t)) \dot{\boldsymbol{x}}_d(t)
 $$
+
 在数字控制器中按离散步长 $\Delta t$ 进行数值欧拉积分：
+
 $$
 \boldsymbol{q}_{k+1} = \boldsymbol{q}_k + \dot{\boldsymbol{q}}_k \Delta t
 $$
@@ -52,17 +55,23 @@ $$
 
 ### 李雅普诺夫指数收敛性证明：
 定义误差导数：
+
 $$
 \dot{\boldsymbol{e}} = \dot{\boldsymbol{x}}_d - \dot{\boldsymbol{x}} = \dot{\boldsymbol{x}}_d - \boldsymbol{J}\dot{\boldsymbol{q}}
 $$
+
 代入控制律（设 $\boldsymbol{J}$ 为满秩方阵或冗余满行秩，$\boldsymbol{J}\boldsymbol{J}^\dagger = \boldsymbol{I}$）：
+
 $$
 \dot{\boldsymbol{e}} = \dot{\boldsymbol{x}}_d - \boldsymbol{J} \boldsymbol{J}^\dagger [\dot{\boldsymbol{x}}_d + \boldsymbol{K}_p \boldsymbol{e}] = \dot{\boldsymbol{x}}_d - (\dot{\boldsymbol{x}}_d + \boldsymbol{K}_p \boldsymbol{e}) = -\boldsymbol{K}_p \boldsymbol{e}
 $$
+
 解此一阶常微分方程：
+
 $$
 \boldsymbol{e}(t) = \boldsymbol{e}(0) \exp(-\boldsymbol{K}_p t)
 $$
+
 > **数学保证**：末端执行器位置误差以指数衰减速度严格收敛到零！任何因离散化引起的微小漂移都会在几个控制周期内被自动拉回标称轨迹。
 
 ---
@@ -77,9 +86,11 @@ $$
 
 ### 速度饱和缩放 (Velocity Scaling)：
 若某个关节计算速度超出物理硬件上限：$\max_i |\dot{q}_i| > \dot{q}_{\max}$，则**等比例缩放所有关节速度**：
+
 $$
 \dot{\boldsymbol{q}}_{\text{safe}} = \frac{\dot{q}_{\max}}{\max_i |\dot{q}_i|} \dot{\boldsymbol{q}}
 $$
+
 **切忌直接单独裁剪超限关节**！单独裁剪会破坏关节协同，导致末端严重脱离既定轨迹。
 
 ---

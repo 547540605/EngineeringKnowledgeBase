@@ -37,32 +37,41 @@
 
 ### 2.1 第一阶段：前向外推 (Forward / Outward Pass)
 从基座连杆 $\{0\}$ 开始向末端执行器递推，初始化条件：
+
 $$
 {^0\boldsymbol{\omega}}_0 = \boldsymbol{0}, \quad {^0\dot{\boldsymbol{\omega}}}_0 = \boldsymbol{0}, \quad {^0\dot{\boldsymbol{v}}}_0 = -\boldsymbol{g} = \begin{bmatrix} 0 \\ 0 \\ 9.81 \end{bmatrix} \, \text{m/s}^2
 $$
 
 对每个连杆 $i = 0, 1, \dots, n-1$：
 1. **递推连杆角速度与角加速度**：
-   $$
-   {^{i+1}\boldsymbol{\omega}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i + \dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
-   $$
-   $$
-   {^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\dot{\boldsymbol{\omega}}}_i + {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i \times (\dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}) + \ddot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
-   $$
+
+$$
+{^{i+1}\boldsymbol{\omega}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i + \dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
+$$
+
+$$
+{^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \, {^i\dot{\boldsymbol{\omega}}}_i + {^{i+1}_i\boldsymbol{R}} \, {^i\boldsymbol{\omega}}_i \times (\dot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}) + \ddot{\theta}_{i+1} \, {^{i+1}\boldsymbol{z}}_{i+1}
+$$
+
 2. **递推坐标原点与质心加速度**：
-   $$
-   {^{i+1}\dot{\boldsymbol{v}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \left[ {^i\dot{\boldsymbol{v}}}_i + {^i\dot{\boldsymbol{\omega}}}_i \times {^i\boldsymbol{P}}_{i+1} + {^i\boldsymbol{\omega}}_i \times ({^i\boldsymbol{\omega}}_i \times {^i\boldsymbol{P}}_{i+1}) \right]
-   $$
-   $$
-   {^{i+1}\dot{\boldsymbol{v}}_{C, i+1}} = {^{i+1}\dot{\boldsymbol{v}}}_{i+1} + {^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1} + {^{i+1}\boldsymbol{\omega}}_{i+1} \times ({^{i+1}\boldsymbol{\omega}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1})
-   $$
+
+$$
+{^{i+1}\dot{\boldsymbol{v}}}_{i+1} = {^{i+1}_i\boldsymbol{R}} \left[ {^i\dot{\boldsymbol{v}}}_i + {^i\dot{\boldsymbol{\omega}}}_i \times {^i\boldsymbol{P}}_{i+1} + {^i\boldsymbol{\omega}}_i \times ({^i\boldsymbol{\omega}}_i \times {^i\boldsymbol{P}}_{i+1}) \right]
+$$
+
+$$
+{^{i+1}\dot{\boldsymbol{v}}_{C, i+1}} = {^{i+1}\dot{\boldsymbol{v}}}_{i+1} + {^{i+1}\dot{\boldsymbol{\omega}}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1} + {^{i+1}\boldsymbol{\omega}}_{i+1} \times ({^{i+1}\boldsymbol{\omega}}_{i+1} \times {^{i+1}\boldsymbol{P}}_{C, i+1})
+$$
+
 3. **计算刚体隔离体净惯性力与净外力矩**：
-   $$
-   \boldsymbol{F}_{i+1} = m_{i+1} \, {^{i+1}\dot{\boldsymbol{v}}_{C, i+1}}
-   $$
-   $$
-   \boldsymbol{N}_{i+1} = \boldsymbol{I}_{C, i+1} \, {^{i+1}\dot{\boldsymbol{\omega}}_{i+1}} + {^{i+1}\boldsymbol{\omega}}_{i+1} \times (\boldsymbol{I}_{C, i+1} \, {^{i+1}\boldsymbol{\omega}}_{i+1})
-   $$
+
+$$
+\boldsymbol{F}_{i+1} = m_{i+1} \, {^{i+1}\dot{\boldsymbol{v}}_{C, i+1}}
+$$
+
+$$
+\boldsymbol{N}_{i+1} = \boldsymbol{I}_{C, i+1} \, {^{i+1}\dot{\boldsymbol{\omega}}_{i+1}} + {^{i+1}\boldsymbol{\omega}}_{i+1} \times (\boldsymbol{I}_{C, i+1} \, {^{i+1}\boldsymbol{\omega}}_{i+1})
+$$
 
 ---
 
@@ -73,18 +82,24 @@ $$
 对每个连杆 $i = n, n-1, \dots, 1$：
 1. **连杆间内力平衡方程**：
    前一连杆对本连杆的作用力 ${^i\boldsymbol{f}}_i$ 必须平衡本连杆质心惯性力与下一连杆传递过来的反作用力：
-   $$
-   {^i\boldsymbol{f}}_i = {^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{f}}_{i+1} + \boldsymbol{F}_i
-   $$
+
+$$
+{^i\boldsymbol{f}}_i = {^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{f}}_{i+1} + \boldsymbol{F}_i
+$$
+
 2. **连杆间内力矩平衡方程**（关于连杆坐标原点对力矩取矩）：
-   $$
-   {^i\boldsymbol{n}}_i = \boldsymbol{N}_i + {^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{n}}_{i+1} + {^i\boldsymbol{P}}_{C, i} \times \boldsymbol{F}_i + {^i\boldsymbol{P}}_{i+1} \times ({^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{f}}_{i+1})
-   $$
+
+$$
+{^i\boldsymbol{n}}_i = \boldsymbol{N}_i + {^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{n}}_{i+1} + {^i\boldsymbol{P}}_{C, i} \times \boldsymbol{F}_i + {^i\boldsymbol{P}}_{i+1} \times ({^{i}_{i+1}\boldsymbol{R}} \, {^{i+1}\boldsymbol{f}}_{i+1})
+$$
+
 3. **电机轴向投影提取驱动扭矩**：
    电机的驱动转子仅沿关节运动轴（$Z$ 轴）做功，其余垂直方向的力矩全部由机械轴承刚性承受：
-   $$
-   \tau_i = {^i\boldsymbol{n}}_i^T \, {^i\boldsymbol{z}}_i = n_{i, z} \quad (\text{旋转关节})
-   $$
+
+$$
+\tau_i = {^i\boldsymbol{n}}_i^T \, {^i\boldsymbol{z}}_i = n_{i, z} \quad (\text{旋转关节})
+$$
+
    若为移动关节（Prismatic Joint），则投影内力：$\tau_i = {^i\boldsymbol{f}}_i^T \, {^i\boldsymbol{z}}_i$。
 
 ---

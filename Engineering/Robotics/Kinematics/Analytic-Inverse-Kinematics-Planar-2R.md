@@ -24,6 +24,7 @@
 ## 2. 闭式余弦代数解析推导
 
 回顾平面两连杆的正运动学方程：
+
 $$
 \begin{cases}
 x = L_1 \cos\theta_1 + L_2 \cos(\theta_1 + \theta_2) \\
@@ -33,18 +34,23 @@ $$
 
 ### 第一步：消去 $\theta_1$ 求取 $\theta_2$
 将两式分别平方并相加：
+
 $$
 x^2 + y^2 = (L_1 \cos\theta_1 + L_2 \cos(\theta_1 + \theta_2))^2 + (L_1 \sin\theta_1 + L_2 \sin(\theta_1 + \theta_2))^2
 $$
+
 利用三角恒等式 $\cos^2\phi + \sin^2\phi = 1$ 与和角公式逆展开：
+
 $$
 x^2 + y^2 = L_1^2 + L_2^2 + 2 L_1 L_2 (\cos\theta_1 \cos(\theta_1+\theta_2) + \sin\theta_1 \sin(\theta_1+\theta_2))
 $$
+
 $$
 x^2 + y^2 = L_1^2 + L_2^2 + 2 L_1 L_2 \cos\theta_2
 $$
 
 从而得到 $\cos\theta_2$ 的解析闭式表达式（这正是三角形的**余弦定理**）：
+
 $$
 \cos\theta_2 = \frac{x^2 + y^2 - L_1^2 - L_2^2}{2 L_1 L_2}
 $$
@@ -57,32 +63,41 @@ $$
 
 ### 第二步：求解双解 $\theta_2$（肘上与肘下）
 利用正弦值 $\sin\theta_2 = \pm\sqrt{1 - \cos^2\theta_2}$，通过工业界标准四象限反正切函数 `atan2(y, x)` 获得无歧义角度：
+
 $$
 \theta_2 = \mathrm{atan2}\left(\pm\sqrt{1 - D^2}, \; D\right)
 $$
+
 * 取正号时（$\sin\theta_2 > 0$）：为**肘上构型（Elbow-Up）**；
 * 取负号时（$\sin\theta_2 < 0$）：为**肘下构型（Elbow-Down）**。
 
 ### 第三步：求解关节 1 角 $\theta_1$
 将正运动学方程展开为 $\cos\theta_1$ 与 $\sin\theta_1$ 的代数线性组合：
+
 $$
 \begin{cases}
 x = (L_1 + L_2 \cos\theta_2)\cos\theta_1 - (L_2 \sin\theta_2)\sin\theta_1 \\
 y = (L_1 + L_2 \cos\theta_2)\sin\theta_1 + (L_2 \sin\theta_2)\cos\theta_1
 \end{cases}
 $$
+
 令辅助常量：
+
 $$
 k_1 = L_1 + L_2 \cos\theta_2, \quad k_2 = L_2 \sin\theta_2
 $$
+
 则方程组变为平面坐标旋转投影：
+
 $$
 \begin{cases}
 x = k_1 \cos\theta_1 - k_2 \sin\theta_1 \\
 y = k_1 \sin\theta_1 + k_2 \cos\theta_1
 \end{cases}
 $$
+
 解得 $\theta_1$ 的极坐标角与辅助三角形偏角的差值：
+
 $$
 \theta_1 = \mathrm{atan2}(y, x) - \mathrm{atan2}(k_2, k_1)
 $$
@@ -103,9 +118,11 @@ $$
 面对数学上的多解，工程控制器必须经过三道防线确定唯一最优执行解：
 1. **物理软限位过滤**：剔除任何超出电机物理行程限制的解 $[\theta_{min}, \theta_{max}]$；
 2. **构型连续性准则（最小位移）**：选取与当前关节位置 $q_{current}$ 欧氏距离最小的解：
-   $$
-   q^* = \arg\min_k \|q_k - q_{current}\|_2
-   $$
+
+$$
+q^* = \arg\min_k \|q_k - q_{current}\|_2
+$$
+
    防止机械臂在轨迹跟踪过程中突然出现“大翻转”危险动作；
 3. **正运动学回代核验 (FK Round-trip Check)**：
    将求解出的 $(\theta_1^*, \theta_2^*)$ 代入正运动学公式，检验其计算位置与输入目标 $(x, y)$ 的欧氏误差是否小于允许阈值（如 $10^{-6}\,\text{m}$）。

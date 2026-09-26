@@ -15,6 +15,7 @@
 正运动学（Forward Kinematics, FK）的核心任务是：**已知各关节当前的位置变量 $q = [\theta_1, \theta_2, \dots, \theta_n]^T$，计算机械臂末端执行器相对于基座参考系的位姿 ${}^0_n T(q)$**。
 
 完整工程计算流水线分为 4 步：
+
 $$
 \text{连杆结构与关节测量} \xrightarrow{\text{建系}} \text{DH 参数表} \xrightarrow{\text{公式代入}} \{{}^{i-1}_i T(\theta_i)\} \xrightarrow{\text{链式连乘}} {}^0_n T(q)
 $$
@@ -30,6 +31,7 @@ $$
 $$
 
 其中每个单连杆齐次变换矩阵 ${}^{i-1}_i T$ 严格由通用单连杆公式生成：
+
 $$
 {}^{i-1}_i T = \begin{bmatrix}
 \cos\theta_i & -\sin\theta_i & 0 & a_{i-1} \\
@@ -40,6 +42,7 @@ $$
 $$
 
 最终得到的复合矩阵结构为：
+
 $$
 {}^0_n T = \begin{bmatrix}
 \mathbf{n} & \mathbf{s} & \mathbf{a} & \mathbf{P} \\
@@ -51,6 +54,7 @@ r_{31} & r_{32} & r_{33} & p_z \\
 0 & 0 & 0 & 1
 \end{bmatrix}
 $$
+
 * $\mathbf{P} = [p_x, p_y, p_z]^T$：末端在基座系下的**三维空间笛卡尔位置**；
 * $[\mathbf{n}, \mathbf{s}, \mathbf{a}]$：末端工具正交基底在基座系下的**三维空间旋转姿态**。
 
@@ -73,6 +77,7 @@ $$
 | **3** | $L_1$ | $0^\circ$ | $0$ | $\theta_3^*$ |
 
 ### 3.3 各连杆变换矩阵
+
 $$
 {}^0_1 T = \begin{bmatrix}
 c_1 & -s_1 & 0 & 0 \\
@@ -96,6 +101,7 @@ $$
 
 ### 3.4 连乘展开末端位置方程
 计算 ${}^0_3 T = {}^0_1 T \cdot {}^1_2 T \cdot {}^2_3 T$，提取末端点位置列向量 $\mathbf{P} = [x, y, z]^T$：
+
 $$
 \begin{cases}
 x = \cos\theta_1 \cdot \left( L_1 \cos\theta_2 + L_2 \cos(\theta_2 + \theta_3) \right) \\

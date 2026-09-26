@@ -31,9 +31,11 @@ $$
 $$
 
 ### 坐标分量形式：
+
 $$
 \begin{bmatrix} F_x \\ F_y \\ F_z \end{bmatrix} = m \begin{bmatrix} \dot{v}_{C, x} \\ \dot{v}_{C, y} \\ \dot{v}_{C, z} \end{bmatrix}
 $$
+
 由于质量 $m$ 是不随运动变化的定标量，平动方程表现为完全解耦的线性关系。
 
 ---
@@ -41,6 +43,7 @@ $$
 ## 3. 欧拉转动方程（绕质心转动定律）
 
 作用在刚体上的**空间总合外力矩 $\boldsymbol{N}$** 等于角动量的时间变化率：
+
 $$
 \boldsymbol{N} = \frac{d}{dt} (\boldsymbol{I}_C \boldsymbol{\omega})
 $$
@@ -64,17 +67,19 @@ $$
 在刚体质心坐标系下，惯量张量矩阵 $\boldsymbol{I}_C$ 为对称正定矩阵：
 
 $$
-\boldsymbol{I}_C = \begin{bmatrix} 
-I_{xx} & -I_{xy} & -I_{xz} \\ 
--I_{xy} & I_{yy} & -I_{yz} \\ 
--I_{xz} & -I_{yz} & I_{zz} 
+\boldsymbol{I}_C = \begin{bmatrix}
+I_{xx} & -I_{xy} & -I_{xz} \\
+-I_{xy} & I_{yy} & -I_{yz} \\
+-I_{xz} & -I_{yz} & I_{zz}
 \end{bmatrix}
 $$
 
 主对角线为主惯量（Moments of Inertia），非对角线为惯量积（Products of Inertia）：
+
 $$
 I_{xx} = \int (y^2 + z^2) \, dm, \quad I_{xy} = \int x y \, dm
 $$
+
 根据主惯性轴定理（Principal Axes of Inertia），总可以通过空间正交变换找到一组对齐主轴的坐标系，使得惯量积全部归零，化为纯对角矩阵 $\boldsymbol{I}_C = \operatorname{diag}(I_{xx}, I_{yy}, I_{zz})$。
 
 ---
@@ -84,9 +89,11 @@ $$
 对于在 $X-Y$ 平面内做纯二维转动的连杆：
 - 角速度与角加速度方向严格沿纸外法线：$\boldsymbol{\omega} = [0, 0, \omega_z]^T, \dot{\boldsymbol{\omega}} = [0, 0, \alpha_z]^T$；
 - 欧拉方程中的陀螺交叉乘积项计算为：
-  $$
-  \boldsymbol{I}_C \boldsymbol{\omega} = \begin{bmatrix} 0 \\ 0 \\ I_{zz} \omega_z \end{bmatrix} \implies \boldsymbol{\omega} \times (\boldsymbol{I}_C \boldsymbol{\omega}) = \begin{bmatrix} 0 \\ 0 \\ \omega_z \end{bmatrix} \times \begin{bmatrix} 0 \\ 0 \\ I_{zz} \omega_z \end{bmatrix} = \boldsymbol{0}
+
 $$
+\boldsymbol{I}_C \boldsymbol{\omega} = \begin{bmatrix} 0 \\ 0 \\ I_{zz} \omega_z \end{bmatrix} \implies \boldsymbol{\omega} \times (\boldsymbol{I}_C \boldsymbol{\omega}) = \begin{bmatrix} 0 \\ 0 \\ \omega_z \end{bmatrix} \times \begin{bmatrix} 0 \\ 0 \\ I_{zz} \omega_z \end{bmatrix} = \boldsymbol{0}
+$$
+
 > **重要工程推论**：在平面机械臂中，**陀螺耦合力矩恒等于零**！欧拉方程在平面内完全退化为标量形式 $N_z = I_{zz} \alpha_z$。这解释了为何平面两连杆的连杆转动阻抗如此平缓，而空间六轴机械臂在高速旋转时会出现强烈的空间扭转力矩。
 
 ---
