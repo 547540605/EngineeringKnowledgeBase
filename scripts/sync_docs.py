@@ -9,6 +9,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 MARKER = ".engineering-kb-generated"
+ROBOTICS_TOPIC_URL = "https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/"
+LEGACY_ROBOTICS_REDIRECTS = {
+    "index.md": "",
+    "NISTIR-7901-Force-Control-Algorithms.md": "nistir-7901.html",
+    "Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md": "learning-path.html",
+    "PI-Force-Control-Simulation.html": "PI-Force-Control-Simulation.html",
+}
 
 
 def main() -> None:
@@ -48,6 +55,18 @@ def main() -> None:
                 target_file = target_dir / source_file.relative_to(source_dir)
                 target_file.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source_file, target_file)
+
+    # Keep published legacy URLs alive without retaining duplicate source articles.
+    legacy_dir = DOCS / "Engineering" / "Robotics" / "Force-Control-and-Compliant-Assembly"
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+    for old_name, new_path in LEGACY_ROBOTICS_REDIRECTS.items():
+        url = ROBOTICS_TOPIC_URL + new_path
+        redirect = (
+            f'<meta http-equiv="refresh" content="0; url={url}">\n'
+            f'<script>window.location.replace({url!r});</script>\n\n'
+            f'[该内容已迁至机器人学专题]({url})。\n'
+        )
+        (legacy_dir / old_name).write_text(redirect, encoding="utf-8")
 
 
 if __name__ == "__main__":

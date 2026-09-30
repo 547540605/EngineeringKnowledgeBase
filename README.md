@@ -242,7 +242,7 @@ Engineering
 │   ├── CSharp
 │   └── ASPNETCore
 ├── Robotics
-│   └── Force-Control-and-Compliant-Assembly (力控与柔顺装配；其余机器人学内容见独立项目)
+│   └── index.md (独立机器人学站点入口与专题索引)
 ├── Python
 ├── Android
 ├── Linux
@@ -471,7 +471,7 @@ AI应优先维护知识结构。
 
 ## Robotics
 
-知识库原有的[机器人力控制与柔顺装配](Engineering/Robotics/Force-Control-and-Compliant-Assembly/index.md)专题继续保留。其余机器人学课程、交互演示和 ROS 2 学习内容由独立机器人学项目维护；点击[机器人学入口](Engineering/Robotics/index.md)即可跳转到[原版交互学习目录](https://547540605.github.io/robotics-notes-site/)。知识库不再复制课程文件。
+[机器人学入口](Engineering/Robotics/index.md)跳转到[独立机器人学站点](https://547540605.github.io/robotics-notes-site/)；[力控制与柔顺装配](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/)也已迁为该站点的独立专题。知识库的 Robotics 目录只保留索引和检索关键词，不维护课程或专题正文的副本。
 
 ---
 
@@ -513,8 +513,7 @@ EngineeringKnowledgeBase
     │   ├── CSharp/
     │   └── ASPNETCore/
     └── Robotics/
-        ├── index.md (独立机器人学项目入口)
-        └── Force-Control-and-Compliant-Assembly/ (原有力控专题)
+        └── index.md (独立机器人学站点入口与专题索引)
 ```
 
 具体目录以仓库现状为准；新增知识优先归入已有领域，避免按项目或时间线堆放。
