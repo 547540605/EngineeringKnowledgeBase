@@ -14,18 +14,18 @@
 ### 结构调整
 
 - 撤销 9 月 25–26 日将独立机器人学课程并入知识库的改动。机器人学课程、交互页与 ROS 2 学习资料继续由原项目维护；知识库的[机器人学入口](Engineering/Robotics/index.md)直接跳转到[原版课程站点](https://547540605.github.io/robotics-notes-site/)。
-- 保留知识库原有的[机器人力控制与柔顺装配](Engineering/Robotics/Force-Control-and-Compliant-Assembly/index.md)专题；先前误公开的简历仍保持移除。
+- 保留知识库原有的[机器人力控制与柔顺装配](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/)专题；先前误公开的简历仍保持移除。
 - 课程站点只发布原版学习页及其交互脚本，不包含简历、教材扫描页或 PDF。
 
 ## 2026-09-24
 
 ### 更新
 
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：为 Section V 的 A–F 按原文段落补充中文译文，并补上 Figure 1、2 的图注译文，方便与概述及工程补充对照。
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：逐节对照报告修正 A、D、E、F 的信号与定义，补全 Figure 2 反馈回路，并将独立仿真和 Demo 推断与原文分开；同步更正[学习路线](Engineering/Robotics/Force-Control-and-Compliant-Assembly/Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md)对原文评价指标的表述。
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：删除 A–F 对照表中的“阅读要点”列，仅保留各方法的控制关系。
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将 Section V 的 A–F 调整为并列章节，去除将 B–F 称作“其他方法”的误导性表述。
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将报告相关的 A–F 算法、显式力控框图、PI 仿真和 Demo/USB 联系合并到同一专题，并统一公式与符号。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：为 Section V 的 A–F 按原文段落补充中文译文，并补上 Figure 1、2 的图注译文，方便与概述及工程补充对照。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：逐节对照报告修正 A、D、E、F 的信号与定义，补全 Figure 2 反馈回路，并将独立仿真和 Demo 推断与原文分开；同步更正[学习路线](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/learning-path.html)对原文评价指标的表述。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：删除 A–F 对照表中的“阅读要点”列，仅保留各方法的控制关系。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：将 Section V 的 A–F 调整为并列章节，去除将 B–F 称作“其他方法”的误导性表述。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：将报告相关的 A–F 算法、显式力控框图、PI 仿真和 Demo/USB 联系合并到同一专题，并统一公式与符号。
 
 ### 维护
 
@@ -38,7 +38,7 @@
 
 ### 更新
 
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：将自绘图收敛为 NIST Figure 1 的核心结构与信号，移除额外系统方块和扩展说明。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：将自绘图收敛为 NIST Figure 1 的核心结构与信号，移除额外系统方块和扩展说明。
 
 ### 维护
 
@@ -46,8 +46,8 @@
 
 ### 新增
 
-- [NISTIR 7901：机器人力控制算法与闭环控制](Engineering/Robotics/Force-Control-and-Compliant-Assembly/NISTIR-7901-Force-Control-Algorithms.md)：展开说明期望力、测量力、控制误差与控制输入的反馈关系，并区分 Demo 的速度输出与直接力命令。
-- [机器人恒力控制与柔顺装配学习路线](Engineering/Robotics/Force-Control-and-Compliant-Assembly/Robot-Force-Control-and-Compliant-Assembly-Learning-Path.md)：将恒力保持、柔顺控制与 USB/连接器插拔串成可复用的学习路径，并区分各任务的控制目标与传感需求。
+- [NISTIR 7901：机器人力控制算法与闭环控制](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/nistir-7901.html)：展开说明期望力、测量力、控制误差与控制输入的反馈关系，并区分 Demo 的速度输出与直接力命令。
+- [机器人恒力控制与柔顺装配学习路线](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/learning-path.html)：将恒力保持、柔顺控制与 USB/连接器插拔串成可复用的学习路径，并区分各任务的控制目标与传感需求。
 
 ## 2026-09-21
 
