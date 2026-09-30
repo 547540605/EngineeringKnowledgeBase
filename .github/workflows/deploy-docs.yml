@@ -41,6 +41,9 @@ jobs:
       - name: Build site
         run: mkdocs build --strict --clean
 
+      - name: Preserve legacy robotics URLs without adding navigation entries
+        run: python scripts/add_legacy_redirects.py
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

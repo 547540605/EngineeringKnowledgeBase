@@ -9,6 +9,10 @@
 - [机器人力控制与柔顺装配](https://547540605.github.io/robotics-notes-site/force-control-and-compliant-assembly/)已迁入机器人学站点，作为独立专题维护；第 36 课只链接到专题，不合并正文。知识库 `Engineering/Robotics` 仅保留[索引](Engineering/Robotics/index.md)与检索关键词。
 - 知识库站点构建时为旧专题文章和 PI 仿真网址生成跳转页，避免已有网页链接失效；源仓库不再保留第二份正文与素材。
 
+### 维护
+
+- 旧力控专题的跳转页改为站点构建后生成，保留旧网址，同时让知识库 Robotics 导航只显示 Index。
+
 ## 2026-09-26
 
 ### 结构调整
