@@ -2,6 +2,12 @@
 
 本页记录对读者有影响的知识新增、内容更新和结构调整，便于快速了解近期变化。它不是完整的 Git 提交历史；具体改动仍以链接的知识条目和仓库提交记录为准。
 
+## 2026-10-08
+
+### 新增
+
+- [Bash `~/.bashrc` 启动与 ROS 环境的防重复配置](Engineering/Linux/Bashrc-Startup-and-Idempotent-ROS-Environment-Setup.md)：用前后文件内容和预期输出说明新终端加载、当前终端生效，以及 `grep -qxF`、`||`、`printf`、`>>` 的作用。
+
 ## 2026-09-30
 
 ### 结构调整
