@@ -10,7 +10,7 @@
 
 ### 更新
 
-- [Bash `~/.bashrc` 启动与 ROS 环境的防重复配置](Engineering/Linux/Bashrc-Startup-and-Idempotent-ROS-Environment-Setup.md)：逐项解释首次检查命令的 `grep`、`-n`、带单引号的正则模式与 `~/.bashrc` 路径，避免把粗略搜索误认为精确查重。
+- [Bash `~/.bashrc` 启动与 ROS 环境的防重复配置](Engineering/Linux/Bashrc-Startup-and-Idempotent-ROS-Environment-Setup.md)：逐项解释检查、按需追加、当前终端加载和变量验证命令的参数、引号与重定向，避免把文件写入与环境生效混淆。
 
 ## 2026-09-30
 
