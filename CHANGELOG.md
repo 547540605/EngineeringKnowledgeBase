@@ -10,7 +10,7 @@
 
 ### 更新
 
-- [Bash `~/.bashrc` 启动与 ROS 环境的防重复配置](Engineering/Linux/Bashrc-Startup-and-Idempotent-ROS-Environment-Setup.md)：逐项解释检查、按需追加、当前终端加载和变量验证命令的参数、引号与重定向，避免把文件写入与环境生效混淆。
+- [Bash `~/.bashrc` 启动与 ROS 环境的防重复配置](Engineering/Linux/Bashrc-Startup-and-Idempotent-ROS-Environment-Setup.md)：将长命令中的 `-q`、`-x`、`-F`、两处字符串、`%s`、`\n` 与 `>>` 各自拆开说明，并补充 `printf` 的实际输出示例。
 
 ## 2026-09-30
 
