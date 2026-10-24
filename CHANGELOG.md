@@ -2,6 +2,16 @@
 
 本页记录对读者有影响的知识新增、内容更新和结构调整，便于快速了解近期变化。它不是完整的 Git 提交历史；具体改动仍以链接的知识条目和仓库提交记录为准。
 
+## 2026-10-24
+
+### 新增
+
+- [共享控制器状态与用例隔离](Engineering/DotNet/Shared-Controller-State-and-Case-Isolation.md)：说明长生命周期控制器的可变状态为何会跨用例残留，以及何时应显式覆盖或恢复。
+
+### 更新
+
+- [C# 类型测试与转换](Engineering/DotNet/CSharp/CSharp-Type-Testing-and-Conversion.md)：补充接口变量访问实现类成员的 `CaseMark` 案例，说明父子类匹配和不匹配控制器的处理边界。
+
 ## 2026-10-10
 
 ### 新增

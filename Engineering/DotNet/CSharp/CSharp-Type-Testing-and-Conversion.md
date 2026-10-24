@@ -17,6 +17,9 @@ Computer Science
 - Declaration Pattern
 - Interface Types
 - Nullable Reference Types
+- [C# 类继承与接口实现](CSharp-Class-Inheritance-and-Interface-Implementation.md)
+- [ASP.NET Core 依赖注入中的接口类型与实现类型](../ASPNETCore/ASP.NET-Core-Dependency-Injection.md)
+- [共享控制器状态与用例隔离](../Shared-Controller-State-and-Case-Isolation.md)
 
 ---
 
@@ -120,3 +123,22 @@ if (detectionTask is { IsCompleted: false })
 ```text
 is not pattern
 ```
+
+## 接口变量访问实现类成员
+
+变量能直接访问哪些成员，取决于它的**编译期类型**。实际对象实现了更多公开成员，也不会让这些成员自动出现在接口变量上。接口与实现类型的区别也见[依赖注入中的示例](../ASPNETCore/ASP.NET-Core-Dependency-Injection.md)。
+
+在 `CaseMark` 中，`Robots` 的元素类型是 `IRobotController`；`KeyStepAxisQuicklyLeave` 是 `RobotController` 的公开属性，却没有声明在 `IRobotController` 中。因此，直接写 `robot.KeyStepAxisQuicklyLeave` 无法通过编译。可以先确认实际对象的类型：
+
+```csharp
+IRobotController robot = Robots[i];
+
+if (robot is RobotController rc)
+{
+    rc.KeyStepAxisQuicklyLeave = !noQuickLeave;
+}
+```
+
+`is RobotController rc` 在匹配成功时，为**同一个对象**建立一个编译期类型为 `RobotController` 的局部引用；它不会复制对象，也不会改变对象的运行时类型。`JointRobotController : RobotController` 也能匹配这个判断；直接实现 `IRobotController`、但不继承 `RobotController` 的 `RemoteRobotController` 不能匹配。硬写 `(RobotController)robot` 则会在类型不匹配时抛出 `InvalidCastException`。
+
+这种转型适用于明确只处理该实现类及其子类的能力。若业务要求每一种 `IRobotController` 都支持这个开关，就不能把未匹配的控制器静默略过；应明确处理不支持的类型，并在可协调升级所有实现和调用方时考虑完善接口或设计独立能力接口。类型转换本身也不会改变[方法隐藏与接口重新实现](CSharp-Method-Hiding-CS0108-and-Interface-Reimplementation.md)的调用分发规则。
