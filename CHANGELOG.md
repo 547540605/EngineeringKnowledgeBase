@@ -14,6 +14,7 @@
 
 ### 维护
 
+- 更新 [README.md](README.md) 与知识库插件技能说明，明确禁止将特定供应商/设备型号私有协议或项目一次性资料写入知识库的反污染规则，并规范 `Engineering/` 工程专题聚合入口的组织方式。
 - 移除具体供应商型号绑定的 `Engineering/HardwareIntegration/ElectricGripper/JODELL/EPG-HP` 夹爪寄存器映射文档，保持知识库聚焦跨项目复用的通用原理与工程实践。
 
 ## 2026-10-24

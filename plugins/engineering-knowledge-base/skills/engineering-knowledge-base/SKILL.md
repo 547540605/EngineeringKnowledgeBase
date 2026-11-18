@@ -94,7 +94,18 @@ problem, or reusable solution is already covered.
 If no existing topic covers it:
 
 - Classify it using the existing knowledge hierarchy and current README rules.
-- Keep one topic per subject; do not create a chronological conversation dump.
+- Keep it strictly vendor-neutral and generalizable: never record vendor-specific hardware register
+  tables, proprietary device manuals, vendor configuration-tool walkthroughs, or project-only
+  context (those belong in the product repository's own `doc/`). Strip brand/model names and use
+  anonymized examples when illustrating concrete frames, registers, or code. Do not imitate legacy
+  vendor-named examples if any remain in older notes.
+- Keep one topic per subject; do not create a chronological conversation dump. When an engineering
+  domain spans several foundational layers that the user reviews together in practice (for example
+  `Engineering/Modbus/`), organize a cohesive topic directory with an `index.md` hub that links
+  existing `ComputerScience/` prerequisites instead of duplicating them or scattering disconnected
+  notes.
+- If the desired scope, abstraction boundary, or placement is uncertain, present a concise proposed
+  outline to the user and get confirmation before writing or pushing.
 - Use a searchable, keyword-rich title.
 - Prefer the repository's existing structure. While the README says the current stage may record all
   knowledge in the root README, use an existing dedicated topic file or domain directory if the
@@ -111,6 +122,7 @@ If no existing topic covers it:
 After writing, re-read the changed section or file and verify:
 
 - the topic was not already present;
+- no vendor names, proprietary model numbers, or project-only specifics were leaked into the topic;
 - the title is searchable;
 - the content follows the canonical README;
 - examples and logs were preserved;

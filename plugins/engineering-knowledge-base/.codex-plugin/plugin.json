@@ -1,6 +1,6 @@
 {
   "name": "engineering-knowledge-base",
-  "version": "0.1.0+codex.20260924054917",
+  "version": "0.1.1+codex.20261118133000",
   "description": "Use the shared EngineeringKnowledgeBase and its searchable web documentation to check for existing knowledge and record only genuinely new topics.",
   "author": {
     "name": "Local developer"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "\u5de5\u7a0b\u77e5\u8bc6\u5e93",
     "shortDescription": "\u5171\u4eab\u5de5\u7a0b\u77e5\u8bc6\u3002",
-    "longDescription": "Connects any Codex project to the shared EngineeringKnowledgeBase and its browser-based documentation site. It reads the knowledge base rules, searches for an existing topic before writing, and records only new reusable knowledge without changing the rules from other projects.",
+    "longDescription": "Connects any Codex project to the shared EngineeringKnowledgeBase and its browser-based documentation site. It reads the knowledge base rules, searches for an existing topic before writing, and records only vendor-neutral, generalizable engineering knowledge without leaking vendor-specific manuals or project-only details.",
     "developerName": "Local developer",
     "category": "Productivity",
     "capabilities": [
