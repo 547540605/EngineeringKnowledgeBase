@@ -12,6 +12,10 @@
 - [寄存器断电保存边界、触发语义与动作状态轮询握手](Engineering/Modbus/03-Register-Persistence-Control-Modes-and-Motion-Handshake.md)：区分 RAM 工作寄存器与 Flash 断电保存寿命边界、四类写寄存器触发语义及异步物理动作轮询握手模板。
 - [上位机串口架构：并发串行化、轮询规划与多通道端口绑定](Engineering/Modbus/04-Host-Architecture-Polling-Concurrency-and-Port-Management.md)：说明单串口半双工请求串行化、连续寄存器批量读取优化及多 USB 转 RS485 通道序列号防漂移方案。
 
+### 更新
+
+- [Modbus 串口硬件通信工程专题](Engineering/Modbus/index.md)：新增协议标准、设备约定与上位机做法速查表，并澄清各篇中容易误读的字序、位域、动作握手和并发规则。
+
 ### 维护
 
 - 更新 `README.md` 与知识库插件技能说明，明确禁止将特定供应商/设备型号私有协议或项目一次性资料写入知识库的反污染规则，并规范 `Engineering/` 工程专题聚合入口的组织方式。
