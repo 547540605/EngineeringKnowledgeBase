@@ -11,6 +11,7 @@
 - [复合寄存器多比特位域拆装与读-改-写模式](Engineering/Modbus/02-Composite-Register-Bit-Fields-and-Read-Modify-Write.md)：总结任意位宽混合控制字/状态字的通用移位掩码公式与局部修改时的读-改-写流程。
 - [寄存器断电保存边界、触发语义与动作状态轮询握手](Engineering/Modbus/03-Register-Persistence-Control-Modes-and-Motion-Handshake.md)：区分 RAM 工作寄存器与 Flash 断电保存寿命边界、四类写寄存器触发语义及异步物理动作轮询握手模板。
 - [上位机串口架构：并发串行化、轮询规划与多通道端口绑定](Engineering/Modbus/04-Host-Architecture-Polling-Concurrency-and-Port-Management.md)：说明单串口半双工请求串行化、连续寄存器批量读取优化及多 USB 转 RS485 通道序列号防漂移方案。
+- [Modbus RTU 实战 01：伺服振动台的 PLC 接入](Engineering/Modbus/Cases/Servo-Vibration-Table-Modbus-RTU.md)：对照源码、点位表和联调记录，说明标准功能码的互通范围、`8N1` 与规范的差异，以及 32 位数据和动作语义如何核实。
 
 ### 更新
 
