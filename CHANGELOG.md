@@ -2,15 +2,6 @@
 
 本页记录对读者有影响的知识新增、内容更新和结构调整，便于快速了解近期变化。它不是完整的 Git 提交历史；具体改动仍以链接的知识条目和仓库提交记录为准。
 
-## 2026-11-18
-
-### 新增
-
-- [步进电机、细分脉冲、开环/闭环与驱控一体基础](Engineering/HardwareIntegration/MotionControl/Stepper-Motor-Microstepping-and-Integrated-Drive-Basics.md)：整理步进电机整步与细分换算、脉冲型与 RS485 驱控一体架构边界、开闭环差异及使能与加减速原则。
-- [工业开关量 IO、NPN/PNP 传感器与机械回零原理](Engineering/HardwareIntegration/MotionControl/NPN-PNP-Sensors-Digital-IO-and-Mechanical-Homing.md)：拆解常开/常闭触点、NPN/PNP 光电开关与驱动器内部光耦有效电平的关系，以及二次回原点与软件零位偏移标定流程。
-- [多通道 USB 转串口端口漂移与转换器序列号身份绑定](Engineering/HardwareIntegration/SerialDeviceManagement/USB-Serial-Port-Reassignment-and-Adapter-Serial-Binding.md)：说明多独立 RS485 通道下 `COM` 号重分配的风险，以及按转换器 `serial_number` 动态解析端口与断线锁存的防护方法。
-- [LEESN SV126 系列 RS485 步进驱动器寄存器映射与运动控制](Engineering/HardwareIntegration/StepperDrive/LEESN/SV126/LEESN-SV126-Modbus-Register-Map-and-Motion-Control.md)：梳理 SV126 默认低字在前（`CDAB`）32 位字序、状态与报警码、`SV113+` 新协议速度寄存器、回零位域拼装及厂商组态软件结构映射。
-
 ## 2026-10-24
 
 ### 新增
