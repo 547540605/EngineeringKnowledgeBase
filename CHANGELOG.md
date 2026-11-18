@@ -15,6 +15,7 @@
 
 ### 更新
 
+- [Modbus RTU 实战 01：伺服振动台的 PLC 接入](Engineering/Modbus/Cases/Servo-Vibration-Table-Modbus-RTU.md)：补充点位到报文地址的映射、只读串口探测、状态采样以及触发写重试的边界。
 - [Modbus 串口硬件通信工程专题](Engineering/Modbus/index.md)：新增协议标准、设备约定与上位机做法速查表，并澄清各篇中容易误读的字序、位域、动作握手和并发规则。
 
 ### 维护
