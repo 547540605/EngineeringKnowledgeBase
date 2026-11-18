@@ -4,6 +4,14 @@
 
 ## 2026-11-18
 
+### 新增
+
+- [Modbus 串口硬件通信工程专题](Engineering/Modbus/index.md)：建立统一的 Modbus 硬件通信复习与落地入口，串联散落的数据表示、串口/RS485 与 Modbus RTU 前置底座，并整理新硬件接入核对清单。
+- [32 位多寄存器字序、有符号补码与定点数缩放](Engineering/Modbus/01-Multi-Register-Word-Order-Twos-Complement-and-Scaling.md)：详解双寄存器 `ABCD`/`CDAB` 字序差异、`INT16`/`INT32` 负数补码编解码及整数定点数倍率换算。
+- [复合寄存器多比特位域拆装与读-改-写模式](Engineering/Modbus/02-Composite-Register-Bit-Fields-and-Read-Modify-Write.md)：总结任意位宽混合控制字/状态字的通用移位掩码公式与局部修改时的读-改-写流程。
+- [寄存器断电保存边界、触发语义与动作状态轮询握手](Engineering/Modbus/03-Register-Persistence-Control-Modes-and-Motion-Handshake.md)：区分 RAM 工作寄存器与 Flash 断电保存寿命边界、四类写寄存器触发语义及异步物理动作轮询握手模板。
+- [上位机串口架构：并发串行化、轮询规划与多通道端口绑定](Engineering/Modbus/04-Host-Architecture-Polling-Concurrency-and-Port-Management.md)：说明单串口半双工请求串行化、连续寄存器批量读取优化及多 USB 转 RS485 通道序列号防漂移方案。
+
 ### 维护
 
 - 移除具体供应商型号绑定的 `Engineering/HardwareIntegration/ElectricGripper/JODELL/EPG-HP` 夹爪寄存器映射文档，保持知识库聚焦跨项目复用的通用原理与工程实践。
