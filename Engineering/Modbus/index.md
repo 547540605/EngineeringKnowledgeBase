@@ -104,6 +104,7 @@ Modbus RTU 规定串行链路上的报文格式和收发规则。Modbus 应用�
 ## 实战案例
 
 1. [伺服振动台的 PLC 接入](Cases/Servo-Vibration-Table-Modbus-RTU.md)。用点位表、源码和实机联调记录核对标准功能码、`8N1` 兼容配置、32 位数据类型以及命令触发方式。
+2. [五工位步进电机共用 RS485 总线](Cases/Multi-Station-Stepper-Drive-Modbus-RTU.md)。通过五站只读回包验证标准事务，并区分串口格式、设备动作与共用总线的软件实现。
 
 ## 接入任意新 Modbus 硬件的 10 分钟核对清单
 
